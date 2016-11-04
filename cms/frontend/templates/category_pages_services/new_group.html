@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}新建分类组{% endblock %}
+
+{% block head %}
+    <style>
+        *{
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        .dashhr{
+            margin: 10px 0;
+            border-top: 1px dashed #ccc;;
+        }
+        .sendmsg-form label{
+            width:16%;
+            text-align: right;
+            margin-right: 1%;
+        }
+        .sendmsg-form .col-lg-12 label{
+            width:8%;
+            margin-right: .5%;
+            vertical-align: middle;
+        }
+        .sendmsg-form .form-control,.sendmsg-form select{
+            display: inline-block;
+            width:70%;
+        }
+        .sendmsg-form .col-lg-12 .form-control{
+            width:50%;
+            vertical-align: middle;
+        }
+        .sendmsg-form a.addpicbtn{
+            cursor:pointer;
+            font-size: 40px;
+            padding: 10px 22px;
+            border: 2px solid #999;
+            color: #999;
+        }
+        .citylist{
+            width: 90%;
+            display: inline-block;
+            vertical-align: top;
+        }
+        .correctbtn{
+            color: #337ab7;
+            margin-left: 470px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .correctbtn:hover{
+            color:blue;
+            cursor: pointer;
+        }
+        #validataDiv{
+            padding-left:10%;
+        }
+        #validataDiv .form-group label{
+            width:4%;
+            text-align: left;
+        }
+        .confirm_btn{
+            width:8rem;
+            height:1rem;
+            margin-top: .5rem;
+            margin-left: 5rem;
+        }
+    </style>
+    <!-- <link rel="stylesheet" href="{% static 'css/selectImg.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/webuploader.css' %}"/> -->
+{% endblock %}
+
+{% block content %}
+     <div class="cms-subtitle">
+         <ol class="breadcrumb" >
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+            <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+             <li><a href="{% url 'category_pages_services' %}?t={{ t }}&v={{ v }}&c={{ c }}">分类服务</a></li>
+             <li class="active">新增分类服务组</li>
+        </ol>
+    </div>
+
+    <div id="error-hints">
+
+    </div>
+    <form class="sendmsg-form" action="{% url 'category_pages_services_new_group' %}?channel={{ channel }}" method="post" enctype="multipart/form-data">{% csrf_token %}
+      
+         <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>类别名:</label>
+                      <select class="input-group-lg form-control" name="category" id="category" required maxlength="256">
+                        <option class="form-control" value=""></option>
+                        {% for category in categories %}
+                            <option class="form-control" value="{{ category.0 }}">{{ category.1 }}({{ category.2 }})</option>
+                        {% endfor %}
+                        {#                        <option class="form-control">测试0</option>#}
+                        {#                        <option class="form-control">测试1</option>#}
+                        {#                        <option class="form-control">测试2</option>#}
+                    </select>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i> 颜色:</label>
+                    <input type="color" class="form-control" name="name_style" id="name_style" />
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>场景:</label>
+                       <select class="input-group-lg form-control" name="scene_id" id="scene_id" required maxlength="11">
+                        <option class="form-control" value=""></option>
+                        {% for scene in scenes %}
+                            <option class="form-control" value="{{ scene.0 }}">{{ scene.1 }}</option>
+                        {% endfor %}
+                        {#                        <option class="form-control">测试0</option>#}
+                        {#                        <option class="form-control">测试1</option>#}
+                        {#                        <option class="form-control">测试2</option>#}
+                    </select>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i> 排序:</label>
+                    <input type="number" class="form-control" name="location" id="location" placeholder="请输入小于128的整数"
+                           required max="127" onkeyup="this.value=this.value.replace(/\D/g,'')"
+                           onafterpaste="this.value=this.value.replace(/\D/g,'')"/>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><!--<i>*</i>-->打点信息:</label>
+                    <input type="text" class="form-control" name="dot_info" id="dot_info" maxlength="2048"/>
+                </div>
+            </div>
+
+        </div>
+        <div class="row text-center">
+            <a class="btn btn-default col-lg-1 col-lg-offset-4" href="{% url 'category_pages_services' %}?t={{ t }}&v={{ v }}&c={{ c }}">取消</a>
+            <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="确定"/>
+        </div>   
+    </form>
+
+    
+
+ <script type="text/javascript">
+        setNavBg({{t}});
+        checkForm({{ errors|safe }});
+     $("form input").focus(function(){
+         $(this).css("border","1px solid #ccc");
+     });
+        function setInPutValue(){
+            // console.log("text:"+"{{ text }}");
+{#        console.log("{{ goods_form.initial }}");#}
+{#        console.log("a"+"b");#}
+        {% for key,value in fields.items %}
+            $("[name='{{ key }}']").val({{ value|safe }});
+        {% endfor %}
+{#        console.log("{{ new_service_form.city.value }}")#}
+
+    };
+    window.onload=setInPutValue;
+
+        </script>
+{#<script src="{% static 'js/require.js' %}" data-main="{% static 'js/cms/addservice' %}"></script>#}
+    <script>
+
+    </script>
+{% endblock %}

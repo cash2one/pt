@@ -1,0 +1,322 @@
+
+
+/*bootstrap默认图标*/
+.glyphicon
+{
+    margin-left: 5px;
+    margin-right: 10px;
+}
+/*导航栏上的文本，例如"欢迎您"*/
+.navbar-text
+{
+    margin-top: 20px;
+}
+/*左侧导航栏， 设置激活导航的样式*/
+.nav-active > a,
+.nav-active > a:hover
+{
+    color: #ffffff;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
+    background-color: #8DB0CE !important;/*0088cc*/
+}
+
+table
+{
+    max-width: 100%;
+}
+thead
+{
+    background-color: #8DB0CE;
+    font-size: 16px;
+}
+
+/*工具提示样式*/
+.tongji_tip p
+{
+    text-align: left;
+}
+.tongji_tip span
+{
+    color: #ffc24a;
+}
+
+/*table 移动到每行，显示的背景*/
+.table-hover > tbody > tr:hover
+{
+    background-color: #ffe3c0;
+}
+
+/*正在加载*/
+.loading_gif
+{
+    background-image: url('/static/images/loading4.gif');
+    background-repeat:no-repeat;
+    width:100px;
+    height: 100px;
+    position: fixed;
+    z-index:999;
+    margin-top:200px;
+    margin-left:45%;
+}
+
+/*返回到顶部*/
+#scrollUp
+{
+    bottom: 20px;
+    right: 80px;
+    width: 38px;
+    height: 38px;
+    background: url(/static/images/top.png) no-repeat;
+    position: fixed;
+    z-index: 2147483647;
+    display: block;
+}
+
+/*搜索框*/
+.input-group .form-control
+{
+    width: 240px;
+}
+
+.tjForm span
+{
+    display: inline-block;
+    width: 100px;
+}
+li
+{
+    list-style:none;
+    margin-bottom: 10px;
+}
+
+.readonly
+{
+    background-color: #dddddd;
+    border: 1px solid #cccccc;
+    padding-left: 5px;
+}
+
+.tooltip-inner
+{
+    max-width: 700px;
+}
+.sort_col
+{
+
+}
+body
+{
+    min-width: 1000px;
+    width:100%;
+}
+
+.overview, .data_detail
+{
+    width: 100%;
+    border: 1px solid #ccc;
+}
+.overview td
+{
+    border-left:0;
+    border-top: 0;
+    border-bottom: 0;
+}
+.overview > thead > tr, .data_detail > thead > tr
+{
+    height: 80px;
+}
+.overview > thead > tr > th > span:first-child, .data_detail > thead > tr > th > span:first-child
+{
+    margin-left: 20px
+}
+.overview tbody tr
+{
+    height: 40px;
+    text-align: center;
+}
+.data_detail tbody tr
+{
+    height: 40px;
+}
+.data_detail td
+{
+    padding-left: 10px;
+    padding-right: 10px;
+}
+.data_detail > tbody > tr:first-child
+{
+    /*background-color: #cccccc;*/
+    background-color: rgba(141, 176, 206, 0.4);
+}
+.chart_date
+{
+    border-top: 1px solid #ccc;
+}
+.chart_date td
+{
+    text-align: right;
+}
+.chart_date > td > div
+{
+    display: inline-table;
+    vertical-align: middle;
+    margin-right: 150px;
+}
+.chart
+{
+    height: 500px !important;
+}
+.chart td
+{
+    padding-bottom: 0;
+}
+.t_right
+{
+    position: absolute;
+    right: 30px;
+    font-weight: normal;
+    color: black;
+}
+
+/*.nav-header*/
+/*{*/
+    /*cursor: pointer;*/
+
+/*}*/
+/*.nav-header:hover*/
+/*{*/
+    /*color:#D0810B;*/
+/*}*/
+/*.nav-list li*/
+/*{*/
+    /*display: none;*/
+/*}*/
+
+/*让footer固定在底部*/
+html, body
+{
+    height: 100%;
+}
+
+#container
+{
+    min-height: 89%;
+}
+
+#footer {
+    min-width:1000px;
+    width:100%;
+    border-top: 1px solid #ddd;
+    text-align: center;
+    color:#9d9d9d;
+    background-color:#101010;
+    padding-top: 10px;
+    min-height: 55px;
+    margin-top: 20px;
+    padding-bottom: 10px;
+}
+
+/*日/周/月  点击之前和之后*/
+.period_normal
+{
+    cursor: hand;
+    color: black;
+    font-weight: normal;
+}
+.period_active
+{
+    border-bottom: 5px solid green;
+    padding-bottom: 5px
+}
+.form-group
+{
+    margin-top: 40px;
+}
+.pt-finance-table {
+        position: relative;
+        width: 95%;
+        margin: 0 auto;
+        }
+        .pt-finance-table #loading {
+        width: 1%;
+        left: 44.5%;
+        right: 44.5%;
+        margin-top: 3.5rem;
+        position: absolute;
+        z-index: 100;
+        }
+        .pt-finance-table table {
+        table-layout: fixed;
+        font-size: .12rem;
+        width: 100%;
+        border: 1px solid #aaa;
+        border-collapse: collapse;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        }
+        .pt-finance-table #table4 thead {
+        background: #8DB0CE;
+        cursor: pointer;
+        }
+        .pt-finance-table table thead:hover{
+        background: #8DB0CE;
+        }
+       
+       /* .pt-finance-table table .one span {
+        display: inline-block;
+        width: 1rem;
+        border-right: 1px solid #aaa;
+        margin: 0;
+        padding: 0;
+        }*/
+        .pt-finance-table table th {
+        border: 1px solid #aaa;
+        text-align: center;
+        height: 36px;
+        }
+        .pt-finance-table caption{
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+        }
+        /*.pt-finance-table table th:last-child {
+        border-right: 2px solid #aaa;
+        }*/
+        .pt-finance-table table tr {
+        border: 1px solid #aaa;
+        line-height: .4rem;
+        height: .2rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        }
+        .pt-finance-table table tbody tr:hover {
+        background: #f2f2f2;
+        }
+        .pt-finance-table table td:last-child {
+        border-right: 2px solid #aaa;
+        }
+        .pt-finance-table table td {
+        border: 1px solid #aaa;
+        height:.4rem;
+        min-width: .3rem;
+        max-width: 1.2rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        }
+        .pt-finance-table table td a {
+        display: inline-block;
+        margin-left: .05rem;
+        height: .3rem;
+        line-height: .3rem;
+        /* border: 1px solid #34cb95;
+        border-radius: 0.05rem;
+        color: #34cb95;*/
+        color:gray;
+        }
+        .pt-finance-table #table1 tr:nth-child(3) td{
+            background-color: #DCDCDC;
+            font-size: 16px;
+            font-weight: bold;
+        }

@@ -1,0 +1,2978 @@
+{% extends "pt_card_base.html" %}
+{% block myhead %}
+{% endblock %}
+{% block title %}葡萄卡管理{% endblock %}
+{% block head %}
+    <style xmlns:v-bind="http://www.w3.org/1999/xhtml" xmlns:v-bind="http://www.w3.org/1999/xhtml">
+    </style>
+    <link rel="stylesheet" href="/static/css/multiple-select.css"/>
+    <link rel="stylesheet" href="/static/css/ptcms.css"/>
+    <link rel="stylesheet" href="/static/css/form.css"/>
+{% endblock %}
+
+
+{% block content %}
+    <style>
+        * {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        .dashhr {
+            margin: 10px 0;
+            border-top: 1px dashed #ccc;;
+        }
+
+        .sendmsg-form label {
+            width: 16%;
+            text-align: right;
+            margin-right: 1%;
+        }
+
+        .sendmsg-form .form-control, .sendmsg-form select {
+            display: inline-block;
+            width: 80%;
+        }
+
+        .sendmsg-form .col-lg-12 .form-control {
+            width: 90%;
+            vertical-align: middle;
+        }
+
+        .sendmsg-form a.addpicbtn {
+            cursor: pointer;
+            font-size: 40px;
+            padding: 5px 7px;
+            border: 2px solid #999;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .citylist {
+            width: 90%;
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        .correctbtn {
+            color: #337ab7;
+            margin-left: 470px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .correctbtn:hover {
+            color: blue;
+            cursor: pointer;
+        }
+
+        #validataDiv {
+            padding-left: 10%;
+        }
+
+        #validataDiv .form_group label {
+            width: 4%;
+            text-align: left;
+        }
+
+        .rangelist {
+            width: 40%;
+            height: 40%;
+            margin-left: 8.5%;
+            text-align: left;
+        }
+
+        .rangelist .srvicearea {
+            background: #c0c0c0;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .rangelist .form_group label {
+            width: auto;
+        }
+
+        .rangelist select {
+            display: block;
+        }
+
+        .clone {
+            display: none !important;
+        }
+
+        .form_group {
+            margin-bottom: 15px;
+        }
+
+        .imgs {
+            display: inline-block;
+        }
+
+        a.add-tag-img .glyphicon {
+            padding: 5px 0;
+            color: #000;
+        }
+
+        .imgs img,
+        .add-tag-img {
+            width: 64px;
+            height: 64px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+            outline: none;
+        }
+
+        .add-tag-img {
+            font-size: 36px;
+            outline: none;
+        }
+
+        .col-md-5 .ms-choice {
+            border: 0px solid #aaa;
+            height: 0px;
+            width: 0px;
+        }
+
+        .ms-search {
+            display: inline-block;
+            margin: 0;
+            min-height: 26px;
+            padding: 4px;
+            white-space: nowrap;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .form_group:before, .form_group:after {
+            content: '';
+            display: table;
+            clear: both;
+        }
+
+
+    </style>
+
+    <div class="loading_gif"></div>
+    <div class="col-md-10" id="haha">
+
+        <form class="sendmsg-form" onsubmit="return mySubmit(false)">
+            <div id="error-hints">
+
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="form_group">
+                        <label class="col-sm-3 control-label"><i>*</i>葡萄卡底图：</label>
+                        <div class="col-md-3 col-sm-4">
+                            <!-- 添加标签图，可新增可删除 -->
+                            <div class="imgs" v-show="putaoDitu">
+                                <img :src="putaoDitu" alt="putao Ditu" id="ditu">
+                            </div>
+                            <a class="btn btn-bg add-tag-img addpicbtn" @click="imgpick"><i
+                                    class="glyphicon glyphicon-plus"></i></a>
+                            <p class="error-info fileupload" hidden>葡萄卡底图上传失败，请重新上传~</p>
+                            <span>
+                            尺寸：1035x516
+                        </span>
+                        </div>
+                        <label class="col-sm-3 control-label"><i>*</i>葡萄卡失效图：</label>
+                        <div class="col-md-3 col-sm-4">
+                            <!-- 添加标签图，可新增可删除 -->
+                            <div class="imgs" v-show="icon_inactive">
+                                <img :src="icon_inactive" alt="putao Ditu" id="ditu_a">
+                            </div>
+                            <a class="btn btn-bg add-tag-img addpicbtn" @click="detailimg"><i
+                                    class="glyphicon glyphicon-plus"></i></a>
+                            <p class="error-info fileupload" hidden>葡萄卡失效图上传失败，请重新上传~</p>
+                            <span>
+                            尺寸：1035x516
+                        </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-12">
+                    <div class="form_group">
+                        <label class="col-sm-3 control-label"><i>*</i>葡萄卡名称:</label>
+                        <div class="col-md-5">
+                            <input id="ptnameclick" type="text" class="form-control" v-model="puname"
+                                   maxlength="30"
+                                   placeholder=""/>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <div class="form_group"><br/>
+                        <label class="col-sm-3 control-label"><i></i>备注:</label>
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" v-model="remark" maxlength="100"
+                                   placeholder=""/>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <div class="form_group"><br/>
+                        <label class="col-sm-3 control-label"><i>*</i>葡萄卡零售价:</label>
+                        <div class="col-md-5">
+                            <input onkeyup="this.value=this.value.replace(/[^0-9.]/g,'')"
+                                   onafterpaste="this.value=this.value.replace(/[^0-9.]/g,'')"
+                                   class="form-control" v-model="retail_price" id="retail_price"
+                                   maxlength="7"
+                                   placeholder="单位为元"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <div class="form_group"><br/>
+                        <label class="col-sm-3 control-label"><i>*</i>葡萄卡服务次数:</label>
+                        <div class="col-md-5">
+                            <input onkeyup="this.value=this.value.replace(/[^0-9]/g,'')"
+                                   onafterpaste="this.value=this.value.replace(/[^0-9]/g,'')"
+                                   class="form-control" v-model="serviceCount" id="serviceCount"
+                                   maxlength="4"
+                                   placeholder=""/>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <div class="form_group">
+                        <label class="col-sm-3 control-label"><i></i>单次服务时长:</label>
+                        <div class="col-md-5">
+                            <input id="oneservertime" onkeyup="this.value=this.value.replace(/[^0-9]/g,'')"
+                                   onafterpaste="this.value=this.value.replace(/[^0-9]/g,'')" class="form-control"
+                                   v-model="serviceTime"
+                                   maxlength="7"
+                                   placeholder="不填为不限"/>
+                        </div>
+                        <div class="col-md-2">
+                            <select id="timetype" class="form-control" v-model="timeType">
+                                <option value="minute">分钟</option>
+                                <option value="hour">小时</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <div class="form_group"><br/>
+                        <label class="col-sm-3 control-label"><i>*</i>子订单取消时间限制:</label>
+                        <div class="col-md-5">
+                            <input onkeyup="this.value=this.value.replace(/[^0-9]/g,'')"
+                                   onafterpaste="this.value=this.value.replace(/[^0-9]/g,'')"
+                                   class="form-control" v-model="timeLimit" maxlength="7"
+                                   placeholder="单位为小时"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <div class="form_group"><br/>
+                        <label class="col-sm-3 control-label"><i>*</i>使用说明:</label>
+                        <div class="col-md-5">
+                        <textarea type="text" class="form-control" v-model="description" maxlength="3000"
+                                  placeholder="用于向用户解释葡萄卡的适用范围，包括适用的商品、城市等"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-12" id="myload">
+                    <div class="form_group">
+                        <label class="col-sm-3 control-label"><i>*</i>适用服务范围</label>
+                    </div>
+                    <div class="rangelist">
+                        <div class="col-md-12">
+                            <div class="srvicearea">
+                                <div class="form_group">
+                                    <label>二级分类:</label>
+                                    <label><input type="radio" value='0' name="fenlei" checked/>仅选中二级分类可用</label>
+                                    <label><input type="radio" value='1' name="fenlei"/>仅选中二级分类不可用</label>
+                                    <select multiple="multiple" name="category" class=""></select>
+                                </div>
+                                <div class="form_group">
+                                    <label>三级分类:</label>
+                                    <label><input type="radio" value='0' name="sanjifenlei" checked/>仅选中三级分类可用</label>
+                                    <label><input type="radio" value='1' name="sanjifenlei"/>仅选中三级分类不可用</label>
+                                    <select multiple="multiple" name="san_category" class=""></select>
+                                </div>
+
+                                <div class="form_group">
+                                    <label>CP:</label>
+                                    <label><input type="radio" value='0' name="allcps" checked/>仅选中CP可用</label>
+                                    <label><input type="radio" value='1' name="allcps"/>仅选中CP不可用</label>
+                                    <select multiple="multiple" name="cps" class=""></select>
+                                </div>
+                                <div class="form_group">
+                                    <label>商品:</label>
+                                    <label><input type="radio" value='0' name="allservice" checked/>仅选中商品可用</label>
+                                    <label><input type="radio" value='1' name="allservice"/>仅选中商品不可用</label>
+                                    <div class="ms-search"><input type="text" name="search"/></div>
+                                    <select multiple="multiple" name="servicelist" class=""></select>
+                                </div>
+                                <a class="btn btn-warning delbtn" href="#">删除</a>
+                            </div>
+                            <div class="srvicearea clone">
+                                <div class="form_group">
+                                    <label>二级分类:</label>
+                                    <label><input type="radio" value='0' name="" checked/>仅选中二级分类可用</label>
+                                    <label><input type="radio" value='1' name=""/>仅选中二级分类不可用</label>
+                                    <select multiple="multiple" name="" class="category"></select>
+                                </div>
+                                <div class="form_group">
+                                    <label>三级分类:</label>
+                                    <label><input type="radio" value='0' name="" checked/>仅选中三级分类可用</label>
+                                    <label><input type="radio" value='1' name=""/>仅选中三级分类不可用</label>
+                                    <select multiple="multiple" name="" class="san_category"></select>
+                                </div>
+                                <div class="form_group">
+                                    <label>CP:</label>
+                                    <label><input type="radio" value='0' name="" checked/>仅选中CP可用</label>
+                                    <label><input type="radio" value='1' name=""/>仅选中CP不可用</label>
+                                    <select multiple="multiple" name="" class="cps"></select>
+                                </div>
+                                <div class="form_group">
+                                    <label>商品:</label>
+                                    <label><input type="radio" value='0' name="" checked/>仅选中商品可用</label>
+                                    <label><input type="radio" value='1' name=""/>仅选中商品不可用</label>
+                                    <div class="ms-search"><input type="text" name="search"/></div>
+                                    <select multiple="multiple" name="" class="servicelist"></select>
+                                </div>
+                                <a class="btn btn-warning delbtn" href="#">删除</a>
+                            </div>
+                            <a class="btn btn-primary addnewrange" href="#">继续添加范围</a>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="col-lg-12">
+                    <div class="form_group"><br/>
+                        <label class="col-sm-3 control-label"><i>*</i>葡萄卡有效期:</label>
+                        <div class="col-md-5">
+                            <input onkeyup="this.value=this.value.replace(/[^0-9]/g,'')"
+                                   onafterpaste="this.value=this.value.replace(/[^0-9]/g,'')"
+                                   class="form-control" v-model="validity" maxlength="10"
+                                   placeholder="自购买后X天内有效，单位为天,1年的"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12" style="display: none;">
+                    <div class="form_group"><br/>
+                        <label class="col-sm-3 control-label"><i></i></label>
+                        <div class="col-md-5">
+                            <input type="checkbox" id="checkbox" v-model="is_sale"><font size="3">该葡萄卡在APP内可售</font>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row text-left"><br/>
+                <a class="btn btn-default col-lg-1 col-lg-offset-2" href="{% url 'putao_card_info' %}">取消</a>
+                <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="提交" @click="sub"/>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- 图片上传&选择组件 -->
+    <div class="imgpicker"></div>
+
+    <script type="text/javascript" src="/static/js/plupload.full.min.js"></script>
+    <script type="text/javascript" src="/static/js/multiple-select.js"></script>
+    <script type="text/javascript" src="/static/js/imgpicker.js"></script>
+    <link rel="stylesheet" href="/static/css/imgpicker.css">
+    <script type="text/javascript">
+        var curCId, editFlag = false, counter = 1, databaseObject = {};
+        var is_upload_init = false;
+        var is_upload = false;
+        var vm = new Vue({
+            el: '#haha',
+            data: {
+                putaoDitu: '', //葡萄卡底图
+                icon_inactive: '', //葡萄卡失效图
+                puname: '', //葡萄卡名称
+                remark: '', //备注
+                retail_price: '', //葡萄卡零售价
+                serviceCount: '', //葡萄卡服务次数
+                serviceTime: '', //单次服务时长
+                timeType: 'hour', //时间类型
+                timeLimit: '', //子订单取消时间限制
+                description: '', //使用说明
+                validity: 365, //葡萄卡有效期
+                //is_sale: false, //该葡萄卡在APP内可售
+            },
+            methods: {
+                imgpick: function () {
+                    var _this = this;
+                    $('#imgpicker').modal();
+                    imgpicker.init({
+                        callback: function (url) {
+                            is_upload_init = true;
+                            _this.putaoDitu = url;
+                        }
+                    });
+                },
+                detailimg: function () {
+                    var _this = this;
+                    $('#imgpicker').modal();
+                    imgpicker.init({
+                        callback: function (url) {
+                            is_upload_init = true;
+                            _this.icon_inactive = url;
+                        }
+                    });
+                },
+                suoluetu: function () {
+                    var _this = this;
+                    $('#imgpicker').modal();
+                    imgpicker.init({
+                        callback: function (url) {
+                            is_upload_init = true;
+                            _this.suolueTu = url;
+                        }
+                    });
+                },
+                sub: function () {
+                    var all_scope = getJsonParamter($("form").serializeArray());
+                    console.log('商品范围', all_scope)
+                },
+            }
+
+        });
+        document.onclick = function () {
+        }
+
+        window.onload = function () {
+
+            loading.init(".loading_gif", "#myload");
+            loading.hide()
+            $('#cityselect').multipleSelect();
+            $('.category1').multipleSelect();
+            if (GetQueryString('id')) {
+                curCId = GetQueryString('id');
+                editFlag = true;
+                $.get('/pt_card/putao_card_goods_detail/?pk=' + curCId, function (data) {
+                    if (data.code == '0') {
+                        $("#retail_price").attr('disabled', 'disabled')
+                        $("#serviceCount").attr('disabled', 'disabled')
+                        var ptCard = data.data;
+                        vm.$set('putaoDitu', ptCard.putaoDitu);
+                        vm.$set('icon_inactive', ptCard.icon_inactive);
+                        vm.$set('puname', ptCard.puName);
+                        vm.$set('serviceCount', ptCard.serviceCount);
+                        vm.$set('serviceTime', ptCard.serviceTime);
+                        vm.$set('timeType', ptCard.timeType);
+                        vm.$set('timeLimit', ptCard.timeLimit);
+                        vm.$set('description', ptCard.description);
+                        vm.$set('validity', ptCard.validity);
+                        //vm.$set('is_sale', ptCard.is_sale);
+                        vm.$set('retail_price', ptCard.retail_price);
+                        vm.$set('remark', ptCard.remark);
+                        databaseObject = ptCard.all_scope;
+                        bindEvent();
+                        if (editFlag && databaseObject) {
+                            var firstContainer = $(".srvicearea:not(.clone)");
+                            if (!$.isArray(databaseObject) || databaseObject.length == 0) {
+                                firstContainer.remove();
+                            }
+                            console.log('返回商品范围', databaseObject)
+                            $.each(databaseObject, function (i, ele) {
+                                var resourceContainer = firstContainer;
+                                if (i !== 0) {
+                                    var newRangDom = $(".srvicearea.clone").clone().removeClass('clone');
+                                    newRangDom.find(".form_group:first [type='radio']").attr('name', 'fenlei' + (counter));
+                                    newRangDom.find('.form_group:first [multiple="multiple"]').attr('name', 'category' + counter).end()
+                                    newRangDom.find(".form_group:nth-child(2) [type='radio']").attr('name', 'sanjifenlei' + (counter))
+                                    newRangDom.find('.form_group:nth-child(2) [multiple="multiple"]').attr('name', 'san_category' + counter).end()
+                                    newRangDom.find(".form_group:nth-child(3) [type='radio']").attr('name', 'allcps' + (counter))
+                                    newRangDom.find('.form_group:nth-child(3) [multiple="multiple"]').attr('name', 'cps' + counter).end()
+                                    newRangDom.find(".form_group:nth-child(4) [name='search']").attr('name', 'search' + counter)
+                                    newRangDom.find('.form_group:nth-child(4) [multiple="multiple"]').attr('name', 'servicelist' + counter)
+                                    newRangDom.find(".form_group:nth-child(4) [type='radio']").attr('name', 'allservice' + (counter++)).end()
+                                    newRangDom.insertBefore('.rangelist .addnewrange');
+                                    resourceContainer = newRangDom;
+                                }
+                                ;
+                                resourceContainer.data("category", JSON.stringify({
+                                    goods_cat: ele.goods_cat,
+                                    goods_cat_x: ele.goods_cat_x
+                                }))
+                                        .data("cpselected", JSON.stringify({cps: ele.cps, cps_x: ele.cps_x}))
+                                        .data("san_category", JSON.stringify({sanji: ele.sanji, sanji_x: ele.sanji_x}))
+                                        .data("gidselected", JSON.stringify({gids: ele.gids, gids_x: ele.gids_x}));
+
+                                getCategory({
+                                    parent: resourceContainer
+                                });
+                            });
+
+
+                        }
+
+                    }
+                })
+            } else {
+                getCategory({
+                    parent: '.srvicearea:not(.clone):first'
+                });
+                bindEvent();
+            }
+            ;
+            vm.$watch('putaoDitu', function (val) {
+                //$("#ditu").change(function () {
+                {#                var wd = getNaturalWidth($("#ditu"))[0];#}
+                {#                var he = getNaturalWidth($("#ditu"))[0];#}
+                {#                if (wd > 1035 || he > 324) {#}
+                {#                    console.log('图片尺寸为', wd, he)#}
+                {#                    $("#error-hints").html('底图宽要小于1035,高要小于324').show();#}
+                {#                    is_upload = true;#}
+                {#                    imgpicker.init({#}
+                {#                        callback: function (url) {#}
+                {#                            vm.putaoDitu = url;#}
+                {#                        }#}
+                {#                    });#}
+                {#                    return#}
+                {#                } else {#}
+                {#                    is_upload = false;#}
+                {#                    $("#error-hints").html('').hide();#}
+                {#                }#}
+            })
+
+
+            function bindEvent() {
+                $("#biz_type").change(function () {
+                            if (this.value == 1) {
+                                $(".remindertext").show();
+                            }
+                            else {
+                                $(".remindertext").hide();
+                            }
+                        }
+                ).change();
+                $("#effect_type").change(function () {
+                    if (this.value == 1) {
+                        $(this).parents(".form_group").next(".form_group").show();
+                        $("#start_time,#end_time").parents(".col-lg-12").hide()
+                    }
+                    else {
+                        $(this).parents(".form_group").next(".form_group").hide();
+                        $("#start_time,#end_time").parents(".col-lg-12").show();
+                    }
+                }).change();
+                $("#scope").change(function () {
+                    if (this.value != 'SELF') {
+                        $("#is_mutex,#cost_type,.rangelist").parents(".col-lg-12").hide();
+                        if (this.value == 'FLOW') {
+                            $("#biz_type").append("<option class='form-control' value='1'>M</option>");
+                        }
+                    }
+                    else {
+                        $("#is_mutex,#cost_type,.rangelist").parents(".col-lg-12").show();
+                    }
+                }).change();
+                $(".addnewrange").click(function (e) {
+                    e.preventDefault();
+                    var newRangDom = $(".srvicearea.clone").clone().removeClass('clone');
+                    newRangDom.find(".form_group:first [type='radio']").attr('name', 'fenlei' + (counter));
+                    newRangDom.find('.form_group:first [multiple="multiple"]').attr('name', 'category' + counter).end()
+                    newRangDom.find(".form_group:nth-child(2) [type='radio']").attr('name', 'sanjifenlei' + (counter))
+                    newRangDom.find('.form_group:nth-child(2) [multiple="multiple"]').attr('name', 'san_category' + counter).end()
+                    newRangDom.find(".form_group:nth-child(3) [type='radio']").attr('name', 'allcps' + (counter))
+                    newRangDom.find('.form_group:nth-child(3) [multiple="multiple"]').attr('name', 'cps' + counter).end()
+                    newRangDom.find(".form_group:nth-child(4) [name='search']").attr('name', 'search' + counter)
+                    newRangDom.find('.form_group:nth-child(4) [multiple="multiple"]').attr('name', 'servicelist' + counter)
+                    newRangDom.find(".form_group:nth-child(4) [type='radio']").attr('name', 'allservice' + (counter++)).end()
+                    newRangDom.insertBefore('.rangelist .addnewrange');
+
+                    getCategory({
+                        parent: newRangDom
+                    })
+
+                })
+
+            }
+        }
+
+
+        $(".rangelist").on("click", "[name^=fenlei]", function () {
+            var selectEle = $(this).parent().siblings("select");
+            var two = selectEle.parents('.srvicearea').find(".form_group:nth-child(2) [multiple='multiple']");
+            var three = selectEle.parents('.srvicearea').find(".form_group:nth-child(3) [multiple='multiple']");
+            var four = selectEle.parents('.srvicearea').find(".form_group:nth-child(4) [multiple='multiple']");
+            var selectEle_area = $(this).parent().siblings("select").parents('.srvicearea');
+            try {
+
+                selectEle.multipleSelect("uncheckAll");
+                selectEle.multipleSelect("refresh");
+                selectEle_area.data("category", JSON.stringify({
+                    goods_cat: '',
+                    goods_cat_x: ''
+                }))
+                two.multipleSelect("uncheckAll");
+                two.multipleSelect("refresh");
+                selectEle_area.data("san_category", JSON.stringify({
+                    sanji: '',
+                    sanji_x: ''
+                }))
+                three.multipleSelect("uncheckAll");
+                three.multipleSelect("refresh");
+                selectEle_area.data("cpselected", JSON.stringify({
+                    cps: '',
+                    cps_x: ''
+                }))
+                four.multipleSelect("uncheckAll");
+                four.multipleSelect("refresh");
+                selectEle_area.data("gidselected", JSON.stringify({
+                    gids: '',
+                    gids_x: ''
+                }))
+            }
+            catch (err) {
+
+            }
+            var selectedCt = [],
+                    parentEle = selectEle.parents(".srvicearea"),
+                    selectedArray = $.makeArray(selectEle.multipleSelect("getSelects")),
+                    selectedStr = selectedArray.length > 0 ? selectedArray.join(',') : '';
+            getAllsanji([], parentEle);
+        }).on("click", "[name^=sanjifenlei]", function () {
+            var selectEle = $(this).parent().siblings("select"), selectedCps = [], cpids = [];
+            var two = selectEle.parents('.srvicearea').find(".form_group:nth-child(2) [multiple='multiple']");
+            var three = selectEle.parents('.srvicearea').find(".form_group:nth-child(3) [multiple='multiple']");
+            var four = selectEle.parents('.srvicearea').find(".form_group:nth-child(4) [multiple='multiple']");
+            var selectEle_area = $(this).parent().siblings("select").parents('.srvicearea');
+            two.multipleSelect("uncheckAll");
+            two.multipleSelect("refresh");
+            selectEle_area.data("san_category", JSON.stringify({
+                sanji: '',
+                sanji_x: ''
+            }))
+            three.multipleSelect("uncheckAll");
+            three.multipleSelect("refresh");
+            selectEle_area.data("cpselected", JSON.stringify({
+                cps: '',
+                cps_x: ''
+            }))
+            four.multipleSelect("uncheckAll");
+            four.multipleSelect("refresh");
+            selectEle_area.data("gidselected", JSON.stringify({
+                gids: '',
+                gids_x: ''
+            }))
+            var selectedArray = $.makeArray(selectEle.multipleSelect("getSelects"));
+            var parentEle = selectEle.parents(".srvicearea");
+            var context = selectEle.parents(".srvicearea");
+            var selectedStr = selectedArray.length > 0 ? selectedArray.join(',') : '';
+            getAllCp([], '', parentEle);
+
+        }).on("click", "[name^=allcps]", function () {
+            var selectEle = $(this).parent().siblings("select"), selectedCps = [], cpids = [];
+            var three = selectEle.parents('.srvicearea').find(".form_group:nth-child(3) [multiple='multiple']");
+            var four = selectEle.parents('.srvicearea').find(".form_group:nth-child(4) [multiple='multiple']");
+            var selectEle_area = $(this).parent().siblings("select").parents('.srvicearea');
+            three.multipleSelect("uncheckAll");
+            three.multipleSelect("refresh");
+            selectEle_area.data("cpselected", JSON.stringify({
+                cps: '',
+                cps_x: ''
+            }))
+            four.multipleSelect("uncheckAll");
+            four.multipleSelect("refresh");
+            selectEle_area.data("gidselected", JSON.stringify({
+                gids: '',
+                gids_x: ''
+            }))
+            var selectedArray = $.makeArray(selectEle.multipleSelect("getSelects"));
+            var parentEle = selectEle.parents(".srvicearea");
+            var context = selectEle.parents(".srvicearea");
+            //var curCpdata = JSON.parse(context.data('cpselected'));
+            var curCategoryEle = selectEle.parents('.srvicearea').find("[name^='category']")
+            var selectedStr = selectedArray.length > 0 ? selectedArray.join(',') : '';
+            var curCategory = [];
+            getsanjigoods_oth(parentEle);
+
+        }).on("click", "[name^=allservice]", function () {
+            var mselectEle = $(this).parent().siblings("select");
+            var four = mselectEle.parents('.srvicearea').find(".form_group:nth-child(4) [multiple='multiple']");
+            var selectEle_area = $(this).parent().siblings("select").parents('.srvicearea');
+            four.multipleSelect("uncheckAll");
+            four.multipleSelect("refresh");
+            selectEle_area.data("gidselected", JSON.stringify({
+                gids: '',
+                gids_x: ''
+            }))
+            var selectEle = $(this).siblings("select"),
+                    parentEle = selectEle.parents(".srvicearea"),
+                    selectedArray = $.makeArray(selectEle.multipleSelect("getSelects")),
+                    selectedStr = selectedArray.length > 0 ? selectedArray.join(',') : '';
+            mselectEle.parents(".srvicearea").data('gidselected', '');
+        }).on("click", "[data-name^=selectAllservicelist]", function () {
+            var selectEle = $(this).parent().parent().parent().parent().parent().siblings('select')
+            var parentEle = selectEle.parents(".srvicearea"),
+                    selectedArray = $.makeArray(selectEle.multipleSelect("getSelects")),
+                    selectedStr = selectedArray.length > 0 ? selectedArray.join(',') : '';
+            if ($(this).val() == '1') {
+                parentEle.data('gidselected', JSON.stringify({
+                    'gids': '',
+                    "gids_x": selectedStr
+                }));
+            } else {
+                parentEle.data('gidselected', JSON.stringify({
+                    'gids': selectedStr,
+                    "gids_x": ''
+                }))
+            }
+            ;
+        }).on("click", "[data-name^=selectAllcategory]", function () {
+            var selectEle = $(this).parent().parent().parent().parent().parent().siblings('select')
+            var parentEle = selectEle.parents(".srvicearea"),
+                    selectedArray = $.makeArray(selectEle.multipleSelect("getSelects")),
+                    selectedStr = selectedArray.length > 0 ? selectedArray.join(',') : '';
+            {#            if ($(this).val() == '1') {#}
+            {#                parentEle.data('category', JSON.stringify({#}
+            {#                    'goods_cat': '',#}
+            {#                    "goods_cat_x": selectedStr#}
+            {#                }));#}
+            {#            } else {#}
+            {#                parentEle.data('category', JSON.stringify({#}
+            {#                    'goods_cat': selectedStr,#}
+            {#                    "goods_cat_x": ''#}
+            {#                }))#}
+            {#            }#}
+            ;
+        }).on("click", "[data-name^=selectAllsan_category]", function () {
+            var selectEle = $(this).parent().parent().parent().parent().parent().siblings('select')
+            var parentEle = selectEle.parents(".srvicearea"),
+                    selectedArray = $.makeArray(selectEle.multipleSelect("getSelects")),
+                    selectedStr = selectedArray.length > 0 ? selectedArray.join(',') : '';
+            var checked = parentEle.find('[name^=sanjifenlei]:checked').val()
+                    {#            if (checked == '1') {#}
+                    {#                parentEle.data('san_category', JSON.stringify({#}
+                    {#                    'sanji': '',#}
+                    {#                    "sanji_x": selectedStr#}
+                    {#                }));#}
+                    {#                parentEle.find("[name^='servicelist']").empty();#}
+                    {#                parentEle.find("[name^='servicelist']").multipleSelect('refresh');#}
+                    {#            } else {#}
+                    {#                parentEle.data('san_category', JSON.stringify({#}
+                    {#                    'sanji': selectedStr,#}
+                    {#                    "sanji_x": ''#}
+                    {#                }))#}
+                    {#                //getsanjigoods_oth(parentEle);#}
+                    {#            }#}
+                    ;
+        }).on("click", "[data-name^=selectAllcps]", function () {
+            var selectEle = $(this).parent().parent().parent().parent().parent().siblings('select')
+            var parentEle = selectEle.parents(".srvicearea"),
+                    selectedArray = $.makeArray(selectEle.multipleSelect("getSelects")),
+                    selectedStr = selectedArray.length > 0 ? selectedArray.join(',') : '';
+            var checked = parentEle.find('[name^=allcps]:checked').val()
+                    {#            if (checked == '1') {#}
+                    {#                parentEle.data('cpselected', JSON.stringify({#}
+                    {#                    'cps': '',#}
+                    {#                    "cps_x": selectedStr#}
+                    {#                }));#}
+                    {#                parentEle.find("[name^='servicelist']").empty();#}
+                    {#            } else {#}
+                    {#                parentEle.data('cpselected', JSON.stringify({#}
+                    {#                    'cps': selectedStr,#}
+                    {#                    "cps_x": ''#}
+                    {#                }))#}
+                    {#                //getCurGoods(selectedArray, '', parentEle);#}
+                    {#            }#}
+                    ;
+        }).on("blur", "[name^=search]", function () {
+            var selectEle = $(this);
+            var first = selectEle.parents('.srvicearea').find(".form_group:first [multiple='multiple']");
+            var two = selectEle.parents('.srvicearea').find(".form_group:nth-child(2) [multiple='multiple']");
+            var three = selectEle.parents('.srvicearea').find(".form_group:nth-child(3) [multiple='multiple']");
+            var four = selectEle.parents('.srvicearea').find(".form_group:nth-child(4) [multiple='multiple']");
+            if ($.trim($(this).val()).length == 0) {
+                if (four.multipleSelect('getSelects').length == 0) {
+
+                    four.empty()
+                    four.append("<option value='-1' disabled><font color='red' size='12px'>" + '所选服务时长无可添加商品' + "</font></option>");
+                    four.multipleSelect('refresh')
+                }
+                return
+            }
+            var selectEle_area = $(this).parent().siblings("select").parents('.srvicearea');
+            first.multipleSelect("uncheckAll");
+            first.multipleSelect("refresh");
+            selectEle_area.data("category", JSON.stringify({
+                goods_cat: '',
+                goods_cat_x: ''
+            }))
+            two.multipleSelect("uncheckAll");
+            two.multipleSelect("refresh");
+            selectEle_area.data("san_category", JSON.stringify({
+                sanji: '',
+                sanji_x: ''
+            }))
+            three.multipleSelect("uncheckAll");
+            three.multipleSelect("refresh");
+            selectEle_area.data("cpselected", JSON.stringify({
+                cps: '',
+                cps_x: ''
+            }))
+            {#            four.multipleSelect("uncheckAll");#}
+            {#            four.multipleSelect("refresh");#}
+            {#            selectEle_area.data("gidselected", JSON.stringify({#}
+            {#                gids: '',#}
+            {#                gids_x: ''#}
+            {#            }))#}
+            //console.log($(this).parents(".srvicearea"),11)
+            getCurGoods([], $.trim($(this).val()), $(this).parents(".srvicearea"))
+        })
+        $(".rangelist").on("click", "a.delbtn", function (e) {
+            e.preventDefault();
+            $(this).parents('.srvicearea').remove();
+        });
+
+
+        function getCategory(options) {
+            /*
+             options ={
+             parent //祖先元素
+             }
+             */
+            var parentEle = $((options && options.parent) ? options.parent : ('.srvicearea:first')),
+                    categoryDom = parentEle.find('[name^=category]').empty(),
+                    checkelement = 'fenlei';
+            $.ajax({
+                        url: '/pt_card/category/list/',
+                        type: "POST",
+                        cache: false,
+                        //async: false,
+                        beforeSend: function (XMLHttpRequest) {
+                            loading.show();
+                        },
+                        complete: function (result) {
+
+                            loading.hide();
+                        },
+                        success: function (data) {
+                            var idArray = [];
+                            if (!data || data.length == 0) return;
+                            $.each(data, function (i, ele) {
+                                categoryDom.append("<option value='" + ele.id + "'>" + ele.name + "</option>");
+                            });
+                            var totalArray = [];
+                            categoryDom.find("option").each(function () {
+                                totalArray.push($(this).val());
+                            })
+                            categoryDom.multipleSelect({
+                                filter: true,
+                                width: '100%',
+                                //selectAll: false,
+                                onClose: function () {
+                                    var selectedArray = categoryDom.multipleSelect("getSelects");
+                                    checkindex = parentEle.find('[name^="fenlei"]:checked').val();
+                                    {#                        view.instance.$parent.parent().children().find('[name^="fenlei"]').each(function (index) {#}
+                                    {#                            if ($(this).prop("checked")) {#}
+                                    {#                                checkindex = index * 2#}
+                                    {#                            }#}
+                                    {#                        });#}
+                                    if (checkindex == '1') {
+                                        //当前为弃用项
+                                        var totalArray = [];
+                                        categoryDom.find("option").each(function () {
+                                            totalArray.push(this.value);
+                                        });
+                                        idArray = getDiffertSets(totalArray, selectedArray);
+                                        parentEle.data('category', JSON.stringify({
+                                            'goods_cat': '',
+                                            "goods_cat_x": selectedArray.join(',')
+                                        }))
+                                    }
+                                    else {
+                                        //当前为选中项
+                                        idArray = selectedArray;
+                                        parentEle.data('category', JSON.stringify({
+                                            'goods_cat': selectedArray.join(','),
+                                            "goods_cat_x": ''
+                                        }))
+                                    }
+                                    ;
+                                    clearsanji(parentEle)
+                                    if (idArray.length == 0) return
+                                    getAllsanji(idArray, parentEle);
+                                    if (idArray.length != 0) {
+
+                                        geterjiGoods(parentEle)
+                                    }
+                                }
+                            });
+                            if (curCId && editFlag) {
+                                var dataSource = parentEle.data("category") ? JSON.parse(parentEle.data("category")) : {},
+                                        cpsarray = dataSource.goods_cat;
+                                idArray = getArray(cpsarray);
+                                if (dataSource.goods_cat_x && dataSource.goods_cat_x.length > 0) {
+                                    cpsarray = dataSource.goods_cat_x;
+
+                                    parentEle.find('[name^=fenlei]').eq(1).prop('checked', true)
+                                    parentEle.find('[name^=fenlei]').eq(0).prop('checked', false)
+                                    //parentEle.find("[name^='fenlei']").eq(1).click();
+                                    idArray = getDiffertSets(totalArray, getArray(cpsarray))
+                                }
+                                categoryDom.multipleSelect("setSelects", getArray(cpsarray));
+                                //console.log(idArray)
+
+
+                                //getAllsanji(idArray, parentEle);
+                                if (idArray.length != 0) {
+                                    var cpsel = parentEle.data("cpselected") ? JSON.parse(parentEle.data("cpselected")) : {
+                                        cps: '',
+                                        cps_x: ''
+                                    };
+                                    var sansel = parentEle.data("san_category") ? JSON.parse(parentEle.data("san_category")) : {
+                                        sanji: '',
+                                        sanji_x: ''
+                                    };
+                                    if (sansel.sanji_x.length > 0 || sansel.sanji.length > 0) {
+
+                                        getAllsanji(idArray, parentEle);
+                                    } else if (cpsel.cps_x.length > 0 || cpsel.cps.length > 0){
+                                        getonesanji(parentEle)
+                                        getAllCp([], '', parentEle);
+                                        }else {
+
+                                        geterjiGoods(parentEle)
+                                        getonesanjicp(parentEle);
+                                    }
+                                } else {
+                                    getAllsanji(idArray, parentEle);
+                                }
+
+
+                            } else {
+                                getAllsanji(idArray, parentEle)
+                            }
+
+                        }
+                    }
+            )
+        }
+
+        function getAllsanji(scids, context) {
+            window.sessionStorage.setItem("scids", scids);
+            var curSelect = context.find("[name^='san_category']").empty(), idArray = [],
+                    curCategoryEle = curSelect.parents('.srvicearea').find("[name^='category']");
+            var curCategory = [];
+            var totalArray = [];
+            curCategoryEle.find("option").each(function () {
+                curCategory.push(this.value)
+            });
+            if (scids.length != 0) {
+
+                $.ajax({
+                    url: '/pt_card/get_sanji_list/',
+                    type: "POST",
+                    cache: false,
+                    //async: false,
+                    data: JSON.stringify({cat_ids: "(" + scids.join(',') + ")"}),
+                    beforeSend: function (XMLHttpRequest) {
+                        loading.show();
+                    },
+                    success: function (data) {
+                        //console.log(data)
+                        $.each(data, function (i, ele) {
+                            if (ele && ele.name) {
+                                curSelect.append("<option value='" + ele.id + "'>" + ele.name + "</option>");
+                            }
+                        });
+
+                        totalArray = [];
+                        curSelect.find("option").each(function () {
+                            totalArray.push($(this).val());
+                        });
+                        curSelect.multipleSelect({
+                            //selectAll: false,
+                            width: '100%',
+                            filter: true,
+                            onClose: function () {
+                                var selectedArray = curSelect.multipleSelect("getSelects");
+                                checkindex = context.find('[name^="sanjifenlei"]:checked').val();
+                                if (checkindex == '1') {
+                                    //当前为弃用项
+                                    var totalArray = [];
+                                    curSelect.find("option").each(function () {
+                                        totalArray.push(this.value);
+                                    });
+                                    idArray = getDiffertSets(totalArray, selectedArray);
+                                    context.data('san_category', JSON.stringify({
+                                        'sanji': '',
+                                        "sanji_x": selectedArray.join(',')
+                                    }))
+                                }
+                                else {
+                                    //当前为选中项
+                                    idArray = selectedArray;
+                                    context.data('san_category', JSON.stringify({
+                                        'sanji': selectedArray.join(','),
+                                        "sanji_x": ''
+                                    }))
+                                }
+                                ;
+                                var scids = window.sessionStorage.getItem("scids");
+                                var cpIdArr = [];
+                                if (scids) {
+                                    cpIdArr = scids.split(',');
+                                }
+                                ;
+                                clearcp(context)
+                                if (idArray.length == 0) return
+                                getAllCp(idArray, '', context);
+                                if (idArray.length != 0) {
+
+                                    getsanjigoods_oth(context);
+                                }
+                            }
+                        });
+
+                        if (curCId && editFlag) {
+                            var dataSource = context.data("san_category") ? JSON.parse(context.data("san_category")) : {},
+                                    cpsarray = dataSource.sanji;
+                            idArray = getArray(cpsarray);
+                            if (dataSource.sanji_x && dataSource.sanji_x.length > 0) {
+                                cpsarray = dataSource.sanji_x;
+                                context.find('[name^=sanjifenlei]').eq(1).prop('checked', true)
+                                context.find('[name^=sanjifenlei]').eq(0).prop('checked', false)
+                                //context.find("[name^='allcps']").eq(1).click();
+                                idArray = getDiffertSets(totalArray, getArray(cpsarray))
+                            }
+                            ;
+                            //context.find("[name^='san_category']").multipleSelect("setSelects", idArray)
+
+
+                            curSelect.multipleSelect("setSelects", getArray(cpsarray));
+                            //getAllCp(idArray, '', context);
+                            if (idArray.length != 0) {
+                                var cpsel = context.data("cpselected") ? JSON.parse(context.data("cpselected")) : {
+                                    cps: '',
+                                    cps_x: ''
+                                };
+                                if (cpsel.cps_x.length > 0 || cpsel.cps.length > 0) {
+
+                                    getAllCp(idArray, '', context);
+                                } else {
+
+                                    getsanjigoods_oth(context);
+                                    getonecp(context);
+                                }
+                            } else {
+                                getAllCp(idArray, '', context);
+                            }
+                        } else {
+                            getAllCp(idArray, '', context);
+                        }
+                    },
+                    complete: function (result) {
+                        loading.hide();
+                    },
+                });
+            }
+            else {
+                $.ajax({
+                    url: '/pt_card/get_all_sanji/',
+                    type: "POST",
+                    cache: false,
+                    //async: false,
+                    data: JSON.stringify({cat_ids: "(" + scids.join(',') + ")"}),
+                    beforeSend: function (XMLHttpRequest) {
+                        loading.show();
+                    },
+                    success: function (data) {
+                        $.each(data, function (i, ele) {
+                            if (ele && ele.name) {
+                                curSelect.append("<option value='" + ele.id + "'>" + ele.name + "</option>");
+                            }
+                        });
+
+                        totalArray = [];
+                        curSelect.find("option").each(function () {
+                            totalArray.push($(this).val());
+                        });
+                        curSelect.multipleSelect({
+                            //selectAll: false,
+                            width: '100%',
+                            filter: true,
+                            onClose: function () {
+                                var selectedArray = curSelect.multipleSelect("getSelects");
+                                checkindex = context.find('[name^="sanjifenlei"]:checked').val();
+                                {#                        view.instance.$parent.parent().children().find('[name^="allcps"]').each(function (index) {#}
+                                {#                            if ($(this).prop("checked")) {#}
+                                {#                                checkindex = index * 2#}
+                                {#                            }#}
+                                {#                        });#}
+                                if (checkindex == '1') {
+                                    //当前为弃用项
+                                    var totalArray = [];
+                                    curSelect.find("option").each(function () {
+                                        totalArray.push(this.value);
+                                    });
+                                    idArray = getDiffertSets(totalArray, selectedArray);
+                                    context.data('san_category', JSON.stringify({
+                                        'sanji': '',
+                                        "sanji_x": selectedArray.join(',')
+                                    }))
+                                }
+                                else {
+                                    //当前为选中项
+                                    idArray = selectedArray;
+                                    context.data('san_category', JSON.stringify({
+                                        'sanji': selectedArray.join(','),
+                                        "sanji_x": ''
+                                    }))
+                                }
+                                ;
+                                var scids = window.sessionStorage.getItem("scids");
+                                var cpIdArr = [];
+                                if (scids) {
+                                    cpIdArr = scids.split(',');
+                                }
+                                ;
+                                clearcp(context)
+                                if (idArray.length == 0) return
+                                getAllCp(idArray, '', context);
+                                if (idArray.length != 0) {
+
+                                    getsanjigoods_oth(context);
+                                }
+                            }
+                        });
+
+                        if (curCId && editFlag) {
+                            var dataSource = context.data("san_category") ? JSON.parse(context.data("san_category")) : {},
+                                    cpsarray = dataSource.sanji;
+                            idArray = getArray(cpsarray);
+                            if (dataSource.sanji_x && dataSource.sanji_x.length > 0) {
+                                cpsarray = dataSource.sanji_x;
+                                context.find('[name^=sanjifenlei]').eq(1).prop('checked', true)
+                                context.find('[name^=sanjifenlei]').eq(0).prop('checked', false)
+                                //context.find("[name^='allcps']").eq(1).click();
+                                idArray = getDiffertSets(totalArray, getArray(cpsarray))
+                            }
+                            ;
+                            //context.find("[name^='san_category']").multipleSelect("setSelects", idArray)
+
+
+                            curSelect.multipleSelect("setSelects", getArray(cpsarray));
+                            //getAllCp(idArray, '', context);
+                            if (idArray.length != 0) {
+                                var cpsel = context.data("cpselected") ? JSON.parse(context.data("cpselected")) : {
+                                    cps: '',
+                                    cps_x: ''
+                                };
+                                if (cpsel.cps_x.length > 0 || cpsel.cps.length > 0) {
+
+                                    getAllCp(idArray, '', context);
+                                } else {
+
+                                    getsanjigoods_oth(context);
+                                    getonecp(context);
+                                }
+                            } else {
+                                getAllCp(idArray, '', context);
+                            }
+                        } else {
+                            getAllCp(idArray, '', context);
+                        }
+                    },
+                    complete: function (result) {
+                        loading.hide();
+                    },
+                });
+
+            }
+
+
+        }
+
+
+        function getAllCp(cpids, selectId, context) {
+            window.sessionStorage.setItem("cpids", cpids);
+            var curSelect = context.find("[name^='cps']").empty(), idArray = [],
+                    curCategoryEle = curSelect.parents('.srvicearea').find("[name^='san_category']");
+
+            var curCategory = [];
+            var totalArray = [];
+            curCategoryEle.find("option").each(function () {
+                curCategory.push(this.value)
+            });
+            if (cpids.length != 0) {
+
+                $.ajax({
+                    url: '/pt_card/cps/list/',
+                    type: "POST",
+                    cache: false,
+                    //async: false,
+                    data: JSON.stringify({cat_ids: "(" + cpids.join(',') + ")"}),
+                    beforeSend: function (XMLHttpRequest) {
+                        loading.show();
+                    },
+                    success: function (data) {
+                        $.each(data, function (i, ele) {
+                            if (ele && ele.name) {
+                                curSelect.append("<option value='" + ele.id + "'>" + ele.name + "</option>");
+                            }
+                        });
+                        totalArray = [];
+                        curSelect.find("option").each(function () {
+                            totalArray.push($(this).val());
+                        });
+                        curSelect.multipleSelect({
+                            //selectAll: false,
+                            width: '100%',
+                            filter: true,
+                            onClose: function () {
+                                var selectedArray = curSelect.multipleSelect("getSelects");
+                                checkindex = context.find('[name^="allcps"]:checked').val();
+                                {#                        view.instance.$parent.parent().children().find('[name^="allcps"]').each(function (index) {#}
+                                {#                            if ($(this).prop("checked")) {#}
+                                {#                                checkindex = index * 2#}
+                                {#                            }#}
+                                {#                        });#}
+                                if (checkindex == '1') {
+                                    //当前为弃用项
+                                    var totalArray = [];
+                                    curSelect.find("option").each(function () {
+                                        totalArray.push(this.value);
+                                    });
+                                    idArray = getDiffertSets(totalArray, selectedArray);
+                                    context.data('cpselected', JSON.stringify({
+                                        'cps': '',
+                                        "cps_x": selectedArray.join(',')
+                                    }))
+                                }
+                                else {
+                                    //当前为选中项
+                                    idArray = selectedArray;
+                                    context.data('cpselected', JSON.stringify({
+                                        'cps': selectedArray.join(','),
+                                        "cps_x": ''
+                                    }))
+                                }
+                                ;
+                                var cpids = window.sessionStorage.getItem("cpids");
+                                var cpIdArr = [];
+                                if (cpids) {
+                                    cpIdArr = cpids.split(',');
+                                }
+                                ;
+                                cleargoods(context)
+                                if (idArray.length == 0) return
+                                getCurGoods(idArray, '', context);
+                            }
+                        });
+
+                        if (curCId && editFlag) {
+                            var dataSource = context.data("cpselected") ? JSON.parse(context.data("cpselected")) : {},
+                                    cpsarray = dataSource.cps;
+                            idArray = getArray(cpsarray);
+                            if (dataSource.cps_x && dataSource.cps_x.length > 0) {
+                                cpsarray = dataSource.cps_x;
+                                context.find('[name^=allcps]').eq(1).prop('checked', true)
+                                context.find('[name^=allcps]').eq(0).prop('checked', false)
+                                //context.find("[name^='allcps']").eq(1).click();
+                                idArray = getDiffertSets(totalArray, getArray(cpsarray))
+                            }
+                            ;
+                            curSelect.multipleSelect("setSelects", getArray(cpsarray));
+                            getCurGoods(idArray, '', context);
+                        } else {
+                            getCurGoods(idArray, '', context);
+                        }
+                    },
+                    complete: function (result) {
+                        loading.hide();
+                    },
+                });
+            } else {
+
+                $.ajax({
+                    url: '/pt_card/get_all_cps/',
+                    type: "POST",
+                    cache: false,
+                    //async: false,
+                    data: JSON.stringify({cat_ids: "(" + cpids.join(',') + ")"}),
+                    beforeSend: function (XMLHttpRequest) {
+                        loading.show();
+                    },
+                    success: function (data) {
+                        loading.hide();
+                        $.each(data, function (i, ele) {
+                            if (ele && ele.name) {
+                                curSelect.append("<option value='" + ele.id + "'>" + ele.name + "</option>");
+                            }
+                        });
+                        totalArray = [];
+                        curSelect.find("option").each(function () {
+                            totalArray.push($(this).val());
+                        });
+                        curSelect.multipleSelect({
+                            //selectAll: false,
+                            width: '100%',
+                            filter: true,
+                            onClose: function () {
+                                var selectedArray = curSelect.multipleSelect("getSelects");
+                                checkindex = context.find('[name^="allcps"]:checked').val();
+                                {#                        view.instance.$parent.parent().children().find('[name^="allcps"]').each(function (index) {#}
+                                {#                            if ($(this).prop("checked")) {#}
+                                {#                                checkindex = index * 2#}
+                                {#                            }#}
+                                {#                        });#}
+                                if (checkindex == '1') {
+                                    //当前为弃用项
+                                    var totalArray = [];
+                                    curSelect.find("option").each(function () {
+                                        totalArray.push(this.value);
+                                    });
+                                    idArray = getDiffertSets(totalArray, selectedArray);
+                                    context.data('cpselected', JSON.stringify({
+                                        'cps': '',
+                                        "cps_x": selectedArray.join(',')
+                                    }))
+                                }
+                                else {
+                                    //当前为选中项
+                                    idArray = selectedArray;
+                                    context.data('cpselected', JSON.stringify({
+                                        'cps': selectedArray.join(','),
+                                        "cps_x": ''
+                                    }))
+                                }
+                                ;
+                                var cpids = window.sessionStorage.getItem("cpids");
+                                var cpIdArr = [];
+                                if (cpids) {
+                                    cpIdArr = cpids.split(',');
+                                }
+                                ;
+                                cleargoods(context)
+                                if (idArray.length == 0) return
+                                if (idArray.length == 0) {
+                                    wufuwu(context)
+                                } else {
+                                    getCurGoods(idArray, '', context);
+                                }
+                            }
+                        });
+
+                        if (curCId && editFlag) {
+                            var dataSource = context.data("cpselected") ? JSON.parse(context.data("cpselected")) : {},
+                                    cpsarray = dataSource.cps;
+                            idArray = getArray(cpsarray);
+                            if (dataSource.cps_x && dataSource.cps_x.length > 0) {
+                                cpsarray = dataSource.cps_x;
+                                context.find('[name^=allcps]').eq(1).prop('checked', true)
+                                context.find('[name^=allcps]').eq(0).prop('checked', false)
+                                //context.find("[name^='allcps']").eq(1).click();
+                                idArray = getDiffertSets(totalArray, getArray(cpsarray))
+                            }
+                            ;
+                            curSelect.multipleSelect("setSelects", getArray(cpsarray));
+
+
+                            if (idArray.length == 0) {
+                                var erji_cat = context.data("category") ? JSON.parse(context.data("category")) : {
+                                    goods_cat: '',
+                                    goods_cat_x: ''
+                                }
+                                var san_cat = context.data("san_category") ? JSON.parse(context.data("san_category")) : {
+                                    sanji: '',
+                                    sanji_x: ''
+                                }
+                                var cp_cat = context.data("cpselected") ? JSON.parse(context.data("cpselected")) : {
+                                    cps: '',
+                                    cps_x: ''
+                                }
+                                var goods = context.data("gidselected") ? JSON.parse(context.data("gidselected")) : {
+                                    gids: '',
+                                    gids_x: ''
+                                }
+                                if (san_cat.sanji.length == 0 && san_cat.sanji_x.length == 0 &&
+                                        cp_cat.cps.length == 0 && cp_cat.cps_x.length == 0 &&
+                                        erji_cat.goods_cat.length == 0 && erji_cat.goods_cat_x.length == 0 &&
+                                        (goods.gids != 0 || goods.gids_x != 0)) {
+                                    getallgoods(context)
+
+                                } else {
+                                    wufuwu(context)
+                                }
+                            } else {
+                                getCurGoods(idArray, '', context);
+                            }
+
+                        } else {
+                            if (idArray.length == 0) {
+                                wufuwu(context)
+                            } else {
+                                getCurGoods(idArray, '', context);
+                            }
+                        }
+                    },
+                    complete: function (result) {
+                        loading.hide();
+                    },
+                });
+            }
+
+
+        }
+        ;
+        function getsanjiGoods(idArray, cpids, context) {
+            var curSelect = context.find("[name^='servicelist']").empty();
+            var sanji = context.find("[name^='san_category']")
+            var cpj = context.find("[name^='cps']")
+            var che = context.find("[name^='sanjifenlei']:checked").val()
+            var sids = sanji.multipleSelect("getSelects")
+            var totalArray = [];
+            var idArrays = [];
+            var allcids = [];
+            sanji.find("option").each(function () {
+                totalArray.push($(this).val());
+            });
+            cpj.find("option").each(function () {
+                allcids.push($(this).val());
+            });
+            if (che == '1') {
+                idArrays = getDiffertSets(totalArray, sids)
+            } else {
+                idArrays = sids
+            }
+            // cp和三级找商品
+            $.ajax({
+                        url: '/pt_card/goods/list/',
+                        type: "POST",
+                        cache: false,
+                        //async: false,
+                        beforeSend: function (XMLHttpRequest) {
+                            loading.show();
+                        },
+                        data: JSON.stringify({
+                            cids: allcids,
+                            sids: totalArray,
+                            time: vm.serviceTime,
+                            type: vm.timeType
+                        }),
+                        success: function (data) {
+                            if (data.code != 1) {
+                                if (data.length == 0) {
+                                    curSelect.append("<option value='-1' disabled><font color='red' size='12px'>" + '所选服务时长无可添加商品' + "</font></option>");
+                                } else {
+                                    $.each(data, function (i, ele) {
+                                        curSelect.append("<option value='" + ele.gid + "'>" + ele.name + "</option>");
+
+                                    });
+                                }
+                            }
+                            curSelect.multipleSelect({
+                                width: '100%',
+                                //selectAll: false,
+                                filter: true,
+                                onClose: function () {
+                                    var idArray = [], selectedArray = curSelect.multipleSelect("getSelects");
+
+                                    checkindex = context.find('[name^="allservice"]:checked').val();
+                                    if (checkindex == 2) {
+                                        //当前为弃用项
+                                        var totalArray = [];
+                                        curSelect.find("option").each(function () {
+                                            totalArray.push(this.value);
+                                        });
+                                        idArray = getDiffertSets(totalArray, selectedArray);
+                                        context.data('gidselected', JSON.stringify({
+                                            'gids': '',
+                                            "gids_x": selectedArray.join(',')
+                                        }))
+                                    }
+                                    else {
+                                        //当前为选中项
+                                        idArray = selectedArray;
+                                        context.data('gidselected', JSON.stringify({
+                                            'gids': selectedArray.join(','),
+                                            "gids_x": ''
+                                        }))
+                                    }
+                                }
+                            })
+                            cleargoods_other(context)
+
+                            if (curCId && editFlag) {
+                                var dataSource = context.data("gidselected") ? JSON.parse(context.data("gidselected")) : {},
+                                        cpsarray = dataSource.gids;
+                                if (dataSource.gids_x && dataSource.gids_x.length > 0) {
+                                    cpsarray = dataSource.gids_x;
+                                    context.find('[name^=allservice]').eq(1).prop('checked', true)
+                                    context.find('[name^=allservice]').eq(0).prop('checked', false)
+                                    //context.find("[name^='allservice']").eq(1).click();
+                                }
+
+                                curSelect.multipleSelect("setSelects", getArray(cpsarray))
+
+                            }
+                        },
+                        complete: function (result) {
+                            loading.hide();
+                        },
+                    }
+            )
+        }
+
+
+        function getallgoods(context) {
+            var curSelect = context.find("[name^='servicelist']").empty();
+            var erji = context.find("[name^='category']")
+            var sanji = context.find("[name^='san_category']")
+            var cpj = context.find("[name^='cps']")
+            var erjiArray = [];
+            var sanjiArray = [];
+            var cpArray = [];
+            erji.find("option").each(function () {
+                erjiArray.push($(this).val());
+            });
+            sanji.find("option").each(function () {
+                sanjiArray.push($(this).val());
+            });
+            cpj.find("option").each(function () {
+                cpArray.push($(this).val());
+            });
+            // 所有商品
+            $.ajax({
+                        url: '/pt_card/get_all_goods/',
+                        type: "POST",
+                        cache: false,
+                        //async: false,
+                        beforeSend: function (XMLHttpRequest) {
+                            loading.show();
+                        },
+                        data: JSON.stringify({
+                            eids: erjiArray,
+                            cids: cpArray,
+                            sids: sanjiArray,
+                            time: vm.serviceTime,
+                            type: vm.timeType
+                        }),
+                        success: function (data) {
+                            if (data.code != 1) {
+                                if (data.length == 0) {
+                                    curSelect.append("<option value='-1' disabled><font color='red' size='12px'>" + '所选服务时长无可添加商品' + "</font></option>");
+                                } else {
+                                    var dataSource_gid = context.data("gidselected") ? JSON.parse(context.data("gidselected")) : {},
+                                            cpsarray_gid = dataSource_gid.gids;
+                                    if (dataSource_gid.gids_x && dataSource_gid.gids_x.length > 0) {
+                                        cpsarray_gid = dataSource_gid.gids_x;
+                                    }
+
+                                    var cparrya = getArray(cpsarray_gid)
+                                    $.each(data, function (i, ele) {
+                                        if (cparrya.indexOf(ele.gid) != -1) {
+                                            curSelect.append("<option value='" + ele.gid + "'>" + ele.name + "</option>");
+                                        }
+                                    });
+                                }
+                            }
+                            curSelect.multipleSelect({
+                                width: '100%',
+                                //selectAll: false,
+                                filter: true,
+                                onClose: function () {
+                                    var idArray = [], selectedArray = curSelect.multipleSelect("getSelects");
+
+                                    checkindex = context.find('[name^="allservice"]:checked').val();
+                                    if (checkindex == 2) {
+                                        //当前为弃用项
+                                        var totalArray = [];
+                                        curSelect.find("option").each(function () {
+                                            totalArray.push(this.value);
+                                        });
+                                        idArray = getDiffertSets(totalArray, selectedArray);
+                                        context.data('gidselected', JSON.stringify({
+                                            'gids': '',
+                                            "gids_x": selectedArray.join(',')
+                                        }))
+                                    }
+                                    else {
+                                        //当前为选中项
+                                        idArray = selectedArray;
+                                        context.data('gidselected', JSON.stringify({
+                                            'gids': selectedArray.join(','),
+                                            "gids_x": ''
+                                        }))
+                                    }
+                                }
+                            })
+
+                            if (curCId && editFlag) {
+                                var dataSource = context.data("gidselected") ? JSON.parse(context.data("gidselected")) : {},
+                                        cpsarray = dataSource.gids;
+                                if (dataSource.gids_x && dataSource.gids_x.length > 0) {
+                                    cpsarray = dataSource.gids_x;
+                                    context.find('[name^=allservice]').eq(1).prop('checked', true)
+                                    context.find('[name^=allservice]').eq(0).prop('checked', false)
+                                    //context.find("[name^='allservice']").eq(1).click();
+                                }
+
+                                curSelect.multipleSelect("setSelects", getArray(cpsarray))
+
+                            }
+                        },
+                        complete: function (result) {
+                            loading.hide();
+                        },
+                    }
+            )
+        }
+
+
+        function geterjiGoods(context) {
+            var curSelect = context.find("[name^='servicelist']").empty();
+            var erji = context.find("[name^='category']")
+            var che = context.find("[name^='fenlei']:checked").val()
+            var sids = erji.multipleSelect("getSelects")
+            var totalArray = [];
+            var idArrays = [];
+            erji.find("option").each(function () {
+                totalArray.push($(this).val());
+            });
+            if (che == '1') {
+                idArrays = getDiffertSets(totalArray, sids)
+            } else {
+                idArrays = sids
+            }
+            // 只有二级找商品
+            $.ajax({
+                        url: '/pt_card/goods/list/',
+                        type: "POST",
+                        cache: false,
+                        //async: false,
+                        beforeSend: function (XMLHttpRequest) {
+                            loading.show();
+                        },
+                        data: JSON.stringify({
+                            eids: idArrays,
+                            time: vm.serviceTime,
+                            type: vm.timeType
+                        }),
+                        success: function (data) {
+                            if (data.code != 1) {
+                                if (data.length == 0) {
+                                    curSelect.append("<option value='-1' disabled>" + '所选服务时长无可添加商品' + "</option>");
+                                } else {
+                                    $.each(data, function (i, ele) {
+                                        curSelect.append("<option value='" + ele.gid + "'>" + ele.name + "</option>");
+
+                                    });
+                                }
+                            }
+                            curSelect.multipleSelect({
+                                width: '100%',
+                                //selectAll: false,
+                                filter: true,
+                                onClose: function () {
+                                    var idArray = [], selectedArray = curSelect.multipleSelect("getSelects");
+
+                                    checkindex = context.find('[name^="allservice"]:checked').val();
+                                    if (checkindex == 2) {
+                                        //当前为弃用项
+                                        var totalArray = [];
+                                        curSelect.find("option").each(function () {
+                                            totalArray.push(this.value);
+                                        });
+                                        idArray = getDiffertSets(totalArray, selectedArray);
+                                        context.data('gidselected', JSON.stringify({
+                                            'gids': '',
+                                            "gids_x": selectedArray.join(',')
+                                        }))
+                                    }
+                                    else {
+                                        //当前为选中项
+                                        idArray = selectedArray;
+                                        context.data('gidselected', JSON.stringify({
+                                            'gids': selectedArray.join(','),
+                                            "gids_x": ''
+                                        }))
+                                    }
+                                }
+                            })
+                            cleargoods_other(context)
+
+                            if (curCId && editFlag) {
+                                var dataSource = context.data("gidselected") ? JSON.parse(context.data("gidselected")) : {},
+                                        cpsarray = dataSource.gids;
+                                if (dataSource.gids_x && dataSource.gids_x.length > 0) {
+                                    cpsarray = dataSource.gids_x;
+                                    context.find('[name^=allservice]').eq(1).prop('checked', true)
+                                    context.find('[name^=allservice]').eq(0).prop('checked', false)
+                                    //context.find("[name^='allservice']").eq(1).click();
+                                }
+
+                                curSelect.multipleSelect("setSelects", getArray(cpsarray))
+
+                            }
+                        },
+                        complete: function (result) {
+                            loading.hide();
+                        },
+                    }
+            )
+        }
+
+        function getCurGoods(idArray, cpids, context) {
+            if (idArray.length != 0) {
+                var curSelect = context.find("[name^='servicelist']").empty();
+                var two = context.find(".form_group:nth-child(2) [multiple='multiple']");
+                if (two.multipleSelect("getSelects").length == 0) {
+
+                    // cp找商品
+                    $.ajax({
+                        url: '/pt_card/goods/list/',
+                        type: "POST",
+                        cache: false,
+                        //async: false,
+                        data: JSON.stringify({cids: idArray, time: vm.serviceTime, type: vm.timeType}),
+                        beforeSend: function (XMLHttpRequest) {
+                            loading.show();
+                        },
+                        complete: function (result) {
+                            loading.hide();
+                        },
+                        success: function (data) {
+                            if (data.code != 1) {
+                                if (data.length == 0) {
+                                    curSelect.append("<option value='-1' disabled><font color='red' size='12px'>" + '所选服务时长无可添加商品' + "</font></option>");
+                                } else {
+                                    $.each(data, function (i, ele) {
+                                        curSelect.append("<option value='" + ele.gid + "'>" + ele.name + "</option>");
+
+                                    });
+                                }
+                            }
+                            curSelect.multipleSelect({
+                                width: '100%',
+                                //selectAll: false,
+                                filter: true,
+                                onClose: function () {
+                                    var idArray = [], selectedArray = curSelect.multipleSelect("getSelects");
+
+                                    checkindex = context.find('[name^="allservice"]:checked').val();
+                                    if (checkindex == 2) {
+                                        //当前为弃用项
+                                        var totalArray = [];
+                                        curSelect.find("option").each(function () {
+                                            totalArray.push(this.value);
+                                        });
+                                        idArray = getDiffertSets(totalArray, selectedArray);
+                                        context.data('gidselected', JSON.stringify({
+                                            'gids': '',
+                                            "gids_x": selectedArray.join(',')
+                                        }))
+                                    }
+                                    else {
+                                        //当前为选中项
+                                        idArray = selectedArray;
+                                        context.data('gidselected', JSON.stringify({
+                                            'gids': selectedArray.join(','),
+                                            "gids_x": ''
+                                        }))
+                                    }
+                                    ;
+                                },
+                            });
+                            cleargoods_other(context)
+
+                            if (curCId && editFlag) {
+                                var dataSource = context.data("gidselected") ? JSON.parse(context.data("gidselected")) : {},
+                                        cpsarray = dataSource.gids;
+                                if (dataSource.gids_x && dataSource.gids_x.length > 0) {
+                                    cpsarray = dataSource.gids_x;
+                                    context.find('[name^=allservice]').eq(1).prop('checked', true)
+                                    context.find('[name^=allservice]').eq(0).prop('checked', false)
+                                    //context.find("[name^='allservice']").eq(1).click();
+                                }
+
+                                curSelect.multipleSelect("setSelects", getArray(cpsarray))
+
+                            }
+                        }
+                    })
+                } else {
+                    var selectedArray = two.multipleSelect("getSelects");
+                    var checkindex = context.find('[name^="sanjifenlei"]:checked').val();
+                    var gArrays = []
+                    if (checkindex == '1') {
+                        //当前为弃用项
+                        var totalArray = [];
+                        two.find("option").each(function () {
+                            totalArray.push(this.value);
+                        });
+                        gArrays = getDiffertSets(totalArray, selectedArray);
+                    }
+                    else {
+                        //当前为选中项
+                        gArrays = selectedArray;
+                    }
+
+                    // cp和三级 找商品
+                    $.ajax({
+                        url: '/pt_card/get_sanji_cp_goods/',
+                        type: "POST",
+                        cache: false,
+                        //async: false,
+                        data: JSON.stringify({cids: idArray, sids: gArrays, time: vm.serviceTime, type: vm.timeType}),
+                        beforeSend: function (XMLHttpRequest) {
+                            loading.show();
+                        },
+                        complete: function (result) {
+                            loading.hide();
+                        },
+                        success: function (data) {
+                            if (data.code != 1) {
+                                if (data.length == 0) {
+                                    curSelect.append("<option value='-1' disabled><font color='red' size='12px'>" + '所选服务时长无可添加商品' + "</font></option>");
+                                } else {
+                                    $.each(data, function (i, ele) {
+                                        curSelect.append("<option value='" + ele.gid + "'>" + ele.name + "</option>");
+
+                                    });
+                                }
+                            }
+                            curSelect.multipleSelect({
+                                width: '100%',
+                                //selectAll: false,
+                                filter: true,
+                                onClose: function () {
+                                    var idArray = [], selectedArray = curSelect.multipleSelect("getSelects");
+
+                                    checkindex = context.find('[name^="allservice"]:checked').val();
+                                    if (checkindex == 2) {
+                                        //当前为弃用项
+                                        var totalArray = [];
+                                        curSelect.find("option").each(function () {
+                                            totalArray.push(this.value);
+                                        });
+                                        idArray = getDiffertSets(totalArray, selectedArray);
+                                        context.data('gidselected', JSON.stringify({
+                                            'gids': '',
+                                            "gids_x": selectedArray.join(',')
+                                        }))
+                                    }
+                                    else {
+                                        //当前为选中项
+                                        idArray = selectedArray;
+                                        context.data('gidselected', JSON.stringify({
+                                            'gids': selectedArray.join(','),
+                                            "gids_x": ''
+                                        }))
+                                    }
+                                    ;
+                                },
+                            });
+                            cleargoods_other(context)
+
+                            if (curCId && editFlag) {
+                                var dataSource = context.data("gidselected") ? JSON.parse(context.data("gidselected")) : {},
+                                        cpsarray = dataSource.gids;
+                                if (dataSource.gids_x && dataSource.gids_x.length > 0) {
+                                    cpsarray = dataSource.gids_x;
+                                    context.find('[name^=allservice]').eq(1).prop('checked', true)
+                                    context.find('[name^=allservice]').eq(0).prop('checked', false)
+                                    //context.find("[name^='allservice']").eq(1).click();
+                                }
+
+                                curSelect.multipleSelect("setSelects", getArray(cpsarray))
+
+                            }
+                        }
+                    })
+                }
+            } else {
+                if (cpids.length != 0) {
+                    var curSelect = context.find("[name^='servicelist']");
+                    // 搜索商品
+                    $.ajax({
+                                url: '/pt_card/get_serch_goods/',
+                                type: "POST",
+                                cache: false,
+                                //async: false,
+                                data: JSON.stringify({kwrd: cpids, time: vm.serviceTime, type: vm.timeType}),
+                                beforeSend: function (XMLHttpRequest) {
+                                    loading.show();
+                                },
+                                complete: function (result) {
+                                    loading.hide();
+                                },
+                                success: function (data) {
+                                    var sel_val = [];
+                                    var sel_name = [];
+                                    sel_val = curSelect.multipleSelect('getSelects');
+                                    sel_name = curSelect.multipleSelect('getSelects', 'text');
+                                    if (data.code != 1) {
+                                        if (data.length == 0) {
+                                            //curSelect.append("<option value='-1' disabled><font color='red' size='12px'>" + '所选服务时长无可添加商品' + "</font></option>");
+                                        } else {
+                                            var kong = curSelect.find('[value=-1]');
+                                            kong.remove();
+                                            context.find("[name^='servicelist']").empty()
+                                            for (var c in sel_val) {
+                                                curSelect.append("<option selected value='" + sel_val[c] + "'>" + sel_name[c] + "</option>");
+                                            }
+                                            $.each(data, function (i, ele) {
+                                                //console.log(sel_val.indexOf(ele.gid),sel_val,ele.gid)
+                                                if (sel_val.indexOf(ele.gid) == -1) {
+                                                    curSelect.append("<option value='" + ele.gid + "'>" + ele.name + "</option>");
+                                                }
+
+
+                                            });
+
+                                        }
+                                    }
+                                    curSelect.multipleSelect({
+                                        width: '100%',
+                                        //selectAll: false,
+                                        filter: true,
+                                        onClose: function () {
+                                            var idArray = [], selectedArray = curSelect.multipleSelect("getSelects");
+
+                                            checkindex = context.find('[name^="allservice"]:checked').val();
+                                            if (checkindex == 2) {
+                                                //当前为弃用项
+                                                var totalArray = [];
+                                                curSelect.find("option").each(function () {
+                                                    totalArray.push(this.value);
+                                                });
+                                                idArray = getDiffertSets(totalArray, selectedArray);
+                                                context.data('gidselected', JSON.stringify({
+                                                    'gids': '',
+                                                    "gids_x": selectedArray.join(',')
+                                                }))
+                                            }
+                                            else {
+                                                //当前为选中项
+                                                idArray = selectedArray;
+                                                context.data('gidselected', JSON.stringify({
+                                                    'gids': selectedArray.join(','),
+                                                    "gids_x": ''
+                                                }))
+                                            }
+                                            ;
+                                        },
+                                    });
+
+                                    if (curCId && editFlag) {
+                                        var dataSource = context.data("gidselected") ? JSON.parse(context.data("gidselected")) : {},
+                                                cpsarray = dataSource.gids;
+                                        if (dataSource.gids_x && dataSource.gids_x.length > 0) {
+                                            cpsarray = dataSource.gids_x;
+                                            context.find('[name^=allservice]').eq(1).prop('checked', true)
+                                            context.find('[name^=allservice]').eq(0).prop('checked', false)
+                                            //context.find("[name^='allservice']").eq(1).click();
+                                        }
+
+                                        curSelect.multipleSelect("setSelects", getArray(cpsarray))
+
+                                    }
+                                }
+                            }
+                    )
+                } else {
+                }
+            }
+
+            ;
+        }
+
+        function wufuwu(context) {
+
+            var curSelect = context.find("[name^='servicelist']");
+            //curSelect.append("<option value='-1' disabled><font color='red' size='12px'>" + '所选服务时长无可添加商品' + "</font></option>");
+            curSelect.multipleSelect({
+                width: '100%',
+                //selectAll: false,
+                filter: true,
+                onClose: function () {
+                    var idArray = [], selectedArray = curSelect.multipleSelect("getSelects");
+
+                    checkindex = context.find('[name^="allservice"]:checked').val();
+                    if (checkindex == 2) {
+                        //当前为弃用项
+                        var totalArray = [];
+                        curSelect.find("option").each(function () {
+                            totalArray.push(this.value);
+                        });
+                        idArray = getDiffertSets(totalArray, selectedArray);
+                        context.data('gidselected', JSON.stringify({
+                            'gids': '',
+                            "gids_x": selectedArray.join(',')
+                        }))
+                    }
+                    else {
+                        //当前为选中项
+                        idArray = selectedArray;
+                        context.data('gidselected', JSON.stringify({
+                            'gids': selectedArray.join(','),
+                            "gids_x": ''
+                        }))
+                    }
+                    ;
+                },
+            });
+            cleargoods_other(context)
+
+            if (curCId && editFlag) {
+                var dataSource = context.data("gidselected") ? JSON.parse(context.data("gidselected")) : {},
+                        cpsarray = dataSource.gids;
+                if (dataSource.gids_x && dataSource.gids_x.length > 0) {
+                    cpsarray = dataSource.gids_x;
+                    context.find('[name^=allservice]').eq(1).prop('checked', true)
+                    context.find('[name^=allservice]').eq(0).prop('checked', false)
+                    //context.find("[name^='allservice']").eq(1).click();
+                }
+
+                curSelect.multipleSelect("setSelects", getArray(cpsarray))
+
+            }
+        }
+
+        function getsanjigoods_oth(context) {
+            var curSelect = context.find("[name^='servicelist']").empty();
+            var sanji = context.find("[name^='san_category']")
+            var che = context.find("[name^='sanjifenlei']:checked").val()
+            var sids = sanji.multipleSelect("getSelects")
+            var totalArray = [];
+            var idArray = [];
+            sanji.find("option").each(function () {
+                totalArray.push($(this).val());
+            });
+            if (che == '1') {
+                idArray = getDiffertSets(totalArray, sids)
+            } else {
+                idArray = sids
+            }
+            // 三级找商品
+            $.ajax({
+                        url: '/pt_card/goods/list/',
+                        type: "POST",
+                        cache: false,
+                        //async: false,
+                        beforeSend: function (XMLHttpRequest) {
+                            loading.show();
+                        },
+                        data: JSON.stringify({
+                            sids: idArray,
+                            time: vm.serviceTime,
+                            type: vm.timeType
+                        }),
+                        success: function (data) {
+                            if (data.code != 1) {
+                                if (data.length == 0) {
+                                    //context.find("[name^='servicelist']").empty()
+                                    curSelect.append("<option value='-1' disabled><font color='red' size='12px'>" + '所选服务时长无可添加商品' + "</font></option>");
+                                } else {
+                                    $.each(data, function (i, ele) {
+                                        curSelect.append("<option value='" + ele.gid + "'>" + ele.name + "</option>");
+
+                                    });
+                                }
+                            }
+                            curSelect.multipleSelect({
+                                width: '100%',
+                                //selectAll: false,
+                                filter: true,
+                                onClose: function () {
+                                    var idArray = [], selectedArray = curSelect.multipleSelect("getSelects");
+
+                                    checkindex = context.find('[name^="allservice"]:checked').val();
+                                    if (checkindex == 2) {
+                                        //当前为弃用项
+                                        var totalArray = [];
+                                        curSelect.find("option").each(function () {
+                                            totalArray.push(this.value);
+                                        });
+                                        idArray = getDiffertSets(totalArray, selectedArray);
+                                        context.data('gidselected', JSON.stringify({
+                                            'gids': '',
+                                            "gids_x": selectedArray.join(',')
+                                        }))
+                                    }
+                                    else {
+                                        //当前为选中项
+                                        idArray = selectedArray;
+                                        context.data('gidselected', JSON.stringify({
+                                            'gids': selectedArray.join(','),
+                                            "gids_x": ''
+                                        }))
+                                    }
+                                }
+                            })
+                            cleargoods_other(context)
+
+                            if (curCId && editFlag) {
+                                var dataSource = context.data("gidselected") ? JSON.parse(context.data("gidselected")) : {},
+                                        cpsarray = dataSource.gids;
+                                if (dataSource.gids_x && dataSource.gids_x.length > 0) {
+                                    cpsarray = dataSource.gids_x;
+                                    context.find('[name^=allservice]').eq(1).prop('checked', true)
+                                    context.find('[name^=allservice]').eq(0).prop('checked', false)
+                                    //context.find("[name^='allservice']").eq(1).click();
+                                }
+
+                                curSelect.multipleSelect("setSelects", getArray(cpsarray))
+
+                            }
+                        },
+                        complete: function (result) {
+                            loading.hide();
+                        },
+                    }
+            )
+        }
+
+        function getonecp(context) {
+            var curSelect = context.find("[name^='cps']").empty()
+            $.ajax({
+                url: '/pt_card/get_all_cps/',
+                type: "POST",
+                cache: false,
+                //async: false,
+                data: JSON.stringify({cat_ids: "()"}),
+                beforeSend: function (XMLHttpRequest) {
+                    loading.show();
+                },
+                success: function (data) {
+                    $.each(data, function (i, ele) {
+                        if (ele && ele.name) {
+                            curSelect.append("<option value='" + ele.id + "'>" + ele.name + "</option>");
+                        }
+                    });
+                    totalArray = [];
+                    curSelect.find("option").each(function () {
+                        totalArray.push($(this).val());
+                    });
+                    curSelect.multipleSelect({
+                        //selectAll: false,
+                        width: '100%',
+                        filter: true,
+                        onClose: function () {
+                            var selectedArray = curSelect.multipleSelect("getSelects");
+                            checkindex = context.find('[name^="allcps"]:checked').val();
+                            {#                        view.instance.$parent.parent().children().find('[name^="allcps"]').each(function (index) {#}
+                            {#                            if ($(this).prop("checked")) {#}
+                            {#                                checkindex = index * 2#}
+                            {#                            }#}
+                            {#                        });#}
+                            if (checkindex == '1') {
+                                //当前为弃用项
+                                var totalArray = [];
+                                curSelect.find("option").each(function () {
+                                    totalArray.push(this.value);
+                                });
+                                idArray = getDiffertSets(totalArray, selectedArray);
+                                context.data('cpselected', JSON.stringify({
+                                    'cps': '',
+                                    "cps_x": selectedArray.join(',')
+                                }))
+                            }
+                            else {
+                                //当前为选中项
+                                idArray = selectedArray;
+                                context.data('cpselected', JSON.stringify({
+                                    'cps': selectedArray.join(','),
+                                    "cps_x": ''
+                                }))
+                            }
+                            ;
+                            var cpids = window.sessionStorage.getItem("cpids");
+                            var cpIdArr = [];
+                            if (cpids) {
+                                cpIdArr = cpids.split(',');
+                            }
+                            ;
+                            //if (idArray.length == 0) return
+                            cleargoods(context)
+                            if (idArray.length == 0) {
+                                wufuwu(context)
+                            } else {
+                                getCurGoods(idArray, '', context);
+                            }
+                        }
+                    });
+                    if (curCId && editFlag) {
+                        var dataSource = context.data("cpselected") ? JSON.parse(context.data("cpselected")) : {},
+                                cpsarray = dataSource.cps;
+                        idArray = getArray(cpsarray);
+                        if (dataSource.cps_x && dataSource.cps_x.length > 0) {
+                            cpsarray = dataSource.cps_x;
+                            context.find('[name^=allcps]').eq(1).prop('checked', true)
+                            context.find('[name^=allcps]').eq(0).prop('checked', false)
+                            //context.find("[name^='allcps']").eq(1).click();
+                            idArray = getDiffertSets(totalArray, getArray(cpsarray))
+                        }
+                        ;
+                        curSelect.multipleSelect("setSelects", getArray(cpsarray));
+                    }
+
+
+                },
+                complete: function (result) {
+                    loading.hide();
+                },
+            });
+        }
+
+        function getonesanji(context) {
+            var curSelect = context.find("[name^='cps']").empty()
+            var sanjiSelect = context.find("[name^='san_category']").empty();
+            $.ajax({
+                url: '/pt_card/get_all_sanji/',
+                type: "POST",
+                cache: false,
+                //async: false,
+                data: JSON.stringify({cat_ids: "()"}),
+                beforeSend: function (XMLHttpRequest) {
+                    loading.show();
+                },
+                success: function (data) {
+                    $.each(data, function (i, ele) {
+                        if (ele && ele.name) {
+                            sanjiSelect.append("<option value='" + ele.id + "'>" + ele.name + "</option>");
+                        }
+                    });
+
+                    totalArray = [];
+                    sanjiSelect.find("option").each(function () {
+                        totalArray.push($(this).val());
+                    });
+                    sanjiSelect.multipleSelect({
+                        //selectAll: false,
+                        width: '100%',
+                        filter: true,
+                        onClose: function () {
+                            var selectedArray = sanjiSelect.multipleSelect("getSelects");
+                            checkindex = context.find('[name^="sanjifenlei"]:checked').val();
+                            {#                        view.instance.$parent.parent().children().find('[name^="allcps"]').each(function (index) {#}
+                            {#                            if ($(this).prop("checked")) {#}
+                            {#                                checkindex = index * 2#}
+                            {#                            }#}
+                            {#                        });#}
+                            if (checkindex == '1') {
+                                //当前为弃用项
+                                var totalArray = [];
+                                sanjiSelect.find("option").each(function () {
+                                    totalArray.push(this.value);
+                                });
+                                idArray = getDiffertSets(totalArray, selectedArray);
+                                context.data('san_category', JSON.stringify({
+                                    'sanji': '',
+                                    "sanji_x": selectedArray.join(',')
+                                }))
+                            }
+                            else {
+                                //当前为选中项
+                                idArray = selectedArray;
+                                context.data('san_category', JSON.stringify({
+                                    'sanji': selectedArray.join(','),
+                                    "sanji_x": ''
+                                }))
+                            }
+                            ;
+                            var scids = window.sessionStorage.getItem("scids");
+                            var cpIdArr = [];
+                            if (scids) {
+                                cpIdArr = scids.split(',');
+                            }
+                            ;
+                            clearcp(context)
+                            if (idArray.length == 0) return
+                            getAllCp(idArray, '', context);
+                            if (idArray.length != 0) {
+
+                                getsanjigoods_oth(context);
+                            }
+                        }
+                    });
+
+                    if (curCId && editFlag) {
+                        var dataSource = context.data("san_category") ? JSON.parse(context.data("san_category")) : {},
+                                cpsarray = dataSource.sanji;
+                        idArray = getArray(cpsarray);
+                        if (dataSource.sanji_x && dataSource.sanji_x.length > 0) {
+                            cpsarray = dataSource.sanji_x;
+                            context.find('[name^=sanjifenlei]').eq(1).prop('checked', true)
+                            context.find('[name^=sanjifenlei]').eq(0).prop('checked', false)
+                            //context.find("[name^='allcps']").eq(1).click();
+                            idArray = getDiffertSets(totalArray, getArray(cpsarray))
+                        }
+                        ;
+                        //context.find("[name^='san_category']").multipleSelect("setSelects", idArray)
+
+
+                        sanjiSelect.multipleSelect("setSelects", getArray(cpsarray));
+                        //getAllCp(idArray, '', context);
+                        if (idArray.length != 0) {
+                            //getsanjigoods_oth(context);
+                        }
+                    } else {
+                        //getAllCp(idArray, '', context);
+                    }
+                },
+                complete: function (result) {
+                    loading.hide();
+                },
+            });
+        }
+
+        function getonesanjicp(context) {
+            var curSelect = context.find("[name^='cps']").empty()
+            var sanjiSelect = context.find("[name^='san_category']").empty();
+            $.ajax({
+                url: '/pt_card/get_all_sanji/',
+                type: "POST",
+                cache: false,
+                //async: false,
+                data: JSON.stringify({cat_ids: "()"}),
+                beforeSend: function (XMLHttpRequest) {
+                    loading.show();
+                },
+                success: function (data) {
+                    $.each(data, function (i, ele) {
+                        if (ele && ele.name) {
+                            sanjiSelect.append("<option value='" + ele.id + "'>" + ele.name + "</option>");
+                        }
+                    });
+
+                    totalArray = [];
+                    sanjiSelect.find("option").each(function () {
+                        totalArray.push($(this).val());
+                    });
+                    sanjiSelect.multipleSelect({
+                        //selectAll: false,
+                        width: '100%',
+                        filter: true,
+                        onClose: function () {
+                            var selectedArray = sanjiSelect.multipleSelect("getSelects");
+                            checkindex = context.find('[name^="sanjifenlei"]:checked').val();
+                            {#                        view.instance.$parent.parent().children().find('[name^="allcps"]').each(function (index) {#}
+                            {#                            if ($(this).prop("checked")) {#}
+                            {#                                checkindex = index * 2#}
+                            {#                            }#}
+                            {#                        });#}
+                            if (checkindex == '1') {
+                                //当前为弃用项
+                                var totalArray = [];
+                                sanjiSelect.find("option").each(function () {
+                                    totalArray.push(this.value);
+                                });
+                                idArray = getDiffertSets(totalArray, selectedArray);
+                                context.data('san_category', JSON.stringify({
+                                    'sanji': '',
+                                    "sanji_x": selectedArray.join(',')
+                                }))
+                            }
+                            else {
+                                //当前为选中项
+                                idArray = selectedArray;
+                                context.data('san_category', JSON.stringify({
+                                    'sanji': selectedArray.join(','),
+                                    "sanji_x": ''
+                                }))
+                            }
+                            ;
+                            var scids = window.sessionStorage.getItem("scids");
+                            var cpIdArr = [];
+                            if (scids) {
+                                cpIdArr = scids.split(',');
+                            }
+                            ;
+                            clearcp(context)
+                            if (idArray.length == 0) return
+                            getAllCp(idArray, '', context);
+                            if (idArray.length != 0) {
+
+                                getsanjigoods_oth(context);
+                            }
+                        }
+                    });
+
+                    if (curCId && editFlag) {
+                        var dataSource = context.data("san_category") ? JSON.parse(context.data("san_category")) : {},
+                                cpsarray = dataSource.sanji;
+                        idArray = getArray(cpsarray);
+                        if (dataSource.sanji_x && dataSource.sanji_x.length > 0) {
+                            cpsarray = dataSource.sanji_x;
+                            context.find('[name^=sanjifenlei]').eq(1).prop('checked', true)
+                            context.find('[name^=sanjifenlei]').eq(0).prop('checked', false)
+                            //context.find("[name^='allcps']").eq(1).click();
+                            idArray = getDiffertSets(totalArray, getArray(cpsarray))
+                        }
+                        ;
+                        //context.find("[name^='san_category']").multipleSelect("setSelects", idArray)
+
+
+                        sanjiSelect.multipleSelect("setSelects", getArray(cpsarray));
+                        //getAllCp(idArray, '', context);
+                        if (idArray.length != 0) {
+                            //getsanjigoods_oth(context);
+                        }
+                    } else {
+                        //getAllCp(idArray, '', context);
+                    }
+                },
+                complete: function (result) {
+                    loading.hide();
+                },
+            });
+            $.ajax({
+                url: '/pt_card/get_all_cps/',
+                type: "POST",
+                cache: false,
+                //async: false,
+                data: JSON.stringify({cat_ids: "()"}),
+                beforeSend: function (XMLHttpRequest) {
+                    loading.show();
+                },
+                success: function (data) {
+                    $.each(data, function (i, ele) {
+                        if (ele && ele.name) {
+                            curSelect.append("<option value='" + ele.id + "'>" + ele.name + "</option>");
+                        }
+                    });
+                    totalArray = [];
+                    curSelect.find("option").each(function () {
+                        totalArray.push($(this).val());
+                    });
+                    curSelect.multipleSelect({
+                        //selectAll: false,
+                        width: '100%',
+                        filter: true,
+                        onClose: function () {
+                            var selectedArray = curSelect.multipleSelect("getSelects");
+                            checkindex = context.find('[name^="allcps"]:checked').val();
+                            {#                        view.instance.$parent.parent().children().find('[name^="allcps"]').each(function (index) {#}
+                            {#                            if ($(this).prop("checked")) {#}
+                            {#                                checkindex = index * 2#}
+                            {#                            }#}
+                            {#                        });#}
+                            if (checkindex == '1') {
+                                //当前为弃用项
+                                var totalArray = [];
+                                curSelect.find("option").each(function () {
+                                    totalArray.push(this.value);
+                                });
+                                idArray = getDiffertSets(totalArray, selectedArray);
+                                context.data('cpselected', JSON.stringify({
+                                    'cps': '',
+                                    "cps_x": selectedArray.join(',')
+                                }))
+                            }
+                            else {
+                                //当前为选中项
+                                idArray = selectedArray;
+                                context.data('cpselected', JSON.stringify({
+                                    'cps': selectedArray.join(','),
+                                    "cps_x": ''
+                                }))
+                            }
+                            ;
+                            var cpids = window.sessionStorage.getItem("cpids");
+                            var cpIdArr = [];
+                            if (cpids) {
+                                cpIdArr = cpids.split(',');
+                            }
+                            ;
+                            //if (idArray.length == 0) return
+                            cleargoods(context)
+                            if (idArray.length == 0) {
+                                wufuwu(context)
+                            } else {
+                                getCurGoods(idArray, '', context);
+                            }
+                        }
+                    });
+                    if (curCId && editFlag) {
+                        var dataSource = context.data("cpselected") ? JSON.parse(context.data("cpselected")) : {},
+                                cpsarray = dataSource.cps;
+                        idArray = getArray(cpsarray);
+                        if (dataSource.cps_x && dataSource.cps_x.length > 0) {
+                            cpsarray = dataSource.cps_x;
+                            context.find('[name^=allcps]').eq(1).prop('checked', true)
+                            context.find('[name^=allcps]').eq(0).prop('checked', false)
+                            //context.find("[name^='allcps']").eq(1).click();
+                            idArray = getDiffertSets(totalArray, getArray(cpsarray))
+                        }
+                        ;
+                        curSelect.multipleSelect("setSelects", getArray(cpsarray));
+                    }
+
+
+                },
+                complete: function (result) {
+                    loading.hide();
+                },
+            });
+        }
+
+
+        $("form").submit(function (e) {
+            //mySubmit(false);
+            var _this = vm;
+            var wd = getNaturalWidth($("#ditu"))[0];
+            var he = getNaturalWidth($("#ditu"))[1];
+            var shi_wd = getNaturalWidth($("#ditu_a"))[0];
+            var shi_he = getNaturalWidth($("#ditu_a"))[1];
+            if (wd != 1035 || he != 516) {
+                console.log('图片尺寸为', wd, he)
+                $("#error-hints").html('底图宽要等于1035,高要等于516').show();
+                $('body').animate({scrollTop: 0}, 500);
+                is_upload = true;
+                return
+            }
+            if (vm.icon_inactive.length != 0 && (shi_wd != 1035 || shi_he != 516)) {
+                console.log('图片尺寸为', shi_wd, shi_he)
+                $("#error-hints").html('失效图宽要等于1035,高要等于516').show();
+                $('body').animate({scrollTop: 0}, 500);
+                is_upload = true;
+                return
+            }
+            if ($.trim(_this.putaoDitu).length == 0) {
+                $("#error-hints").html('请选择葡萄卡底图').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+            if ($.trim(_this.icon_inactive).length == 0) {
+                $("#error-hints").html('请选择葡萄卡失效图').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+            if ($.trim(_this.puname).length == 0) {
+                $("#error-hints").html('请填写葡萄卡名称').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+            if ($.trim(_this.retail_price).length == 0) {
+                $("#error-hints").html('请填写零售价').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+            if ($.trim(_this.serviceCount).length == 0) {
+                $("#error-hints").html('请填写葡萄卡服务次数').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+            if ($.trim(_this.timeLimit).length == 0) {
+                $("#error-hints").html('请填写子订单取消时间限制').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+            if ($.trim(_this.description).length == 0) {
+                $("#error-hints").html('请填写使用说明').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+            if ($.trim(_this.validity).length == 0) {
+                $("#error-hints").html('请填写葡萄卡有效期').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+
+            if (!ismoney(vm.retail_price)) {
+                $("#error-hints").html('零售价要为大于0且小于9999').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+            if (!isPositiveNum(vm.serviceCount)) {
+                $("#error-hints").html('服务次数要为大于0的整数且小于9999,不能以0为开头').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+            if ($.trim(vm.serviceTime).length > 0 && !isPositiveNum_deng(vm.serviceTime)) {
+                $("#error-hints").html('单次服务时长要为大于等于的整数0且小于9999,不能以0为开头').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+            if (!isPositiveNum(vm.timeLimit)) {
+                $("#error-hints").html('子订单取消时间限制要为大于0的整数且小于9999,不能以0为开头').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+            if ($.trim(vm.validity).length > 0 && !isPositiveNum(vm.validity)) {
+                $("#error-hints").html('葡萄卡有效期要为大于0的整数且小于9999,不能以0为开头').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+
+            var all_scope = getJsonParamter($("form").serializeArray());
+            console.log('商品范围', all_scope)
+            if (all_scope.length == 0) {
+                $("#error-hints").html('请至少选择一个服务范围').show();
+                $('body').animate({scrollTop: 0}, 500);
+                return
+            }
+            for (var i in all_scope) {
+
+                if ((all_scope[i].goods_cat.length == 0 && all_scope[i].goods_cat_x.length == 0) &&
+                        (all_scope[i].sanji.length == 0 && all_scope[i].sanji_x.length == 0) &&
+                        (all_scope[i].cps.length == 0 && all_scope[i].cps_x.length == 0) &&
+                        (all_scope[i].gids.length == 0 && all_scope[i].gids_x.length == 0)) {
+                    $("#error-hints").html('请至少选择一个服务范围').show();
+                    $('body').animate({scrollTop: 0}, 500);
+                    return
+                }
+                {#                if (all_scope[i].sanji.length == 0 && all_scope[i].sanji_x.length == 0) {#}
+                {#                    $("#error-hints").html('请选择分类').show();#}
+                {#                    return#}
+                {#                }#}
+                {#                if (all_scope[i].cps.length == 0 && all_scope[i].cps_x.length == 0) {#}
+                {#                    $("#error-hints").html('请选择cp').show();#}
+                {#                    return#}
+                {#                }#}
+                {#                if (all_scope[i].gids.length == 0 && all_scope[i].gids_x.length == 0) {#}
+                {#                    $("#error-hints").html('请选择商品').show();#}
+                {#                    return#}
+                {#                }#}
+            }
+            if (curCId && editFlag) {
+                $.ajax({
+                    url: '/pt_card/putao_card_goods_detail/?pk=' + curCId,
+                    type: 'PUT',
+                    data: JSON.stringify(
+                            {
+                                putaoDitu: _this.putaoDitu,
+                                icon_inactive: _this.icon_inactive,
+                                puName: _this.puname,
+                                retail_price: _this.retail_price,
+                                remark: _this.remark,
+                                serviceCount: _this.serviceCount,
+                                serviceTime: $.trim(_this.serviceTime),
+                                timeType: _this.timeType,
+                                timeLimit: _this.timeLimit,
+                                description: _this.description,
+                                validity: _this.validity,
+                                is_sale: _this.is_sale,
+                                all_scope: all_scope,
+
+                            }
+                    ),
+                    beforeSend: function () {
+                        $("#error-hints").html('').hide();
+                    },
+                    success: function (result) {
+                        var result = eval(result)
+                        if (result.code == '0') {
+                            window.location.href = '{% url "putao_card_info" %}'
+                        } else {
+                            $("#error-hints").html(result.msg).show();
+                            $('body').animate({scrollTop: 0}, 500);
+                        }
+                    }
+                })
+            } else {
+                $("#error-hints").html('').hide();
+                $.post('/pt_card/putao_card_goods/', JSON.stringify({
+                    putaoDitu: _this.putaoDitu,
+                    icon_inactive: _this.icon_inactive,
+                    puName: _this.puname,
+                    remark: _this.remark,
+                    retail_price: _this.retail_price,
+                    serviceCount: _this.serviceCount,
+                    serviceTime: _this.serviceTime,
+                    timeType: _this.timeType,
+                    timeLimit: _this.timeLimit,
+                    description: _this.description,
+                    validity: _this.validity,
+                    is_sale: _this.is_sale,
+                    all_scope: all_scope,
+
+                }), function (result) {
+                    var result = eval(result)
+                    if (result.code == '0') {
+                        window.location.href = '{% url "putao_card_info" %}'
+                    } else {
+                        $("#error-hints").html(result.msg).show()
+                        $('body').animate({scrollTop: 0}, 500);
+                    }
+                });
+            }
+        });
+
+        function getJsonParamter(array) {
+            var o = {}, rangelist = [];
+            $(".srvicearea:not(.clone)").each(function () {
+                var curEle = $(this);
+                var fenleiIndex = curEle.find("[name^='fenlei']:checked").val();
+                var sanfenleiIndex = curEle.find("[name^='sanjifenlei']:checked").val();
+                var allcpsIndex = curEle.find("[name^='allcps']:checked").val();
+                var allserviceIndex = curEle.find("[name^='allservice']:checked").val();
+                var categoryData = JSON.parse(curEle.data('category') || '{"goods_cat":"","goods_cat_x":""}');
+                var san_categoryData = JSON.parse(curEle.data('san_category') || '{"sanji":"","sanji_x":""}');
+                var cpData = JSON.parse(curEle.data('cpselected') || '{"cps":"","cps_x":""}');
+                var goodsData = JSON.parse(curEle.data('gidselected') || '{"gids":"","gids_x":""}');
+                if (fenleiIndex == '1') {
+                    if (categoryData.goods_cat) {
+                        categoryData.goods_cat_x = categoryData.goods_cat;
+                        categoryData.goods_cat = "";
+                    }
+                } else {
+                    if (categoryData.goods_cat_x) {
+                        categoryData.goods_cat = categoryData.goods_cat_x;
+                        categoryData.goods_cat_x = "";
+                    }
+                }
+                curEle.data("category", JSON.stringify(categoryData));
+                if (sanfenleiIndex == '1') {
+                    if (san_categoryData.sanji) {
+                        san_categoryData.sanji_x = san_categoryData.sanji;
+                        san_categoryData.sanji = "";
+                    }
+                } else {
+                    if (san_categoryData.sanji_x) {
+                        san_categoryData.sanji = san_categoryData.sanji_x;
+                        san_categoryData.sanji_x = "";
+                    }
+                }
+                curEle.data("san_category", JSON.stringify(san_categoryData));
+                if (allcpsIndex == '1') {
+                    if (cpData.cps) {
+                        cpData.cps_x = cpData.cps;
+                        cpData.cps = "";
+                    }
+                } else {
+                    if (cpData.cps_x) {
+                        cpData.cps = cpData.cps_x;
+                        cpData.cps_x = "";
+                    }
+                }
+                curEle.data("cpselected", JSON.stringify(cpData));
+                if (allserviceIndex == '1') {
+                    if (goodsData.gids) {
+                        goodsData.gids_x = goodsData.gids;
+                        goodsData.gids = "";
+                    }
+                } else {
+                    if (goodsData.gids_x) {
+                        goodsData.gids = goodsData.gids_x;
+                        goodsData.gids_x = "";
+                    }
+                }
+                curEle.data("gidselected", JSON.stringify(goodsData));
+                var rangeOne = $.extend({}, JSON.parse(curEle.data('category') || '{"goods_cat":"","goods_cat_x":""}'), JSON.parse(curEle.data('san_category') || '{"sanji":"","sanji_x":""}'), JSON.parse(curEle.data('cpselected') || '{"cps":"","cps_x":""}'), JSON.parse(curEle.data('gidselected') || '{"gids":"","gids_x":""}'));
+                rangelist.push(rangeOne);
+            });
+            o = rangelist;
+            return o;
+        }
+
+        {#        checkForm({{ errors|safe }});#}
+
+
+        $("form input").focus(function () {
+            $(this).css("border", "1px solid #ccc");
+        });
+
+
+        function GetQueryString(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+            var r = window.location.search.substr(1).match(reg);  //获取url中"?"符后的字符串并正则匹配
+            var context = "";
+            if (r != null)
+                context = r[2];
+            reg = null;
+            r = null;
+            return context == null || context == "" || context == "undefined" ? "" : context;
+        }
+
+        function getDiffertSets(setA, setB) {
+            var returnArray = [], cstr = setB.join('&&');
+            $.each(setA, function (i, ele) {
+                if (cstr.indexOf(ele) < 0) returnArray.push(ele);
+            })
+            return returnArray;
+        }
+
+        function getCategorys(parentEle, totalArray) {
+            var dataSource = parentEle.data("category") ? JSON.parse(parentEle.data("category")) : {},
+                    cpsarray = dataSource.goods_cat,
+                    idArray = getArray(cpsarray);
+            if (dataSource.goods_cat_x && dataSource.goods_cat_x.length > 0) {
+                cpsarray = dataSource.goods_cat_x;
+                idArray = getDiffertSets(totalArray, getArray(cpsarray))
+            }
+            ;
+
+            return idArray;
+
+
+        }
+
+        function getArray(str) {
+            if (!str) return [];
+            return str.toString().split(',');
+        }
+
+        function transfor2Array(ele) {
+            var mArray = [];
+            if (ele && ele.length > 0) {
+                $.each(ele, function (i, element) {
+                    mArray.push(element.value);
+                })
+            }
+            return mArray;
+        }
+
+        function getNaturalWidth(img) {
+            // 获取真实img的尺寸
+            var image = new Image()
+            image.src = img.attr('src')
+            var naturalWidth = image.width
+            var naturalHeight = image.height
+            return [naturalWidth, naturalHeight]
+        }
+
+        function isPositiveNum(s) {//是否为正整数 >0
+            var re = /^[1-9]+[0-9]*$/;
+            if (s > 9999) {
+                return false
+            }
+            return re.test(s)
+        }
+        function isPositiveNum_deng(s) {//是否为正整数 >=0
+            var re = /^[0-9]+[0-9]*$/;
+            if (s > 9999) {
+                return false
+            }
+            return re.test(s)
+        }
+
+        function ismoney(money) { //大于0,可以为小时
+            if (money == 0 || money > 9999) {
+                return false
+            }
+            var t = /^\d+(\.\d+)?$/;
+            return t.test(money)
+        }
+
+        function mySubmit(flag) {
+            return flag;
+        }
+
+        $("#oneservertime").change(function () {
+            // 时间改变去掉商品
+            changefuwu()
+        });
+        $("#timetype").change(function () {
+            // 时间改变去掉商品
+            changefuwu()
+        });
+        function changefuwu() {
+            var allservicearea = $('[name^=allservice]').parents('.srvicearea')
+            allservicearea.each(function () {
+                $(this).data('gidselected', JSON.stringify({
+                    gids: '',
+                    gids_x: ''
+                }));
+                $(this).data("cpselected", JSON.stringify({
+                    cps: '',
+                    cps_x: ''
+                }))
+                $(this).find("[name^=servicelist]").multipleSelect("uncheckAll");
+                $(this).find("[name^=servicelist]").multipleSelect("refresh");
+                $(this).find("[name^=cps]").multipleSelect("uncheckAll");
+                $(this).find("[name^=cps]").multipleSelect("refresh");
+                $(this).find("[name^='servicelist']").empty();
+                $(this).find("[name^='servicelist']").append("<option value='-1' disabled>" + '所选服务时长无可添加商品' + "</option>");
+                $(this).find("[name^='servicelist']").multipleSelect('refresh');
+                //console.log($(this).data('gidselected'))
+            })
+
+        }
+        function clearsanji(context) {
+            var two = context.find(".form_group:nth-child(2) [multiple='multiple']");
+            var three = context.find(".form_group:nth-child(3) [multiple='multiple']");
+            var four = context.find(".form_group:nth-child(4) [multiple='multiple']");
+            two.multipleSelect("uncheckAll");
+            //two.empty()
+            two.multipleSelect("refresh");
+            context.data("san_category", JSON.stringify({
+                sanji: '',
+                sanji_x: ''
+            }))
+            three.multipleSelect("uncheckAll");
+            //three.empty()
+            three.multipleSelect("refresh");
+            context.data("cpselected", JSON.stringify({
+                cps: '',
+                cps_x: ''
+            }))
+            four.multipleSelect("uncheckAll");
+            four.empty()
+            four.multipleSelect("refresh");
+            context.data("gidselected", JSON.stringify({
+                gids: '',
+                gids_x: ''
+            }))
+        }
+        function clearcp(context) {
+            var three = context.find(".form_group:nth-child(3) [multiple='multiple']");
+            var four = context.find(".form_group:nth-child(4) [multiple='multiple']");
+            three.multipleSelect("uncheckAll");
+            //three.empty()
+            three.multipleSelect("refresh");
+            context.data("cpselected", JSON.stringify({
+                cps: '',
+                cps_x: ''
+            }))
+            four.multipleSelect("uncheckAll");
+            four.empty()
+            four.multipleSelect("refresh");
+            context.data("gidselected", JSON.stringify({
+                gids: '',
+                gids_x: ''
+            }))
+        }
+        function cleargoods(context) {
+            var four = context.find(".form_group:nth-child(4) [multiple='multiple']");
+            four.multipleSelect("uncheckAll");
+            four.empty()
+            four.multipleSelect("refresh");
+            context.data("gidselected", JSON.stringify({
+                gids: '',
+                gids_x: ''
+            }))
+        }
+
+        function cleargoods_other(context) {
+            //$(".srvicearea:not(.clone)").each(function () {
+            //var context = $(this);
+            var first = context.find(".form_group:first [multiple='multiple']");
+            var two = context.find(".form_group:nth-child(2) [multiple='multiple']");
+            var three = context.find(".form_group:nth-child(3) [multiple='multiple']");
+            var four = context.find(".form_group:nth-child(4) [multiple='multiple']");
+            var erji_cat = context.data("category") ? JSON.parse(context.data("category")) : {
+                goods_cat: '',
+                goods_cat_x: ''
+            }
+            var san_cat = context.data("san_category") ? JSON.parse(context.data("san_category")) : {
+                sanji: '',
+                sanji_x: ''
+            }
+            var cp_cat = context.data("cpselected") ? JSON.parse(context.data("cpselected")) : {
+                cps: '',
+                cps_x: ''
+            }
+            if (san_cat.sanji.length == 0 && san_cat.sanji_x.length == 0 &&
+                    cp_cat.cps.length == 0 && cp_cat.cps_x.length == 0 &&
+                    erji_cat.goods_cat.length == 0 && erji_cat.goods_cat_x.length == 0) {
+                four.empty()
+                four.append("<option value='-1' disabled>" + '所选服务时长无可添加商品' + "</option>");
+                four.multipleSelect("refresh");
+            }
+            else {
+
+            }
+        }
+    </script>
+{% endblock %}

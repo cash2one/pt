@@ -1,0 +1,160 @@
+.toolbar button{
+    margin-left: 10px;
+}    .nav-tabs {
+         border:none;
+     }
+.nav>li>a{
+    border: none;
+    background: #ccc;
+}
+.nav>li>a:focus,.nav>li>a:hover {
+    text-decoration: none;
+    background-color:transparent;
+    border-bottom: none;
+    background: #666;
+}
+.nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover{
+    background: #666;
+    color: #fff;
+}
+.tab-content .tab-pane{
+    padding:0px 20px;
+}
+.w1in8{
+    width:13%;
+    display: inline-block;
+    position: relative;
+}
+.tab-content .w1in8 .delmodal{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80.5%;
+    height: 81px;
+}
+.tab-content .w1in8 .delmodal.selected{
+    background: rgba(0,0,0,.4);
+}
+.tab-content .w1in8 .delmodal.selected:before{
+    content: "\2714";
+    display: block;
+    position: absolute;
+    margin: auto;
+    top: 12px;
+    left: 15px;
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+    background: #6cbf51;
+    border-radius: 50px;
+    color: #fff;
+    text-align: center;
+    font-size: 30px;
+    z-index: 10;
+    transition: 0.3s linear;
+    -o-transition: 0.3s linear;
+    -ms-transition: 0.3s linear;
+    -moz-transition: 0.3s linear;
+    -webkit-transition: 0.3s linear;
+    -o-user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    cursor: pointer;
+}
+.w1in8 img{
+    height: 81px;
+    max-height: 81px;
+}
+.pr1in40{
+    padding-right: 4%;
+}
+.w1in8:nth-child(8n+8){
+    padding-right: 0;
+    width:9%
+}
+
+.pagination > li > a {
+    color: #797979;
+}
+.imglist {
+    margin-top: 44px;
+}
+.pagination {
+    position: absolute;
+    right: 0;
+}
+.pagination .pagelist {
+    max-width: 4rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    float: left;
+}
+.pagination .pagelist li {
+    display: inline-block;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pagination .pagelist li a {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline;
+    float: left;
+    padding: 6px 12px;
+    margin-left: -1px;
+    line-height: 1.42857143;
+    color: #797979;
+    text-decoration: none;
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+.pagination .pagelist li a:hover {
+    background: #eeeeee;
+}
+.uploadAssort{
+    border-top: 1px solid #dadada;
+    padding-top: 20px;
+    padding-left: 20px;;
+}
+.toassortin{
+    display: inline-block;
+    padding:5px 10px;
+    background: #ccc;
+    margin-right: 10px;
+    cursor: pointer;
+}
+.toassortin.mycurrent{
+    background-color: green;
+    color:#fff;
+}
+.modal-dialog {
+    margin-top: 1.8rem;
+}
+.newImg{
+    padding-left: 18%;
+    position: relative;
+    margin-top: -20px;
+}
+.newImg img{
+    width: 150px;
+    height: 150px;
+}
+.newImg span{
+    position: absolute;
+    left: 277px;
+    font-size: 21px;
+    color: #fff;
+    background-color: rgba(0,0,0,.5);
+    border-radius: 15px;
+    width: 30px;
+    height: 30px;
+    padding-left: 5px;
+    padding-top: 3px;
+}
+.text-overflow-js {
+    overflow: hidden;
+    word-break:keep-all;
+    white-space: nowrap;
+    -o-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+}

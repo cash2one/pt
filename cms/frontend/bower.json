@@ -1,0 +1,21 @@
+{
+	"name": "frontend",
+	"authors": [
+		"Jogiter <jogiter.g@gmail.com>"
+	],
+	"description": "",
+	"main": "",
+	"license": "MIT",
+	"homepage": "",
+	"ignore": [
+		"**/.*",
+		"node_modules",
+		"bower_components",
+		"test",
+		"tests"
+	],
+	"dependencies": {
+		"paginationjs": "^2.0.7",
+		"plupload": "^2.1.9"
+	}
+}

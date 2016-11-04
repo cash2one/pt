@@ -1,0 +1,326 @@
+{% extends "finance_base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/fileinput.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <script type="text/javascript" src="/static/js/fileinput.js" ></script>
+    <script type="text/javascript" src="/static/js/fileinput_locale_zh.js" ></script>
+    <style type="text/css">
+{#     td#}
+{#        {#}
+{#            white-space: nowrap;/*不允许td换行*/#}
+{#        }#}
+.snav > li > a{
+    color:#333;
+    padding:5px 15px 0
+}
+
+    </style>
+{% endblock %}
+{% block title %}财务对账{% endblock %}
+{% block content %}
+    支付渠道选择：
+    <select id="cp_types">
+        <option value="">请选择支付渠道</option>
+        {% for cp_type in cp_types %}
+            <option value="{{ cp_type.0 }}" {% if cur_cp_type == cp_type.0 %} selected="selected"{% endif %} data-protype = {{ cp_type.2 }}> {{ cp_type.1 }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+
+    <input type = "hidden" value ="{{ cur_cp_type }}" id="cur_cp">
+    <input type = "hidden"  id="product_type">
+
+
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                                <span class="add-on input-group-addon">
+                                    <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                                </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button type="button" data-toggle="modal" style="cursor:pointer;" id="loadBtn" class="btn btn-primary">导入CSV文件</button>
+    <button type="button" style="cursor:pointer;" id="update_cash_summary" class="btn btn-info" onclick="refreshSummary();">更新支付渠道数据</button>
+    <div class="loading_gif"></div>
+
+
+<!-- <li><a href="#" data-toggle="modal" data-target="#uploadFile" onclick="">导入CSV文件</a></li>-->
+
+
+    <div class="modal fade" id="uploadFile" tabindex="-1" role="dialog" aria-labelledby="uploadFileLabel" data-backdrop="static">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="uploadFileLabel">
+                        <span class="glyphicon glyphicon-paperclip" style="margin-right: 0"></span>
+                            导入CSV文件
+                    </h4>
+                </div>
+                <br />
+                <form enctype="multipart/form-data" style="padding:10px">
+                    <input id="uploadFileInput" class="file" type="file" multiple data-min-file-count="1">
+                    <script type="application/javascript">
+                        $('#uploadFileInput').fileinput({
+                            uploadAsync: false,
+                            language: 'zh',
+                            allowedFileExtensions : ['csv']
+                        }).on('filebatchuploadsuccess', function(event, data) {
+                            alert('上传成功！');
+                        });
+                    </script>
+                    <br />
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_data = [];
+        var g_event_id = 0;
+        var g_business_type = 0;
+        var g_cp_type = -1,g_date_control = $("#date_control");
+
+        $(document).ready(function()
+        {
+            setTopNav(3);
+            $(".loading_gif").hide();
+            loading.init(".loading_gif", "#data_table");
+            $("#loadCsvFile .btn").click(function(){
+                if($(this).hasClass("disabled")){
+                    alert("请选择CP类型");
+                    return;
+                }
+            });
+            $('#cp_types').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    var indexValue = $(option).index();
+                    $("#cur_cp").val($(option).val());
+                    $("#product_type").val($(option).data("protype"));
+                    if(indexValue != 0){
+                        $(".tab-content .btn-primary").removeClass("disabled");
+                    }
+                    else{
+                        $(".tab-content .btn-primary").addClass("disabled");
+                    }
+                   // window.location.href="{% url upload_cp_pay %}?cp_type={0}".format($("#cp_types").val());
+                },
+                onDropdownHide: function(event) {
+                    //$(".multiselect-clear-filter").click();
+                }
+
+            });
+            g_date_control.daterangepicker(
+                    {
+                        locale:
+                        {
+                            applyLabel: "确定",
+                            cancelLabel: "取消"
+                        },
+                        format: 'YYYY-MM-DD',
+                        separator: ' 到 ', //前后有空格
+                        startDate: getDateStr("{{ currentdate }}", -29),
+                        endDate: "{{ currentdate }}",
+                        maxDate: getDateStr("{{ currentdate }}", 1)// < maxDate
+                    },
+                    function(start, end, label)
+                    {
+                        console.log(start.toISOString(), end.toISOString(), label);
+                    }
+            ).val(getDateStr("{{ currentdate }}", -29) + " 到 {{ currentdate }}");
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function(ev, picker){
+
+            });
+            $("#loadBtn").click(function(){
+                var start_date = g_date_control.val().substr(0,10);
+                var end_date = g_date_control.val().substr(13);
+                console.log(start_date+"::"+end_date);
+                $('#uploadFileInput').fileinput('refresh',{
+                    uploadAsync: false,
+                    language: 'zh',
+                    uploadUrl: '/finance/upload_cp_pay_csv/?cp_type='+$("#cur_cp").val()+"&start_date="+start_date+"&end_date="+end_date+"&product_type="+$("#product_type").val(),
+                    allowedFileExtensions : ['csv']
+                });
+                setTimeout(function(){
+                    $("#uploadFile").modal("show")
+                },0);
+            })
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p>您可以通过以下方式来管理事件</p>',
+                    '<p><span>添加事件：</span>如果想使用自定义事件统计，必须先注册事件ID，这里提供了手动添加和批量导入两种方法。</p>',
+                    '<p>批量导入只支持csv文件，编码格式为utf-8</p>',
+                    '<p><span>编辑：</span>修改事件名称和类型</p>',
+                    '<p><span>删除：</span>删除，不统计该事件</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+            $("#uploadForm").click(function(){
+                if($(this).hasClass("disabled")) return;
+                requestData();
+            })
+        });
+
+        function requestData()
+        {
+            postJSON("/finance/upload_balance_ajax/",
+                    {
+                        cp_id:$("#cur_cp").val(),
+                        /*product_type:'',*/
+                        balance: $("#balance").val()
+                    },
+                    function(data)
+                    {
+                        console.log(data);
+                        if(data.toString() == 'success') alert("提交成功！")
+                        else alert("提交失败！")
+                    }
+            );
+        }
+
+        function updateTable()
+        {
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for(var i = 0; i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(var j in g_data[i])
+                {
+                    //最后一行，business id就不显示了
+                    if(j == 0)
+                        tr.append($("<td><a style='cursor:pointer' href='/user/event_detail/?app={0}&eventid={1}'>{1}</a>".format(getURLParam("app"), g_data[i][0])));
+                    else if (j < 4)
+                        tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+
+                tr.append($("<td>{0}{1}</td>".format(
+                        "<a style='cursor:pointer' data-toggle='modal' data-target='#handAdd' onclick='beforeEdit({0});'><span class='glyphicon glyphicon-edit'></span>编辑</a>".format(i),
+                        "<a style='cursor:pointer;margin-left:30px;' data-toggle='modal' data-target='#delItem' onclick='beforeDelete({0})'><span class='glyphicon glyphicon-trash'></span>删除</a>".format(i)
+                )));
+                $("#data_table tbody").append(tr);
+            }
+        }
+
+        //删除某项
+        function delItem()
+        {
+            postJSON("/user/del_event/",
+                {
+                    app: getURLParam("app"),
+                    eventid: g_event_id
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data);
+                    updateTable();
+                }
+            );
+        }
+
+        //清除事件
+        function clearEvent()
+        {
+            postJSON("/user/clear_event/",
+                {
+                    app: getURLParam("app")
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data);
+                    updateTable();
+                }
+            );
+        }
+
+        //增加某项之前
+        function beforeAdd()
+        {
+            $("#handAddIcon").attr("class", "glyphicon glyphicon-plus-sign");
+            $("#handAddHead").html("添加事件");
+            $("#id_event_id").val("").attr("readonly", null).removeClass("readonly");
+            $("#id_event_name").val("");
+            setRadio("event_type", "计数事件");
+/*            $('#category').multiselect('deselect', g_business_type);
+            $('#category').multiselect('select', "");*/
+            $('#id_business_type').val("");
+            $("#eventForm").attr("action", "/user/events/?app=517ccacb56240b80");
+        }
+
+        //编辑某项之前
+        function beforeEdit(i)
+        {
+            $("#handAddIcon").attr("class", "glyphicon glyphicon-edit");
+            $("#handAddHead").html("编辑事件");
+            $("#id_event_id").val(g_data[i][0]).attr("readonly", "readonly").addClass("readonly");
+            $("#id_event_name").val(g_data[i][1]);
+            setRadio("event_type", g_data[i][2]);
+            g_business_type = g_data[i][4];
+   /*         $('#category').multiselect('deselect', "");
+            $('#category').multiselect('select', g_data[i][4]);*/
+            $('#id_business_type').val(g_data[i][4]);
+            $("#eventForm").attr("action", "/user/edit_event/?app=517ccacb56240b80");
+        }
+
+        //删除某项之前
+        function beforeDelete(i)
+        {
+            g_event_id = g_data[i][0];
+            $("#delEventId").html(g_data[i][0]);
+        }
+
+        function resetFile()
+        {
+            $("#importfile").val("");
+        }
+
+        //更新汇总数据表
+        function refreshSummary()
+        {
+            //截取出开始日期和结束日期
+            var start_date = g_date_control.val().substr(0,10);
+            var end_date = g_date_control.val().substr(13);
+            postJSON("{% url refresh_zf_summary %}",
+                {
+                    start_date: start_date,
+                    end_date: end_date,
+                },
+                function(data)
+                {
+                    alert(data);
+                }
+            );
+        }
+
+        $(document).ajaxStart(function() {
+            $(".loading_gif").show();
+        });
+        $(document).ajaxComplete(function() {
+            $(".loading_gif").hide();
+        });
+    </script>
+
+
+{% endblock %}

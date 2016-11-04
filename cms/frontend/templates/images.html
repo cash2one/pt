@@ -1,0 +1,774 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}图库{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/webuploader.css' %}"/>
+<style>
+    .nav-tabs {
+        border:none;
+    }
+    .tab-content {
+        width: 97%;
+        margin: 0 auto;
+    }
+    article .content .top-sec {
+        width: 96%;
+    }
+    .nav>li>a{
+        color:#333;
+        border: none;
+    }
+    .nav>li+li{
+        border-left: 1px solid #ccc;
+    }
+
+    .nav>li>a:focus,.nav>li>a:hover {
+        text-decoration: none;
+        background-color:transparent;
+        border-bottom: none;
+        color:green;
+    }
+    .nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover{
+        color:green;
+        border:transparent;
+    }
+    .tab-content .tab-pane{
+        padding:0px 20px;
+    }
+    .w1in8{
+        width:12.76%;
+        display: inline-block;
+        position: relative;
+    }
+    .tab-content.todelete .w1in8 .delmodal{
+             position: absolute;
+             left: 0;
+             top: 0;
+             width: 78.37%;
+             height: 121px;
+             background: rgba(0,0,0,.4);
+    }
+    .tab-content.todelete .w1in8:nth-child(8n+8) .delmodal{
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 121px;
+        background: rgba(0,0,0,.4);
+    }
+    .tab-content.todelete .w1in8 .delmodal.selected:before{
+        content: "\2714";
+        display: block;
+        position: absolute;
+        margin: auto;
+        top: 20px;
+        left: 40px;
+        width: 80px;
+        height: 80px;
+        line-height: 80px;
+        background: #6cbf51;
+        border-radius: 50px;
+        color: #fff;
+        text-align: center;
+        font-size: 60px;
+        z-index: 10;
+        transition: 0.3s linear;
+        -o-transition: 0.3s linear;
+        -ms-transition: 0.3s linear;
+        -moz-transition: 0.3s linear;
+        -webkit-transition: 0.3s linear;
+        -o-user-select: none;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        cursor: pointer;
+    }
+    #confirmDelBtn{
+        width:auto
+    }
+    .w1in8 img{
+        height: 121px;
+        max-height: 121px;
+        position: relative;
+    }
+    .w1in8.tocommit::before,.w1in8.commited:before{
+        content: '待提交';
+        position: absolute;
+        left: 0;
+        bottom: 27px;
+        width: 78%;
+        color: #fff;
+        height: 25px;
+        background: rgba(0,0,0,.5);
+        z-index: 5;
+        text-align: center;
+        line-height: 25px;
+        font-size: 16px;
+    }
+    .w1in8.commited:before{
+        content: '已提交';
+        background: #27c394;
+    }
+    .pr1in40{
+        padding-right: 2.76%;
+    }
+    .w1in8:nth-child(8n+8){
+       padding-right: 0;
+        width:10.68%
+    }
+    .w1in8:nth-child(8n+8).tocommit::before,:nth-child(8n+8).commited:before{
+        width:100%
+    }
+    .pagination > li > a {
+        color: #797979;
+    }
+    .imglist {
+        margin-top: 44px;
+    }
+    .pagination {
+        position: absolute;
+        right: 0;
+    }
+    .pagination .pagelist {
+        max-width: 4rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        float: left;
+    }
+    .pagination .pagelist li {
+        display: inline-block;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .pagination .pagelist li a {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline;
+        float: left;
+        padding: 6px 12px;
+        margin-left: -1px;
+        line-height: 1.42857143;
+        color: #797979;
+        text-decoration: none;
+        background-color: #fff;
+        border: 1px solid #ddd;
+    }
+    .pagination .pagelist li a:hover {
+        background: #eeeeee;
+    }
+    .uploadAssort{
+        border-top: 1px solid #dadada;
+        padding-top: 20px;
+        padding-left: 20px;;
+    }
+    .toassortin{
+        display: inline-block;
+        padding:5px 10px;
+        background: #ccc;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+    .toassortin.mycurrent{
+        background-color: green;
+        color:#fff;
+    }
+    .text-overflow-js {
+        overflow: hidden;
+        word-break:keep-all;
+        white-space: nowrap;
+        -o-text-overflow: ellipsis;
+        text-overflow: ellipsis;
+    }
+    .btn-info {
+    color: #fff;
+    font-size:.1rem;
+    background-color: #66cccc;
+    border-color: #66cccc;
+}   .btn-info:hover{
+    background: #339999;
+}
+
+   .input-sm {
+    /* height: 30px; */
+    padding: 5px 10px;
+       width: 2rem;
+    font-size: 10px;
+    line-height: 1.5;
+    outline: none;
+    border: 1px solid #aaa;
+    border-radius: 0.05rem;
+    text-indent: 1em;
+}
+.nav {
+    margin-top: .02rem;
+    padding-left: 0;
+    margin-bottom: 0;
+    list-style: none;
+}
+.search_pic {
+  width: .2rem;
+  position: absolute;
+  left: .5rem;
+  margin-top: .05rem;
+}
+.search_pic img {
+  width: 100%;
+}
+ .pagination > li > a {
+  color: #797979;
+}
+ .pagination {
+  position: absolute;
+  right: 0;
+}
+ .pagination .pagelist {
+  max-width: 3.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  float: left;
+}
+ .pagination .pagelist li {
+  display: inline-block;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: #fff;
+}
+ .pagination .pagelist li a {
+  width: .4rem;
+  height: .3rem;
+  padding-top: .05rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline;
+  float: left;
+  padding: 6px 12px;
+  margin-left: -1px;
+  line-height: 1.42857143;
+  color: #797979;
+  text-decoration: none;
+  border: 1px solid #ddd;
+}
+.clearInput {
+  font-size: .16rem;
+  font-weight: bold;
+  text-align: right;
+  display: inline-block;
+  position: absolute;
+  margin-left: -.2rem;
+  margin-top: .03rem;
+}
+.clearInput a {
+  text-decoration: none;
+  color: #aaa;
+}
+.clearInput a:hover {
+  color: #5e5e5e;
+}
+#searchBtn {
+    margin-left: .3rem;
+}
+.header .btn,.header input,.header span{
+    font-size: .14rem;
+}
+
+</style>
+    <div>
+ <section class="top-sec">
+
+        <ol class="breadcrumb col-md-3" >
+            <li><a href="#">图库</a></li>
+            <li class="active">广告图片</li>
+        </ol>
+
+
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs pull-right" role="tablist" id="pic-nav">
+        <li  class="active"><a href="#">广告图片</a></li>
+        <li><a href="#">大图标</a></li>
+        <li><a href="#">小图标</a></li>
+        <li><a href="#">优惠券</a></li>
+        <li><a href="#">其他</a></li>
+    </ul>
+</section>
+    <br />
+    <div class="clearfix"></div>
+    <!-- Tab panes -->
+    <div class="tab-content">
+        <div  class="tab-pane active" id="adspic">
+            <div class="header">
+                <input id="searchImg" class="input-sm" type="text" placeholder="请输入关键词搜索"/>
+                <span class="search_pic" ><img src="{% static 'images/sousuo.png' %}"></span>
+                <span  class="clearInput" onclick="clearInput()"><a href="javascript:void(0)">×</a></span>
+                <button class="btn btn-info" id="searchBtn" onclick="">搜索</button>
+                <p class="toolbar pull-right">
+                    <!--<button class="addNewImg">添加图片</button>-->
+                    <!-- Large modal -->
+                    {% if perms.man.config %}
+                        <button type="button" class="btn btn-primary" id="addImgModal" style=" width:1.2rem;height:.3rem;line-height:.1rem;"><b style="font-size:.18rem">＋&nbsp</b>添加图片</button>
+                        <!--data-toggle="modal" data-target=".bs-example-modal-lg"-->
+                        <button id="delBtn" class="btn btn-warning disabled" style=" width:1rem;height:.3rem;line-height:.1rem;"><b style="font-size:.14rem">一&nbsp</b>删除</button>
+                    {% endif %}
+
+                </p>
+                <p class="delbar pull-right" style="display: none">
+                    <label><input type="checkbox" name="selectall"/>全选</label>
+                    <!--<label><input type="radio" name="selectnone" value="全不选"/>全不选</label>-->
+                    <button id="confirmDelBtn" class="btn btn-warning disabled">确认删除</button>
+                    <button id="cancelDelBtn" class="btn btn-primary">取消</button>
+                </p>
+            </div>
+            <div id="loading" style="display:none;">
+                <img src="{% static 'images/loading.gif' %}"/>
+            </div>
+            <div class="imglist">
+
+            </div>
+             <div class="no_content" ><p>未找到相关内容，请重新搜索</p></div>
+            <div id="pagination"></div>
+        </div>
+    </div>
+
+    <div id="dialogUpload" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                    <h4 class="modal-title" id="myLargeModalLabel"><div class="icon_add"><img src="{% static 'images/add.png' %}"></div>上传图片到图库</h4>
+                    <!--<input type="button" class="btn btn-primary" value="浏览本地文件"/>-->
+                </div>
+                <div class="modal-body">
+                    <div id="uploader" class="wu-example">
+                        <div class="queueList">
+                            <div id="dndArea" class="placeholder">
+                                <div id="filePicker" class="webuploader-container">
+                                    <div class="webuploader-pick">点击选择图片</div>
+                                    <div id="rt_rt_19uockugs1ao15nr1c751r95unt1" style="position: absolute; top: 0px; left: 448px; width: 168px; height: 44px; overflow: hidden; bottom: auto; right: auto;"><input type="file" name="file" class="webuploader-element-invisible" multiple="multiple" accept="image/*"><label style="opacity: 0; width: 100%; height: 100%; display: block; cursor: pointer; background: rgb(255, 255, 255);"></label></div></div>
+                                <p>或将照片拖到这里，单次最多可选300张</p>
+                            </div>
+                            <ul class="filelist"></ul></div>
+                        <div class="uploadAssort">
+                            将图片添加到
+                            <a class="toassortin"><span class="glyphicon glyphicon-ok"></span>广告图片</a>
+                            <a class="toassortin"><span class="glyphicon glyphicon-ok"></span>大图标</a>
+                            <a class="toassortin"><span class="glyphicon glyphicon-ok"></span>小图标</a>
+                            <a class="toassortin"><span class="glyphicon glyphicon-ok"></span>优惠券</a>
+                            <a class="toassortin"><span class="glyphicon glyphicon-ok"></span>其他</a>
+                        </div>
+                        <div class="statusBar" style="display:none;">
+                            <div class="progress" style="display: none;">
+                                <span class="text">0%</span>
+                                <span class="percentage" style="width: 0%;"></span>
+                            </div><div class="info">共0张（0B），已上传0张</div>
+                            <div class="btns">
+                                <div id="filePicker2" class="webuploader-container"><div class="webuploader-pick">继续添加</div><div id="rt_rt_19uockuhb16hejgni5rtul5fm6" style="position: absolute; top: 0px; left: 0px; width: 1px; height: 1px; overflow: hidden;"><input type="file" name="file" class="webuploader-element-invisible" multiple="multiple" accept="image/*"><label style="opacity: 0; width: 100%; height: 100%; display: block; cursor: pointer; background: rgb(255, 255, 255);"></label></div></div><div id="uploadBtn" class="uploadBtn state-pedding">开始上传</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div>
+        <div class="modal fade in" id="myImageModal-del" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="none">
+            <div class="modal-dialog" style="width: 480px;">
+                <div class="modal-content" style="width:5rem;margin:0 auto;">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                            ×
+                        </button>
+                        <h4 class="modal-title" id="myModalLabel">
+                            <div class="hint_icon"><img src="{% static 'images/delete.png' %}"></div>删除提示
+                        </h4>
+                    </div>
+                    <div class="modal-body" style="text-align:center;">
+                        <p>确认删除所选图片</p>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消
+                        </button>
+                        <button  id="deleteImgBtn" type="button" class="btn btn-primary btn-default" data-dismiss="modal">
+                            确定
+                        </button>
+                    </div>
+                </div><!-- /.modal-content
+  </div><!-- /.modal -->
+            </div>
+        </div>
+        <script type="text/javascript" src="{% static 'js/cms/webuploader.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/cms/uploadfile.js' %}"></script>
+        <script type="text/javascript">
+            var picNav = $("#pic-nav>li"),g_per_page = 32,cur_category='广告图片',g_cur_page = 1,searchkeywords='',uploader;;
+            $(document).ready(function(){
+
+                $(".guide-ul li").removeClass("current").eq(2).addClass("current")
+                picNav.click(function(){
+                    $(this).addClass("active").siblings().removeClass("active");
+                    var cindex = picNav.index($(this));
+                    cur_category = $(this).text();
+
+
+                    /*修改分级目录文字*/
+                    $(".breadcrumb li.active").text(cur_category);
+
+
+                    /*修改弹窗部分图片类别*/
+                    $(".uploadAssort .toassortin").eq(cindex).addClass("mcurrent").siblings().removeClass("mycurrent");
+                    //清空图片和分页内容，显示加载中图标
+
+                    $("#loading").show();
+                    $("#searchImg").val('');
+                    searchkeywords  = '';
+                    $(".imglist,.pagelist").empty();
+
+                    //重置全选按钮
+                    $("input[name='selectall']")[0].checked = false;
+
+                    /*取消删除状态*/
+                    $("#cancelDelBtn").click();
+
+                    //请求数据
+                    requestData(1);
+
+                });
+                $(".breadcrumb li:first-child").click(function(){
+                    picNav.eq(0).click();
+                });
+
+
+                if(window.localStorage.getItem("currentList")){
+                    var mindex = window.localStorage.getItem("currentList");
+                    cur_category = picNav.eq(mindex).text();
+                    $(".breadcrumb li.active").text(cur_category);
+                    picNav.eq(mindex).addClass("active").siblings().removeClass("active");
+                }
+                else{
+                    requestData(1);
+                }
+
+                requestData(1);
+                /*绑定搜索按钮功能*/
+                $("#searchBtn").click(function(){
+                    searchkeywords  = $("#searchImg").val();
+                    requestData(1);
+                })
+
+
+                //添加删除图片按钮绑定事件
+                $("#delBtn").click(function(){
+                    if(!$(this).hasClass("disabled")){
+                        $(this).parent(".toolbar").hide()
+                                .next(".delbar").show()
+                                .parents(".tab-content").addClass("todelete");
+                    }
+
+                });
+
+
+
+                /*取消删除状态*/
+                $("#cancelDelBtn").click(function(){
+                    $(this).parent(".delbar").hide()
+                            .prev(".toolbar").show()
+                            .parents(".tab-content").removeClass("todelete")
+                            .find(".delmodal.selected").removeClass('selected');
+                })
+
+                /*添加确认删除按钮事件*/
+                $("#confirmDelBtn").click(function(){
+                    var urlArray = [],domList = $(this).parents(".tab-content").find(".delmodal.selected").siblings("img");
+                    if(domList.length == 0) return;
+                    $.each(domList,function(i,ele){
+                        urlArray.push(ele.src);
+                    })
+                    //console.log(urlArray)
+                    window.localStorage.setItem("currentList",$("#pic-nav li.active").index());
+                    $("#myImageModal-del").modal("show");
+                    window.localStorage.setItem("todeleteImg",JSON.stringify(urlArray));
+                })
+
+
+                $("#myImageModal-del .modal-footer .btn-primary").click(function(){
+                    deleteImg(window.localStorage.getItem("todeleteImg"));
+                })
+
+                /*删除功能：全选所有图片*/
+                $("input[name='selectall']").change(function(){
+                    var nodeList  = $(this).parents(".tab-content").find(".delmodal");
+                    (this.checked == true) ? nodeList.addClass("selected"):nodeList.removeClass("selected");
+                })
+
+
+                /*绑定图片删除状态*/
+                $(document).on("click",'.tab-content.todelete .delmodal',function(){
+                    var parentEle = $(this).parents(".w1in8");
+                    if(parentEle.hasClass("tocommit") || parentEle.hasClass("commited")){
+//                        alert("")
+                        return
+                    }
+                    if($(this).data("check") == "0") return;
+                    $(this).toggleClass("selected");
+                    if($(".tab-content.todelete .delmodal.selected").length > 0){
+                        $("#confirmDelBtn").removeClass("disabled");
+                    }
+                    else{
+                        $("#confirmDelBtn").addClass("disabled");
+                    }
+                })
+            });
+            //图片列表创建函数
+            function CreateImgList(data) {
+                if(data.length > 0){
+                $(".my_thead").show();
+                 }
+                if(data.length == 0){
+                $(".no_content").show();
+                $(".my_thead").hide();
+                 }
+                var htmlstr = '';
+                $.each(data,function(i,value){
+                    var statusArray = ['commited','tocommit',''],status = (value[4] == -1) ? 2:parseInt(value[4]);
+                    htmlstr += '<div class="w1in8 pr1in40 '+statusArray[parseInt(status)]+'"><img style="width:100%" src="'+value[2]+'" /><p class="text-overflow-js">'+value[0]+'</p><div class="delmodal" data-check="'+value[4]+'" ></div></div>';
+                });
+                $(".no_content").hide();
+                $('.imglist').empty().append($(htmlstr));
+            }
+            function clearInput(){ //清除input内容
+                $("#searchImg").val("");
+                searchkeywords = '';
+                requestData(1);
+                }
+          //按下enter键进行搜索
+                $("input").keydown(function(e){
+                var e = e || event,
+                 keycode = e.which || e.keyCode;
+                if (keycode==13) {
+                $("#searchBtn").trigger("click");
+              }
+          });       
+            function pagination(pages)
+                 { 
+                 
+                  var ul = $("<ul>");
+                  $("#pagination ul").remove();
+                  if (pages == 1) {
+                      $("#pagination").css("display","none");
+                  }
+                  else
+                  {
+                   $("#pagination").css(   "display","block");
+                };
+                ul.appendTo("#pagination");
+                $(ul).addClass('pagination');
+
+
+                for(var i = 1; i <= 1; i++)
+                {
+                   var li = $(" <li  class='pagefirst'><a href='javascript:void(0)' onclick='requestData(" + i + ")'>"+"首页"+"</a></li>");
+                   li.appendTo(ul);
+
+                }
+                var li = $(" <li  class='pagepre'><a href='javascript:void(0)'>"+"上一页"+"</a></li>");
+                if(g_cur_page>1)
+                   li.appendTo(ul);
+                var li = $(" <li class='dots' ><a href='javascript:void(0)' style='cursor:not-allowed'>"+"......"+"</a></li>");
+                if(g_cur_page>5 && g_cur_page!=6)
+                   li.appendTo(ul);
+                var pageDiv = $("<div class='pagelist pagenavigate'></div>");
+                for(var i = 1; i <= pages; i++)
+                {   
+                var li = $(" <li ><a href='javascript:void(0)' onclick='requestData(" + i + ")'>"+i+"</a></li>");
+                li.appendTo(pageDiv);
+                pageDiv.appendTo(ul)
+                }
+                var li = $(" <li ><a href='javascript:void(0)' style='cursor:not-allowed'>"+"......"+"</a></li>");
+                if(pages>10 && g_cur_page <= pages-5)
+                                // g_cur_page!=pages-5
+                li.appendTo(ul);
+                var li = $(" <li  class='pagenext'><a href='javascript:void(0)'>"+"下一页"+"</a></li>");
+                if(g_cur_page<pages)
+                    li.appendTo(ul);
+                var li = $(" <li  class='pagelast'><a href='javascript:void(0)'  onclick='requestData(" + pages + ")'>"+"尾页"+"</a></li>");
+
+                li.appendTo(ul);
+
+               $('.pagepre').one('click', function(event) {    //上一页
+               // console.log( g_cur_page);
+               var prePage = g_cur_page-1;
+               if(prePage > 0)
+                 requestData(prePage);
+                 });
+               $('.pagenext').one('click', function(event) {   //下一页
+               // console.log( g_cur_page+1);
+                var nextPage = g_cur_page+1;
+               if(nextPage <= pages)
+                 requestData(nextPage);
+            });
+
+         }
+         function requestData(cur_page){
+                g_cur_page = cur_page;
+                currentpage = cur_page-1;
+                g_cur_page = cur_page;
+                $.ajax("{% url 'get_images' %}",{
+                    type:"get",
+                    cache:false,
+                    data:{
+                        key: searchkeywords,
+                        cur_page: cur_page,
+                        per_page: g_per_page,
+                        image_category:cur_category
+                    },
+                    dataType:'json',
+                    beforeSend:function(XMLHttpRequest){
+                        $("#pagination,.imglist").empty();
+                        $("#loading").show();
+
+                    },
+                    success:function(result){
+                        // console.log(result);
+                        var data = result[0];
+                        var num_pages = result[1];
+                        if(data.length == 0){
+                            $(".no_content").html("暂无图片，请点击右上方添加图片按钮新增图片").show();
+                            $("#delBtn").addClass("disabled")
+                            return;
+                        }
+                        $("#delBtn").removeClass("disabled");
+                        $("#confirmDelBtn").addClass("disabled");
+                        CreateImgList(data);
+                        pagination(num_pages);
+                    },
+                    error:function(result){
+                        console.log(result);
+                    },
+                    complete:function(result){
+                          $("#loading").hide();
+                          $(".pagelist li a").eq(currentpage).css('background', '#34cb95');
+                          if(currentpage>5){
+                          $(".pagelist li").eq(currentpage-5).prevAll().hide(); //当当前页大宇5时，当前页索引-5的元素隐藏
+                          }
+                    }
+
+                })
+            }
+
+            $("li:not(.three)").removeClass('current_li');
+            $(".three").addClass("current_li");
+
+
+            /*加载上传图片控件*/
+            var config = {
+                swfUri: '/webuploader/0.1.5/.swf',
+                tokenUrl : 'http://cms.putao.so/uptoken',
+                imageUrl : 'http://img.putao.so',
+                imageUploadUrl : 'http://upload.qiniu.com/',
+                /*thumbnailWidth : 275,//285,
+                 thumbnailHeight : 186//204*/
+                token:''
+            };
+
+            $(function(){
+                $("#addImgModal").bind("click",function(){
+                    $('#dialogUpload').modal('show');
+
+                    if(!uploader){
+                        initWebUploader();
+                        //解决webuploader 在弹出框中浏览文件按钮不起作用的bug，一定要放在web uploader初始化之后
+                        $("#filePicker .webuploader-pick").click(function(){
+                            $("#filePicker :file").click();
+                        });
+
+                    }
+
+                    //$(".toassortin").eq($("#pic-nav li.active").index()).addClass('mycurrent');
+
+                    $(".toassortin").click(function(){
+                        $(this).addClass("mycurrent").siblings().removeClass("mycurrent");
+                    }).eq($("#pic-nav li.active").index()).click();
+                })
+            })
+
+            /**/
+            function addNewImg(name,category,imgUrl){
+                $.ajax("{% url 'new_image' %}",{
+                    type:"post",
+                    cache:false,
+                    data:{
+                        image_name: name,
+                        image_category: category,
+                        image_url: imgUrl
+                    },
+                    success:function(response){
+                        console.log(response);
+                    }
+                })
+            }
+
+
+
+            function deleteImg(imgUrlArray){
+                $.ajax("{% url 'del_image' %}",{
+                    type:"post",
+                    cache:false,
+                    data:{
+                        del_list: JSON.parse(imgUrlArray)
+                    },
+                    success:function(response){
+//                        console.log(response);
+                        if(response == 0){
+                            window.location.reload();
+                        }
+                    }
+                })
+            }
+
+
+            /*扩展jQuery插件：单行超出宽度隐藏并先省略号显示*/
+            $(document).ready(function() {
+                $.fn.textOverflow = function(enableUpdating){
+                    var style = document.documentElement.style;
+                    if (!('textOverflow' in style || 'OTextOverflow' in style)) {
+                        return this.each(function(){
+                            var el = $(this);
+                            if(el.css("overflow") == "hidden"){
+                                var originalText = el.html();
+                                var w = el.width();
+                                var t = $(this.cloneNode(true)).hide().css({
+                                    'position': 'absolute',
+                                    'width': 'auto',
+                                    'overflow': 'visible',
+                                    'max-width': 'inherit'
+                                });
+                                el.after(t);
+                                var text = originalText;
+                                while(text.length > 0 && t.width() > el.width()){
+                                    text = text.substr(0, text.length - 1);
+                                    t.html(text + "...");
+                                }
+                                el.html(t.html());
+                                t.remove();
+                                if(enableUpdating == true){
+                                    var oldW = el.width();
+                                    setInterval(function(){
+                                        if(el.width() != oldW){
+                                            oldW = el.width();
+                                            el.html(originalText);
+                                            el.ellipsis();
+                                        }
+                                    }, 200);
+                                }
+                            }
+                        });
+                    } else return this;
+                };
+                //调用textOverflow()函数
+                $(".text-overflow-js").textOverflow();
+            });
+        </script>
+</div>
+{% endblock %}

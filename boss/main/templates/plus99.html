@@ -1,0 +1,13 @@
+{% extends "main-base.html" %}
+{% block myhead %}
+{% endblock %}
+{% block title %}{{ zh }}{% endblock %}
+{% block content %}
+    <div class="alert alert-info alert-dismissible fade in" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+        <p><span style="font-weight: bold">全部应用</span>&nbsp;&nbsp;&nbsp;无法查看{{ zh }}，请在导航栏上选择某个具体应用</p>
+    </div>
+    <script type="application/javascript">
+        setLeftNav("nav_{{ en }}");
+    </script>
+{% endblock %}

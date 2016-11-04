@@ -1,0 +1,349 @@
+{% extends "report-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <style type="text/css">
+{#     td#}
+{#        {#}
+{#            white-space: nowrap;/*不允许td换行*/#}
+{#        }#}
+    </style>
+{% endblock %}
+{% block title %}订单日报表{% endblock %}
+{% block content %}
+    版本选择：
+    <select id="ver">
+        <option value="">全部版本</option>
+        {% for ver in vers %}
+            <option value="{{ ver }}">{{ ver }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    渠道选择：
+    <select id="channel">
+        <option value="">全部渠道</option>
+        {% for channel in channels %}
+            <option value="{{ channel }}">{{ channel }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    订单种类选择：
+    <select id="order_types">
+        <option value="">总和</option>
+        {% for product in products %}
+            <option value="{{ product.0 }}">{{ product.1 }}</option>
+        {% endfor %}
+    </select>
+    <br />
+    <br />
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+
+    <br />
+    <br />
+    <div class="loading_gif" style="display: none"></div>
+{#    <DIV  style=" overflow-x: scroll; " align=center>   增加横向滚动条#}
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px">
+        <thead>
+            <tr>
+                <th colspan="26">
+                    <span id="table_title">所有订单状态日报表</span>
+                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                    <a id="export_csv" href="{% url order_reports_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="colname">
+                <td>日期</td>
+{#                <td>订单种类</td>#}
+                <td>交易是否正常</td>
+                <td>总支付金额</td>
+                <td>总成本价</td>
+                <td>总交易笔数</td>
+                <td>成功笔数</td>
+                <td>处理中笔数</td>
+                <td>失败笔数</td>
+                <td>退款成功笔数</td>
+                <td>退款失败笔数</td>
+                <td>退款中笔数</td>
+                <td>支付宝收款</td>
+                <td>微信收款</td>
+                <td>其他收款</td>
+                <td>支付宝退款</td>
+                <td>微信退款</td>
+                <td>其他退款</td>
+                <td>支付宝费率</td>
+                <td>微信费率</td>
+                <td>CP应扣</td>
+                <td>CP实扣</td>
+                <td>CP退款</td>
+                <td>CP佣金</td>
+                <td>运营成本</td>
+                <td>运营成本(用券)</td>
+                <td>营收合计</td>
+            </tr>
+        </tbody>
+    </table>
+{#    </div>#}
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;
+        var g_current_page = 1;
+        var g_date_control = $("#date_control");
+        var g_data = [];
+        var g_period = 1;
+        $(document).ready(function()
+        {
+            setLeftNav("nav_order_reports");
+            loading.init(".loading_gif", "#data_table");
+            modifyCsvHref(getDateStr("{{ currentdate }}", -29).replace(/-/g, ""), "{{ currentdate }}".replace(/-/g, ""));
+            $('#ver').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#channel').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#order_types').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+            g_date_control.daterangepicker(
+                {
+                    locale:
+                    {
+                        applyLabel: "确定",
+                        cancelLabel: "取消"
+                    },
+                    format: 'YYYY-MM-DD',
+                    separator: ' 到 ', //前后有空格
+                    startDate: getDateStr("{{ currentdate }}", -29),
+                    endDate: "{{ currentdate }}",
+                    maxDate: getDateStr("{{ currentdate }}", 1)// < maxDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+            ).val(getDateStr("{{ currentdate }}", -29) + " 到 {{ currentdate }}");
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function(ev, picker){
+                requestData();
+            });
+
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    //'<p><span>订单种类：</span>一般有两种类型。一种是“总和”，表示所有业务的汇总情况。另外一种是具体业务</p>',
+                    '<p><span>交易是否正常：</span>如果失败订单数量大于0，则为异常；等于0，则为正常</p>',
+                    '<p><span>总成交额：</span>所有成交额的总数</p>',
+                    '<p><span>总交易笔数：</span>有支付行为的所有订单数量</p>',
+                    '<p><span>成功笔数：</span>用户支付，且交易成功的订单数量</p>',
+                    '<p><span>处理中笔数：</span>用户支付，正在处理中的订单数量</p>',
+                    '<p><span>失败笔数：</span>交易失败，用户选择退款的订单数量</p>',
+                    '<p><span>退款成功笔数：</span>交易失败，用户选择退款，并且退款成功的订单数量</p>',
+                    '<p><span>退款失败笔数：</span>交易失败，用户选择退款，但退款失败的订单数量</p>',
+                    '<p><span>退款中笔数：</span>交易失败，用户选择退款，退款正在处理的订单数量</p>',
+                    '<p><span>支付宝收款：</span>在总成交额中，用支付宝支付的成交额</p>',
+                    '<p><span>微信收款：</span>在总成交额中，用微信支付的成交额</p>',
+                    '<p><span>其他收款：</span>在总成交额中，用其他方式支付的成交额</p>',
+                    '<p><span>支付宝退款：</span>在所有退款中，支付宝的退款金额</p>',
+                    '<p><span>微信退款：</span>在所有退款中，微信的退款金额</p>',
+                    '<p><span>其他退款：</span>在所有退款中，其他方式的退款金额</p>',
+                    '<p><span>支付宝费率：</span>按交易额量级的1.25%收取的服务费</p>',
+                    '<p><span>微信费率：</span>按交易额的0.6%收取的服务费</p>',
+                    '<p><span>CP应扣：</span>预存型业务，CP应扣金额</p>',
+                    '<p><span>CP实扣：</span>预存型业务，CP 实扣金额</p>',
+                    '<p><span>CP退款：</span>预存型业务，CP退款金额</p>',
+                    '<p><span>运营成本：</span>除去退款订单外的，CP应扣和葡萄收入之间的差额</p>',
+                    '<p><span>运营成本(用券)：</span>根据优惠券计算的补贴金额</p>',
+                    '<p><span>营收合计：</span>葡萄收入 - 葡萄退款 - （CP应扣 / 实扣 - CP退款） - 手续费 = 手续费 + 运营成本</p>',
+                    '</div>'
+                ]).join("")
+            });
+            requestData();
+        });
+
+        function updateDividePage()
+        {
+            var count = 1 + parseInt((g_data.length - 1) / g_per);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+        //参数i是页数
+        function updateTable(page)
+        {
+            var total_page = 1 + parseInt((g_data.length - 1) / g_per);
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for(var i = (page - 1) * g_per; i < g_per * page && i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(j in g_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //更新显示行数
+        function updatePer(per)
+        {
+            g_per = per;
+            updateDividePage();
+            updateTable(1);
+        }
+
+        function requestData()
+        {
+            //截取出开始日期和结束日期
+            var start_date = g_date_control.val().substr(0,10);
+            var end_date = g_date_control.val().substr(13);
+            //修改导出文件的href地址
+            modifyCsvHref(start_date, end_date);
+            postJSON("{% url order_reports_ajax %}",
+                {
+                    start_date: start_date,
+                    end_date: end_date,
+                    ot: $("#order_types").val(),
+                    app: getURLParam("app"),
+                    ver: $("#ver").val(),
+                    channel: $("#channel").val()
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data);
+                    updateDividePage();
+                    updateTable(1);
+                    changeTableTitle();
+                }
+            );
+        }
+
+        //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+        function updateTime(delay)
+        {
+            var start_date = getDateStr("{{ currentdate }}", delay);
+            var end_date = "{{ currentdate }}";
+
+            g_date_control.data('daterangepicker').setStartDate(start_date);
+            g_date_control.data('daterangepicker').setEndDate(end_date);
+            g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+            requestData();
+        }
+
+        function modifyCsvHref(start_date, end_date)
+        {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url order_reports_csv %}?start_date={0}&end_date={1}&ot={2}&app={3}&ver={4}&channel={5}".
+                format(start_date, end_date, $("#order_types").val(), getURLParam("app"), $("#ver").val(), $("#channel").val()));
+        }
+
+        function changeTableTitle()
+        {
+            var order_type = $("#order_types").val();
+            var table_tile = $("#table_title");
+
+            if(!order_type)
+                table_tile.html("所有订单状态日报表");
+            else
+                table_tile.html("{0}业务分表".format($("#order_types").find("option:selected").text()));
+        }
+
+    </script>
+{% endblock %}

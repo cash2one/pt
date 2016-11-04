@@ -1,0 +1,537 @@
+{% extends "report-base.html" %}
+{% block myhead %}
+<link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" xmlns="http://www.w3.org/1999/html"/>
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <style type="text/css">
+    .form-group
+    {
+        margin-top: 0;
+    }
+    </style>
+{% endblock %}
+{% block title %}全托管订单{% endblock %}
+{% block content %}
+    <div class="form-inline">
+        <div class="form-group">
+            <input type="text" class="form-control" id="search" placeholder="订单号">
+        </div>
+        <div class="form-group">
+            <input type="text" class="form-control" id="search_mobile" placeholder="手机号">
+        </div>
+        <button class="btn btn-success" onclick="requestData(1)">搜索</button>&nbsp;&nbsp;&nbsp;&nbsp;
+        订单状态选择：
+        <select id="order_status" multiple="multiple">
+            <!--<option value="">总和</option>-->
+            {% for status in order_status %}
+                <option value="{{ status.0 }}">{{ status.1 }}</option>
+            {% endfor %}
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+        CP名称选择：
+        <select id="cp_name" multiple="multiple">
+            <!--<option value="">总和</option>-->
+            {% for c_name in cp_names %}
+                <option value="{{ c_name.1 }}">{{ c_name.0 }}</option>
+            {% endfor %}
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+        活动渠道选择：
+        <select id="activity_channels" multiple="multiple">
+            <!--<option value="">总和</option>-->
+            {% for channel in activity_channels %}
+                <option value="{{ channel.1 }}">{{ channel.0 }}</option>
+            {% endfor %}
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+        测试单筛选：
+        <select id="test_status">
+            <option value="">总和</option>
+            {% for status in test_status %}
+                <option value="{{ status.0 }}" {% if status.0 == 1 %} selected="selected"{% endif %}>{{ status.1 }}</option>
+            {% endfor %}
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+        到家订单列表显示：
+        <select id="daojia_table" multiple="multiple">
+            <!--<option value="">总和</option>-->
+            {% for column in daojia_table_columns %}
+                <option value="{{ column.1 }}" {% if column.2 == 1 %} selected="selected"{% endif %}>{{ column.1 }}</option>
+            {% endfor %}
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+        城市选择：
+        <select id="citys_select" multiple="multiple">
+            <!--<option value="">总和</option>-->
+            {% for city in citys %}
+                <option value="{{ city.1 }}" >{{ city.1 }}</option>
+            {% endfor %}
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+        日期类型选择：
+        <select id="time_type">
+            <option value="0" selected>创建时间</option>
+            <option value="1">服务时间</option>
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    </div>
+
+
+    <br />
+    <br />
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button type="button" class="btn btn-primary" id="ditui_order">地推订单</button>
+    <br />
+    <br />
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px">
+        <thead>
+            <tr>
+                <th id="col_num" colspan="24">
+                    <span id="table_title">全托管业务订单</span>
+                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                    <a id="export_csv" href="{% url full_hosting_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="colname">
+                <td id="col_id">ID</td>
+                <td id="col_order_no">订单号</td>
+                <td id="col_cporderno">CP订单号</td>
+                <td id="col_goodsname">商品名称</td>
+                <td id="col_provider">CP</td>
+                <td id="col_providermobile">CP电话</td>
+                <td id="col_payway">支付类型</td>
+                <td id="col_service_time">服务开始时间</td>
+                <td id="col_service_length">服务时长</td>
+                <td id="col_city">服务预约城市</td>
+                <td id="col_service_address">服务预约地址</td>
+                <td id="col_consumer">消费者</td>
+                <td id="col_consumermobile">消费者电话</td>
+                <td id="col_pt_username">下单人电话</td>
+                <td id="col_quantity">数量</td>
+                <td id="col_price">价格（元）</td>
+                <td id="col_user_comment">用户备注</td>
+                <td id="col_pay_price">订单金额（元）</td>
+                <td id="col_create_time">创建时间</td>
+                <td id="col_modify_time">更新时间</td>
+                <td id="col_status">状态</td>
+                <td id="col_promotion_activity_info">促销活动信息</td>
+                <td id="col_status_1">超时接单状态</td>
+                <td id="col_status_2">上门确认状态</td>
+                <td id="col_status_3">服务回访状态</td>
+                <td id="col_comment_1">超时接单评论</td>
+                <td id="col_comment_2">上门确认评论</td>
+                <td id="col_comment_3">服务回访评论</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block;margin-bottom: 200px;">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="requestData(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="requestData(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;
+        var num_pages = 1;
+        var g_date_control = $("#date_control");
+        var g_current_page = 1;
+        var g_data = [],g_period = 1,
+                initStartDate = getURLParam("start_date") || (getDateStr("{{ currentdate }}", -6)),
+                initEndDate = getURLParam("end_date") || "{{ currentdate }}";
+        var g_order_detail = []
+        var g_order_pos = -1
+
+        //特殊筛选项(1-超时接单,2上门确认,3服务回访)
+        var g_special_filter = -1;
+
+        $(document).ready(function()
+        {
+            setLeftNav("nav_full_hosting");
+            loading.init(".loading_gif", "#data_table");
+            modifyCsvHref(initStartDate.replace(/-/g, ""), initEndDate.replace(/-/g, ""));
+
+             $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>订单保障规则</p>',
+                    '<p><span>超时接单：</span>用户下单后，超过20分钟CP未接单</p>',
+                    '<p><span>上门确认：</span>离服务开始时间前2小时的单</p>',
+                    '<p><span>服务回访：</span> A）服务状态变成『服务完成』的订单；B）一个单变成『服务中』后，6小时后还未变成『服务完成』;</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+            $('#cp_name').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                includeSelectAllOption: true,
+                nonSelectedText: '默认全选',
+                onChange: function(option, checked, select) {
+                    requestData(1);
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            $('#test_status').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData(1);
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            $('#order_status').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                includeSelectAllOption: true,
+                nonSelectedText: '默认全选',
+                onChange: function(option, checked, select) {
+                    requestData(1);
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            $('#daojia_table').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 400,
+                filterPlaceholder: "搜索",
+                includeSelectAllOption: true,
+                enableFiltering: true,
+                nonSelectedText: '默认全选',
+                onChange: function(option, checked, select) {
+                    showTable()
+                    requestData(1);
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            $('#activity_channels').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 400,
+                filterPlaceholder: "搜索",
+                includeSelectAllOption: true,
+                enableFiltering: true,
+                nonSelectedText: '默认全选',
+                onChange: function(option, checked, select) {
+                    showTable()
+                    requestData(1);
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            $('#citys_select').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 400,
+                filterPlaceholder: "搜索",
+                includeSelectAllOption: true,
+                enableFiltering: true,
+                nonSelectedText: '默认全选',
+                onChange: function(option, checked, select) {
+                    showTable()
+                    requestData(1);
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#time_type').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 400,
+                onChange: function(option, checked, select) {
+                    showTable()
+                    requestData(1);
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+        g_date_control.daterangepicker(
+                {
+                    locale:
+                    {
+                        applyLabel: "确定",
+                        cancelLabel: "取消"
+                    },
+                    format: 'YYYY-MM-DD',
+                    separator: ' 到 ', //前后有空格
+                    startDate: initStartDate,
+                    endDate: initEndDate,
+                    maxDate: getDateStr(initEndDate, 1)// < maxDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+            ).val(initStartDate + " 到 "+ initEndDate);
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function(ev, picker){
+                requestData(1);
+            });
+        requestData(1);
+        showTable()
+        });
+
+        function updateDividePage()
+        {
+            var count = num_pages;
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='requestData({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+        function updateTable(page)
+        {
+            var total_page = num_pages;
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for(var i = 0; i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for (j in g_data[i])
+                {
+                        tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //刷新订单信息
+        function freshOrderDetail(detail_data, row_index)
+        {
+
+            $("[tr_can_remove='yes']").remove();
+
+            for(var i = 0; i < g_data.length; i++)
+            {
+                if(i != row_index)
+                {
+                    var tr = $("<tr tr_can_remove='yes'></tr>");
+                    for(j in g_data[i])
+                    {
+                        tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                    }
+                     $("#data_table tbody").append(tr);
+                }
+                else
+                {
+                    var tr = $("<tr tr_can_remove='yes'></tr>");
+                    for(j in g_data[i])
+                    {
+                        tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                    }
+                    $("#data_table tbody").append(tr);
+                    for(var sub_i = 0; sub_i < detail_data.length; sub_i++)
+                    {
+                        var sub_tr = $("<tr tr_can_remove='yes'></tr>");
+                        for(sub_j in detail_data[sub_i])
+                        {
+                            sub_tr.append($("<td style='max-width:150px; table-layout:fixed; word-break:break-all; overflow:hidden;' >{0}</td>".format(detail_data[sub_i][sub_j])));
+                        }
+                         $("#data_table tbody").append(sub_tr);
+                    }
+                }
+            }
+        }
+
+        //更新显示行数
+        function updatePer(per)
+        {
+            g_per = per;
+            requestData(1);
+        }
+
+        //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+        function updateTime(delay)
+        {
+            var start_date = getDateStr("{{ currentdate }}", delay);
+            var end_date = "{{ currentdate }}";
+
+            g_date_control.data('daterangepicker').setStartDate(start_date);
+            g_date_control.data('daterangepicker').setEndDate(end_date);
+            g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+            requestData(1);
+        }
+
+         //全部订单
+        $("#ditui_order").click(function(){
+             g_special_filter = 6;
+             showTable()
+             requestData(1);
+        });
+
+        function requestData(cur_page)
+        {
+            var start_date = g_date_control.val().substr(0,10);
+            var end_date = g_date_control.val().substr(13);
+
+            //修改导出文件的href地址
+            modifyCsvHref(start_date, end_date);
+            if(cur_page <= 0 || cur_page > num_pages)
+                return;
+            postJSON("{% url full_hosting_ajax %}",
+                {
+                    per_page: g_per,
+                    cur_page: cur_page,
+                    key: $("#search").val(),
+                    start_date: start_date,
+                    end_date: end_date,
+                    cp_name:$("#cp_name").val(),
+                    order_status:$("#order_status").val(),
+                    test_status:$("#test_status").val(),
+                    mobile_num:$("#search_mobile").val(),
+                    g_special_filter: g_special_filter,
+                    daojia_table:$("#daojia_table").val(),
+                    activity_channels:$("#activity_channels").val(),
+                    citys_select:$("#citys_select").val(),
+                    time_type:$("#time_type").val(),
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data)[0];
+                    num_pages = eval(data)[1];
+                    updateDividePage();
+                    updateTable(cur_page);
+                    showCheckbox();
+                    g_order_pos = -1;
+                }
+            );
+        }
+
+        function modifyCsvHref(start_date, end_date)
+        {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url full_hosting_csv %}?per_page={0}&cur_page={1}&key={2}&start_date={3}&end_date={4}&cp_name={5}&order_status={6}&mobile_num={7}".
+                format(g_per, 1, $("#search").val(), start_date, end_date, $("#cp_name").val(), $("#order_status").val(), $("#search_mobile").val()));
+        }
+
+        //根据daojia_table筛选项,调整列表行数，跟列表名
+        function showTable()
+        {   var column_selected = $("#daojia_table option:selected")
+            var column_all = document.getElementById("colname")
+            document.getElementById("col_num").colSpan=column_selected.length
+            $("#colname").children().remove();
+            for(i = 0; i < column_selected.length; i++ )
+            {
+                var node=document.createElement("td");
+                if(column_selected[i].value == "ID" && (g_special_filter == 1|| g_special_filter == 2 || g_special_filter == 3))
+                {
+                    //给ID增加勾选框
+                    var cknode=document.createElement("input");
+                    var textnode=document.createTextNode(column_selected[i].value);
+                    cknode.setAttribute("type","checkbox");
+                    cknode.setAttribute("id","selectall_checkbox");
+                    node.appendChild(cknode);
+                    node.appendChild(textnode);
+                    document.getElementById("colname").appendChild(node);
+
+                    //勾选框全选或者取消全选
+                    $("#selectall_checkbox").click(function(){
+                        var ch = document.getElementsByClassName('id_sub_check');
+                        var isCheck = document.getElementById("selectall_checkbox").checked
+                        for(var i=0;i<ch.length;i++){
+                            ch[i].checked = isCheck;
+                        }
+                    });
+
+                }
+                else
+                {
+                    var textnode=document.createTextNode(column_selected[i].value);
+                    node.appendChild(textnode);
+                    document.getElementById("colname").appendChild(node);
+                }
+            }
+        }
+
+        // 显示每行的checkbox
+        function showCheckbox()
+        {
+            if(g_special_filter == 1|| g_special_filter == 2 || g_special_filter == 3)
+            {
+                var ch = document.getElementsByClassName('id_sub_check');
+                for(var i=0;i<ch.length;i++){
+                    ch[i].style.display = "";
+                }
+            }
+        }
+
+
+    </script>
+{% endblock %}

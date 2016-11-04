@@ -1,0 +1,316 @@
+<div class="modal" id="myapp_list">
+    <div class="modal-dialog" style="width:75%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="app_title">渠道选择</h4>
+            </div>
+            <div class="modal-body">
+                <ul>
+                    <li>
+                        <div class="row" id="appSelect">
+
+
+                        </div>
+                    </li>
+                    <input class="form-control" type="hidden" id="v_is_able">
+                </ul>
+                <hr/>
+                <form>
+                    <label>
+                        <input type="radio" name="shelves_updown" class="shelves_updown" id="shelves_liji" value="0"
+                               checked/><span id="liji_tile">立即上架</span>
+                    </label>
+                    <br>
+                    <label>
+                        <input type="radio" name="shelves_updown" class="shelves_updown" id="shelves_dinshi" value="1"
+                        /><span id="time_tile">定时上架</span>
+                    </label>
+                    <input id="pf_start_time" type="text" class="form-control ui_timepicker"
+                           min="1999-12-31T23:59" max="9999-12-31T23:59" name="start_time" required
+                           placeholder="时间格式：yyyy-mm-dd hh:mm:ss"/>
+                    <span>至</span>
+                    <input id="pf_end_time" type="text" class="form-control ui_timepicker"
+                           min="1999-12-31T23:59" max="9999-12-31T23:59" name="end_time" required
+                           placeholder="时间格式：yyyy-mm-dd hh:mm:ss"/>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="app_save" onclick="requestShow(-1)">保存</button>
+            </div>
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div class="modal" id="changeshow">
+    <div class="modal-dialog" style="width:60%;">
+        <div class="modal-content" id="modal-content" style="margin-top: 2px;">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="shelves_title_x">本次共上架X个商品:</h4>
+                <h4 class="modal-title" id="">其中以下商品与原渠道商品有冲突：</h4>
+            </div>
+            <div class="modal-body">
+                <div id="chongtu">
+                    <table id="da_table" class=" table-striped table-bordered table-hover data_detail"
+                           style="font-size: 12px">
+                        <tbody>
+                        <tr>
+                            <td></td>
+                            <td>序号</td>
+                            <td>省份</td>
+                            <td>运营商</td>
+                            <td>流量</td>
+                            <td>面值</td>
+                            <td>CP</td>
+                            <td>售价</td>
+                            <td>进货价</td>
+                            <td>渠道</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <hr/>
+                <h4 class="modal-title" id="shelves_title">以下是全部上架的商品：</h4>
+                <div id="allchange">
+                    <table id="da_table" class=" table-striped table-bordered table-hover data_detail"
+                           style="font-size: 12px">
+                        <tbody>
+                        <tr>
+                            <td>序号</td>
+                            <td>省份</td>
+                            <td>运营商</td>
+                            <td>流量</td>
+                            <td>面值</td>
+                            <td>CP</td>
+                            <td>售价</td>
+                            <td>进货价</td>
+                            <td>渠道</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="changeSave" onclick="requestShow(1)">保存</button>
+            </div>
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<script>
+
+    var shelves_type = 0;
+
+    //console.log(apps);
+    $(document).ready(function () {
+        for (var i in apps) {
+            //console.log(apps[i][1]);
+            if(apps[i][1] != '全部应用'){
+                $("#appSelect").append($("<div class='col-md-4'><label><input type='checkbox' values='{1}' class='fee_appSelect'>{0}</label></div>".format(apps[i][1], apps[i][0])));
+            }
+        }
+    })
+
+
+    function requestShow(argv) {
+        var selectApp = [];
+        for (var i in apps) {
+            if ($(".fee_appSelect").eq(i).prop('checked')) {
+                selectApp.push(apps[i][0])
+            }
+        }
+
+        shelvesType()
+        //console.log('argv', argv)
+        //console.log(selectApp);
+        //console.log(batch_list);
+        //$("#app_save").modal('hide');
+        //console.log(shelves_type)
+        if (argv == -1) {
+            if (shelves_type == 1) {
+                if ($("#pf_start_time").val() == '' || $("#pf_end_time").val() == '') {
+                    alert('请填写时间')
+                    return
+                }
+            }
+
+
+            postJSON("{% url 'flow_batch_shelve_ajax' %}",
+                    {
+                        selectapp: selectApp.toString(),
+                        selectlist: JSON.stringify(select_list),
+                        done: '-1',
+                        is_updown: g_is_updown,
+                    },
+                    function (data) {
+                        //字符串转json
+                        g_data = eval(data);
+                        //console.log(g_data)
+                        $('#changeshow').modal('show');
+                        showExchange(g_data)
+                    }
+            );
+        }
+        else {
+            //立即上架下架
+            if (shelves_type == 0) {
+                postJSON("{% url 'flow_batch_shelve_ajax' %}",
+                        {
+                            selectapp: selectApp.toString(),
+                            selectlist: JSON.stringify(select_list),
+                            done: '1',
+                            is_updown: g_is_updown,
+                        },
+                        function (data) {
+                            //字符串转json
+                            var erros = eval('(' + data + ')');
+
+                            if (erros.length != 0) {
+                                alert(data.err)
+                            } else {
+                                alert('ok')
+                                requestData(1);
+                                $("#myapp_list").modal('hide')
+                                $("#changeshow").modal('hide')
+                            }
+                        }
+                );
+            }
+            //定时上下架
+            else {
+                postJSON("{% url 'flow_batch_shelve_timing' %}",
+                        {
+                            selectapp: selectApp.toString(),
+                            selectlist: JSON.stringify(select_list),
+                            is_updown: g_is_updown,
+                            starttime: $("#pf_start_time").val(),
+                            endtime: $("#pf_end_time").val(),
+
+                        },
+                        function (data) {
+                            alert('ok')
+                            requestData(1);
+                            $("#myapp_list").modal('hide')
+                            $("#changeshow").modal('hide')
+                        }
+                );
+            }
+        }
+    }
+    function showExchange(ex_data) {
+        console.log('ex', ex_data)
+        //在添加之前，先把现有元素移除掉
+        $("[tr_ex_remove='yes']").remove();
+        var num_ex = 1;
+        var num_te = 1;
+        var num_list = []
+        //添加元素
+        for (var i = 0; i < ex_data.length; i++) {
+            var tr = $("<tr tr_ex_remove='yes'></tr>");
+            //console.log(i)
+            if (i % 2 == 1) {
+                if (num_list.indexOf(ex_data[i][0]) == -1) {
+                    num_list.push(ex_data[i][0])
+                    tr.append($("<td>{0}</td>".format(num_ex)));
+                    tr.append($("<td>{0}</td>".format(ex_data[i][3])));
+                    tr.append($("<td>{0}</td>".format(ex_data[i][4])));
+                    tr.append($("<td>{0}</td>".format(ex_data[i][10])));
+                    tr.append($("<td>{0}元</td>".format(ex_data[i][5])));
+                    tr.append($("<td>{0}</td>".format(ex_data[i][2])));
+                    tr.append($("<td>{0}元</td>".format(ex_data[i][6])));
+                    tr.append($("<td>{0}元</td>".format(ex_data[i][7])));
+                    tr.append($("<td id='app{1}'>{0}</td>".format(ex_data[i][11],ex_data[i][0])));
+                    num_ex = num_ex + 1;
+                    $("#allchange tbody").append(tr);
+                }
+                else {
+                    //console.log($("#app{0}".format(ex_data[i][0])).text())
+                    $("#app{0}".format(ex_data[i][0])).append('<br//>' + ex_data[i][11])
+                }
+
+
+            } else {
+                if (ex_data[i].length != 0) {
+                    var trt = $("<tr tr_ex_remove='yes'></tr>");
+                    tr.append($("<td>修改后</td>"));
+                    tr.append($("<td>{0}</td>".format(num_te)));
+                    tr.append($("<td>{0}</td>".format(ex_data[i + 1][3])));
+                    tr.append($("<td>{0}</td>".format(ex_data[i + 1][4])));
+                    tr.append($("<td>{0}</td>".format(ex_data[i + 1][10])));
+                    tr.append($("<td>{0}元</td>".format(ex_data[i + 1][5])));
+                    tr.append($("<td>{0}</td>".format(ex_data[i + 1][2])));
+                    tr.append($("<td>{0}元</td>".format(ex_data[i + 1][6])));
+                    tr.append($("<td>{0}元</td>".format(ex_data[i + 1][7])));
+                    tr.append($("<td>{0}</td>".format(ex_data[i + 1][11])));
+                    trt.append($("<td>修改前</td>"));
+                    trt.append($("<td>{0}</td>".format(num_te)));
+                    trt.append($("<td>{0}</td>".format(ex_data[i + 1][3])));
+                    trt.append($("<td>{0}</td>".format(ex_data[i + 1][4])));
+                    trt.append($("<td>{0}</td>".format(ex_data[i + 1][10])));
+                    trt.append($("<td>{0}元</td>".format(ex_data[i + 1][5])));
+                    trt.append($("<td>{0}</td>".format(ex_data[i][6])));
+                    trt.append($("<td>{0}元</td>".format(ex_data[i][1])));
+                    trt.append($("<td>{0}元</td>".format(ex_data[i][3])));
+                    trt.append($("<td>{0}</td>".format(ex_data[i + 1][11])));
+                    num_te = num_te + 1;
+                    $("#chongtu tbody").append(trt);
+                    $("#chongtu tbody").append(tr);
+                }
+
+
+            }
+
+        }
+        if (g_is_updown == 1) {
+            $("#shelves_title_x").text('本次共上架{0}个商品:'.format(num_list.length))
+        }
+        else {
+            $("#shelves_title_x").text('本次共下架{0}个商品:'.format(num_list.length))
+        }
+
+    }
+    function shelvesType() {
+        if ($("#shelves_liji").prop('checked')) {
+            shelves_type = 0
+        } else {
+            shelves_type = 1
+        }
+    }
+
+
+    $("#pf_start_time").datetimepicker({
+        showSecond: true,
+        timeFormat: 'hh:mm:ss',
+        stepHour: 1,
+        stepMinute: 1,
+        stepSecond: 1
+    })
+    $("#pf_end_time").datetimepicker({
+        showSecond: true,
+        timeFormat: 'hh:mm:ss',
+        stepHour: 1,
+        stepMinute: 1,
+        hour: 23,
+        minute: 59,
+        second: 59,
+        stepSecond: 1
+    })
+
+    $("#shelves_liji").click(function () {
+        shelves_type = 0
+    })
+    $("#shelves_dinshi").click(function () {
+        shelves_type = 1
+    })
+
+
+</script>
+

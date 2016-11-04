@@ -1,0 +1,234 @@
+{% extends "main-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+{% endblock %}
+{% block title %}使用时长{% endblock %}
+{% block content %}
+    版本选择：
+    <select id="ver">
+        <option value="">全部版本</option>
+        {% for ver in versions %}
+            <option value="{{ ver }}">{{ ver }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    渠道选择：
+    <select id="channel">
+        <option value="">全部渠道</option>
+        {% for channel in channels %}
+            <option value="{{ channel }}">{{ channel }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>日期选择
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    <br />
+    <br />
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail">
+        <thead>
+            <tr>
+                <th colspan="3">
+                    <span>单次使用时长分布明细</span>
+                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                    <a id="used_time_once_csv" href="{% url used_time_once_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="width:33%">时长</td>
+                <td style="width:33%">启动次数</td>
+                <td style="width:33%">启动次数占比</td>
+            </tr>
+        </tbody>
+    </table>
+    <br />
+    <br />
+    <table id="data_table2" class=" table-striped table-bordered table-hover data_detail">
+        <thead>
+            <tr>
+                <th colspan="3">
+                    <span>日使用时长分布明细</span>
+                    <span id="data_detail2" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                    <a id="used_time_day_csv" href="{% url used_time_day_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="width:33%">时长</td>
+                <td style="width:33%">用户数</td>
+                <td style="width:33%">用户数比例</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_date_control = $("#date_control");
+        var g_data = {{ data1|safe }};
+        var g_data2 = {{ data2|safe }};
+
+        $(document).ready(function()
+        {
+            setLeftNav("nav_used_time");
+            loading.init(".loading_gif", "#data_table");
+            $('#ver').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                /*
+                onDropdownHidden: function(event)//multiselect  onDropdownHidden
+                {
+
+                }
+                */
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+            $('#channel').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                /*
+                onDropdownHidden: function(event)//multiselect  onDropdownHidden
+                {
+                    requestData();
+                }
+                */
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            modifyCsvHref("{{ currentdate }}".replace(/-/g, ""));
+            g_date_control.daterangepicker(
+                {
+                    singleDatePicker: true,
+                    format: 'YYYY-MM-DD',
+                    startDate: "{{ currentdate }}",
+                    endDate: "{{ currentdate }}",
+                    maxDate: "{{ currentdate }}"// <= maxDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+            ).val("{{ currentdate }}");
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function(ev, picker){
+                requestData();
+            });
+
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p>您可以查看用户在任意1天内单次使用时长的分布情况，同时可以对单次使用时长的数据进行版本、渠道的交叉筛选。</p>',
+                    '<p><span>单次使用时长：</span>一次启动的使用时长</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+            $("#data_detail2").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p>您可以查看用户在任意1天内日使用时长的分布情况，同时可以对日使用时长的数据进行版本、渠道的交叉筛选。</p>',
+                    '<p><span>日使用时长：</span>（用户）一天内使用应用的时长</p>',
+                    '</div>'
+                ]).join("")
+            });
+            updateTable();
+        });
+
+        function updateTable()
+        {
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for(var i = 0; i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for (j in g_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+                //添加元素
+            for(var i = 0; i < g_data2.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(j in g_data2[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data2[i][j])));
+                }
+                $("#data_table2 tbody").append(tr);
+            }
+        }
+
+        function requestData()
+        {
+            //截取出日期
+            var date = g_date_control.val().replace(/-/g, "");
+            //修改导出文件的href地址
+            modifyCsvHref(date);
+            postJSON("{% url used_time_ajax %}",
+                {
+                    app: getURLParam("app"),
+                    date: date,
+                    ver: $("#ver").val(),
+                    channel: $("#channel").val()
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data)[0];
+                    g_data2 = eval(data)[1];
+                    updateTable();
+                }
+            );
+        }
+
+        function modifyCsvHref(date)
+        {
+            var ver = $("#ver").val();
+            var channel = $("#channel").val();
+            //修改导出文件的href地址
+            $("#used_time_once_csv").attr("href", "{% url used_time_once_csv %}?app={0}&date={1}&ver={2}&channel={3}".
+                format(getURLParam("app"), date, ver, channel));
+            $("#used_time_day_csv").attr("href", "{% url used_time_day_csv %}?app={0}&date={1}&ver={2}&channel={3}".
+                format(getURLParam("app"), date, ver, channel));
+        }
+    </script>
+{% endblock %}

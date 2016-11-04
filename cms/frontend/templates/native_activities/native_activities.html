@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}native活动{% endblock %}
+{% block content %}
+    <style>
+        .my_thead {
+            display: table-header-group;
+        }
+
+        #table tr td:nth-child(2) {
+            text-align: left;
+            padding-left: 20px;
+        }
+
+        #table .mimg {
+            width: 100px;
+            height: 100px;
+            margin: 10px 0;
+        }
+
+        #table td .mblock {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        #table .noContent {
+            height: 200px;
+            font-size: 20px;;
+        }
+
+        #table .noContent:hover {
+            background: transparent;
+        }
+    </style>
+    <section class="top-sec">
+        <ol class="breadcrumb" id="breadcrumb">
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+            <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+            <li class="active">native活动</li>
+        </ol>
+        {% if perms.man.config %}
+            <a class="adbtn-new" href="{% url 'new_native_activity' %}?channel={{ channel }}" style="width: 1.5rem;"><b
+                    style="font-size:.18rem">＋&nbsp</b>新建native活动</a>
+        {% endif %}
+
+    </section>
+    <section class="service-table ">
+        <table id="table">
+            <caption></caption>
+            <thead class="my_thead">
+            <tr>
+                <th>场景</th>
+                <th>排序</th>
+                <th>标题</th>
+                <th>标题颜色</th>
+                <th>副标题</th>
+                <th>图片</th>
+                <th>开始时间</th>
+                <th>结束时间</th>
+                <th>Action Id</th>
+                <th>有效时间</th>
+                <th>城市</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <div id="loading" style="display:none;">
+                <img src="{% static 'images/loading.gif' %}"/>
+            </div>
+            <tbody id="tbody" class="tbody">
+
+            </tbody>
+        </table>
+        <div class="no_content"><p>暂无相关内容</p></div>
+        <div id="pagination"></div>
+        <script src="{% static 'js/cms/initTable.js' %}"></script>
+        <script>
+            var myTable;
+            $(function () {
+                init();
+                myTable = new tableInit({});
+                myTable.getData();
+                /*绑定搜索部分功能*/
+                // myTable.searchInit();
+            })
+
+            function init() {
+                /*初始化页面*/
+                setNavBg({{t}});
+            }
+            function requestData(options) {
+                $.ajax("{% url 'search_native_activities' %}", {
+                    type: "get",
+                    cache: false,
+                    data: {
+                        channel: {{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#" + options.loadImgId).show();
+                        $("#pagination").hide();
+                    },
+                    success: function (result) {
+                        //console.log(result);
+                        var data = JSON.parse(result);
+                        if (data.length == 0) {
+                            $('#' + myTable.default.tbodyId).empty();
+                            $("#pagination").hide();
+                            $(".no_content").show();
+                            $(".my_thead").hide();
+                        }
+                        else {
+                            /*data = mydata[0],num_pages = mydata[1];*/
+                            $(".no_content").hide();
+                            myTable.processData(data);
+                            //if(num_pages>=2) myTable.pageInit(num_pages);
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#" + options.loadImgId).hide();
+                        var currentpage = options.curPage - 1;
+                        $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                        if (currentpage > 5) {
+                            $(options.pageSelector).eq(currentpage - 5).prevAll().hide();
+                        }
+                    }
+                })
+            }
+            function delData(id) {
+                $.ajax("{% url 'delete_native_activity' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id: id,
+                        channel: {{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        if (result == 0) {
+                            requestData(myTable.default);
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            }
+            ;
+
+            function exchangeData(id1, id2) {
+                $.ajax("{% url 'exchange_native_activities' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id1: id1,
+                        id2: id2,
+                        channel: {{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        console.log(result);
+                        if (result == 0) {
+                            requestData(myTable.default);
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            }
+            ;
+            /*处理后台返回数据*/
+            function dataInit(data) {
+                var tbodyId = myTable.default.tbodyId, htmlStr = '', trId;
+                if (data.length == 0) {
+                    $("#tbody").empty();
+                    $("#table thead").hide();
+                    $(".no_content").show();
+                    return;
+                }
+                $.each(data, function (i, value) {
+                    trId = value[value.length - 1];
+                    var td_status = value[value.length - 2];
+                    if (value[value.length - 2] == '1') htmlStr += '<tr class="level2" data-id=' + trId + '>';
+                    else htmlStr += '<tr data-id=' + trId + '>';
+                    value.splice(value.length - 2, 2);
+                    $.each(value, function (j, ele) {
+                        if (j == 3) {
+                            htmlStr += '<td><span class="mblock" style="background-color:' + ele + '"></span></td>';
+                        }
+                        else if (j == 5) {
+                            htmlStr += '<td><img style="cursor:pointer" class="mimg" data-toggle="modal" data-target="#myModal_img" src="' + ele + '" /></td>';
+                        }
+                        else {
+                            htmlStr += '<td>' + ele + '</td>';
+                        }
+                    });
+                    //根据传递参数，显示操作状态，0为可见，1为可编辑
+                    if (td_status == '1') {
+                        htmlStr += '<td class="edit-td" data-status="' + td_status + '">';
+                        if (data.length > 1) {
+                            if (i == data.length - 1) {
+                                htmlStr += '<span class="glyphicon glyphicon-arrow-up" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span>';
+                            }
+                            else if (i == 0) {
+                                htmlStr += '<span class="glyphicon glyphicon-arrow-down" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span>';
+                            }
+                            else {
+                                htmlStr += '<span class="glyphicon glyphicon-arrow-up" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span>'
+                                        + '<span class="glyphicon glyphicon-arrow-down" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span>';
+                            }
+                        }
+                        htmlStr += '<span class="glyphicon glyphicon-edit" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span><span class="glyphicon glyphicon-trash" aria-hidden="true" style="cursor: pointer"></span></td></tr>';
+                    } else if (td_status == '0') {
+                        //不显示编辑状态
+                        htmlStr += '<td class="edit-td" data-status="' + td_status + '"><a class="glyphicon glyphicon-eye-open"></a></td></tr>';
+                    }
+                    //htmlStr += '<span class="glyphicon glyphicon-edit" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span><span class="glyphicon glyphicon-trash" aria-hidden="true" style="cursor: pointer"></span></td></tr>';
+                });
+
+
+                $('#' + tbodyId).empty().append($(htmlStr)).off("click", '.glyphicon-edit').on("click", '.glyphicon-edit', function (e) {
+                    window.location.href = "{% url 'edit_native_activity'%}" + /*'/config/native_activies/edit_activity/*/'?id=' + $(this).parents('tr').data("id") + "&channel=" + "{{ channel }}";
+                }).off("click", '.glyphicon-trash').on("click", '.glyphicon-trash', function (e) {
+                    var tr = $(this).parents("tr"),
+                            id = tr.data("id"),
+                            mtext = tr.find("td").eq(2).text();
+                    $("#myModal-del").find(".del_info").text(mtext)
+                            .end().find(".btn-primary").off("click").on("click", function () {
+                                delData(id);
+                            }).end().modal("show");
+                    return false;
+                }).off("click", '.glyphicon-arrow-up').on("click", '.glyphicon-arrow-up', function () {
+                    var tr = $(this).parents("tr"),
+                            id = tr.data("id"),
+                            prevtr = tr.prev(),
+                            prevtrid = prevtr.data('id');
+                    exchangeData(id, prevtrid);
+                    return false;
+                }).off("click", '.glyphicon-arrow-down').on("click", '.glyphicon-arrow-down', function () {
+                    var tr = $(this).parents("tr"),
+                            id = tr.data("id"),
+                            prevtr = tr.next(),
+                            nexttrid = prevtr.data('id');
+                    exchangeData(id, nexttrid);
+                    return false;
+                })
+            }
+        </script>
+    </section>
+
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}新增品牌分类{% endblock %}
+
+{% block head %}
+    <style>
+        *{
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        .dashhr{
+            margin: 10px 0;
+            border-top: 1px dashed #ccc;;
+        }
+        .sendmsg-form label{
+            width:16%;
+            text-align: right;
+            margin-right: 1%;
+        }
+        .sendmsg-form .col-lg-12 label{
+            width:8%;
+            margin-right: .5%;
+            vertical-align: middle;
+        }
+        .sendmsg-form .form-control,.sendmsg-form select{
+            display: inline-block;
+            width:80%;
+        }
+        .sendmsg-form .col-lg-12 .form-control{
+            width:90%;
+            vertical-align: middle;
+        }
+        .sendmsg-form a.addpicbtn{
+            cursor:pointer;
+            font-size: 40px;
+            padding: 10px 22px;
+            border: 2px solid #999;
+            color: #999;
+        }
+
+        #validataDiv{
+            padding-left:10%;
+        }
+        #validataDiv .form-group label{
+            width:4%;
+            text-align: left;
+        }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="cms-subtitle">
+        <ol class="breadcrumb">
+            <li><a href="{% url 'cp_list' %}">品牌列表</a></li>
+            <li class="active">新建品牌分类</li>
+        </ol>
+    </div>
+
+    <div id="error-hints">
+
+    </div>
+
+
+    <form class="sendmsg-form" action="{% url 'new_cp_category' %}" method="post" enctype="multipart/form-data">{% csrf_token %}
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>分类名:</label>
+                    <input  type="text" class="form-control" name="name" id="name" placeholder="请输入分类名" required max="127" />
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>排序:</label>
+                    <input  type="number" class="form-control" name="location" id="location" placeholder="请输入小于128的整数" required max="127" onkeyup="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')"/>
+                </div>
+            </div>
+        </div>
+
+        <div class="row text-center">
+            <a class="btn btn-default col-lg-1 col-lg-offset-4" href="{% url 'cp_category_list' %}">取消</a>
+            <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="确定"/>
+        </div>
+    </form>
+    <script type="text/javascript">
+        setNavBg({{t}});
+        checkForm({{ errors|safe }});
+     $("form input").focus(function(){
+         $(this).css("border","1px solid #ccc");
+     });
+        function setInPutValue(){
+{#        console.log("{{ goods_form.initial }}");#}
+{#        console.log("a"+"b");#}
+        {% for key,value in fields.items %}
+            $("[name='{{ key }}']").val({{ value|safe }});
+        {% endfor %}
+{#        console.log("{{ new_service_form.city.value }}")#}
+
+    };
+    window.onload=setInPutValue;
+
+        </script>
+{#<script src="{% static 'js/require.js' %}" data-main="{% static 'js/cms/addservice' %}"></script>#}
+    <script>
+
+    </script>
+{% endblock %}
+

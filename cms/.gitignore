@@ -1,0 +1,13 @@
+*.pyc
+.idea/
+*/cms/settings.py
+.DS_Store
+*cms/main/management/
+Gruntfile.js
+cms/cd
+cms/dataTime/
+node_modules/
+bower_components
+package.json
+var/
+locmem/

@@ -1,0 +1,146 @@
+{% extends "report-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <script type="text/javascript" src="/static/js/echarts.js" ></script>
+    <style type="text/css">
+{#     td#}
+{#        {#}
+{#            white-space: nowrap;/*不允许td换行*/#}
+{#        }#}
+    </style>
+{% endblock %}
+{% block title %}到家服务-CP数据报表{% endblock %}
+
+{% block content %}
+    <br />
+    <br />
+    <br />
+    <button type="button" class="btn btn-default" onclick="return_to_daojia()">返回</button>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px">
+        <thead>
+            <tr>
+                <th colspan="9">
+                    <span id="table_title">数据报表-{{ cp_name }}</span>
+{#                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>#}
+                    <a id="export_csv" href="" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="colname">
+                <td>日期</td>
+                <td>订单总量</td>
+                <td>成单转化</td>
+                <td>订单取消笔数</td>
+                <td>商家取消笔数</td>
+                <td>接单时长（秒）</td>
+                <td>状态更新不及时次数</td>
+                <td>接口报警次数</td>
+            </tr>
+        </tbody>
+    </table>
+{#    </div>#}
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;//每页的显示数
+        var g_data = {{ result|safe }};//趋势数据
+        var g_current_page = 1;//当前页
+
+        $(document).ready(function() {
+            $("#colname").siblings().remove();
+            setLeftNav("nav_order_reports");
+            loading.init(".loading_gif", "#data_table");
+            updatePer(g_per);
+            modifyCsvHref();
+        });
+
+
+    //修改下载订单报表的href链接
+    function modifyCsvHref()
+        {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url exchange_daojia_cp_reports_csv %}?start_date={0}&end_date={1}&cp_name={2}".
+                format('{{ start_date }}', '{{ end_date }}','{{ cp_name }}'));
+        }
+        //更新每页的显示数
+        function updatePer(per)
+        {
+            g_per = per;
+            updateDividePage();
+            updateTable(1);
+        }
+        //更新表格第page页的数据
+        function updateTable(page)
+        {
+            var total_page = 1 + parseInt((g_data.length - 1) / g_per);
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("#colname").siblings().remove();
+            //添加元素
+            for(var i = (page - 1) * g_per; i < g_per * page && i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(var j in g_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+        //按照每页显示数和总数据 更新分页
+        function updateDividePage()
+        {
+            var count = 1 + parseInt((g_data.length - 1) / g_per);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+        function return_to_daojia(){
+        window.location.href = "{% url exchange_daojia %}?app="+getURLParam("app");
+    }
+    </script>
+{% endblock %}

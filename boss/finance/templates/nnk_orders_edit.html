@@ -1,0 +1,352 @@
+{% extends "finance_base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+{% endblock %}
+{% block title %}财务对账{% endblock %}
+{% block content %}
+    <br />
+    <br />
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px">
+        <thead>
+            <tr>
+                <th colspan="24">
+                    <span id="table_title">年年卡待定订单</span>
+                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                    <a id="export_csv" href="{% url nnk_orders_edit_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="colname">
+                <td>年年卡订单号</td>
+                <td>葡萄订单号</td>
+                <td>下单时间</td>
+                <td>充值号码</td>
+                <td>面值</td>
+                <td>结算金额</td>
+                <td>订单状态</td>
+                <td>充值成功<input type='checkbox' id='selectall_checkbox_success' ></td>
+                <td>充值退款<input type='checkbox' id='selectall_checkbox_refund' ></td>
+                <td>充值处理中<input type='checkbox' id='selectall_checkbox_process' ></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="modal" id="mymodal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                            class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="modal_title">年年卡订单状态更新确认</h4>
+                </div>
+                <div class="modal-body">
+                     <div style="display: inline-table;vertical-align: middle;">
+                        <form class="form-horizontal">
+                            <fieldset>
+                                <div class="control-group">
+                                    <div class="controls">
+                                        <div class="input-prepend input-group">
+                                            <span class="add-on input-group-addon">
+                                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>账单更新周期
+                                            </span>
+                                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                    <br/>
+                    <br/>
+                    <div id="more_data">
+                        <table id="more_table" class=" table-striped table-bordered table-hover data_detail"
+                               style="font-size: 12px">
+                            <tbody>
+                            <tr>
+                                <td>年年卡订单号</td>
+                                <td>更新状态</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="save_order" onclick="update_nnk_order()">保存</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+
+    <br/>
+    <span style="text-align:center" id="btn_batch_confirm">
+    <button type="button" class="btn btn-info" id="update_order_state" onclick='update_list();'>更新订单状态</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    </span>
+    <br/>
+
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;
+        var g_current_page = 1;
+        var g_data = [];
+        var u_success_order = [];
+        var u_refund_order = [];
+        var u_process_order = [];
+        var g_period = 1,
+        initStartDate = getURLParam("start_date") || (getDateStr("{{ currentdate }}", -1)),
+        initEndDate = getURLParam("end_date") || "{{ currentdate }}";
+        var g_order_detail = []
+        var g_order_pos = -1
+        var g_date_control = $("#date_control");
+
+        $(document).ready(function()
+        {
+            setTopNav(2,3);
+            loading.init(".loading_gif", "#data_table");
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>年年卡待定订单更新说明：</span> 空</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+            g_date_control.daterangepicker(
+                {
+                    locale:
+                    {
+                        applyLabel: "确定",
+                        cancelLabel: "取消"
+                    },
+                    format: 'YYYY-MM-DD',
+                    separator: ' 到 ', //前后有空格
+                    startDate: initStartDate,
+                    endDate: initEndDate,
+                    maxDate: getDateStr(initEndDate, 1),// < maxDate
+                    minDate: getDateStr(initStartDate, -15)// < minDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+            ).val(initStartDate + " 到 "+ initEndDate);
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function(ev, picker){
+                requestData();
+            });
+
+            requestData();
+        });
+
+        function updateDividePage()
+        {
+            var count = 1 + parseInt((g_data.length - 1) / g_per);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+        //参数i是页数
+        function updateTable(page)
+        {
+            var total_page = 1 + parseInt((g_data.length - 1) / g_per);
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for(var i = (page - 1) * g_per; i < g_per * page && i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(j in g_data[i])
+                {
+                    if(j == 7)
+                    {
+                        tr.append($("<td><input type='checkbox' class='id_sub_check_success' value='{0}'></td>".format(g_data[i][0])));
+                    }
+                    else if(j == 8)
+                    {
+                        tr.append($("<td><input type='checkbox' class='id_sub_check_refund' value='{0}'></td>".format(g_data[i][0])));
+                    }
+                    else if(j == 9)
+                    {
+                        tr.append($("<td><input type='checkbox' class='id_sub_check_process' value='{0}'></td>".format(g_data[i][0])));
+                    }
+                    else
+                    {
+                        tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                    }
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+
+        //更新显示行数
+        function updatePer(per)
+        {
+            g_per = per;
+            updateDividePage();
+            updateTable(1);
+        }
+
+        function requestData()
+        {
+            //截取出开始日期和结束日期
+            var start_date = g_date_control.val().substr(0,10);
+            var end_date = g_date_control.val().substr(13);
+
+            postJSON("{% url nnk_orders_edit_ajax %}",
+                {
+                    start_date: start_date,
+                    end_date: end_date,
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data);
+                    updateDividePage();
+                    updateTable(1);
+                }
+            );
+        }
+
+        //勾选框全选或者取消全选
+        $("#selectall_checkbox_success").click(function(){
+            var ch = document.getElementsByClassName('id_sub_check_success');
+            var isCheck = document.getElementById("selectall_checkbox_success").checked
+            for(var i=0;i<ch.length;i++){
+                ch[i].checked = isCheck;
+            }
+        });
+
+        $("#selectall_checkbox_refund").click(function(){
+            var ch = document.getElementsByClassName('id_sub_check_refund');
+            var isCheck = document.getElementById("selectall_checkbox_refund").checked
+            for(var i=0;i<ch.length;i++){
+                ch[i].checked = isCheck;
+            }
+        });
+
+        $("#selectall_checkbox_process").click(function(){
+            var ch = document.getElementsByClassName('id_sub_check_process');
+            var isCheck = document.getElementById("selectall_checkbox_process").checked
+            for(var i=0;i<ch.length;i++){
+                ch[i].checked = isCheck;
+            }
+        });
+
+        //获取更新内容
+        function update_list() {
+            $("[tr_can_more_remove='yes']").remove();
+            var ch_success = document.getElementsByClassName('id_sub_check_success');
+            var ch_refund = document.getElementsByClassName('id_sub_check_refund');
+            var ch_process = document.getElementsByClassName('id_sub_check_process');
+
+            //充值成功订单
+            for (var i = 0; i < ch_success.length; i++) {
+                var ck_count = 0;
+                var tr = $("<tr tr_can_more_remove='yes'></tr>");
+                if(ch_success[i].checked) {
+                    ck_count = ck_count + 1;
+                    tr.append($("<td>{0}</td>".format(ch_success[i].value)));
+                    tr.append($("<td>充值成功</td>"));
+                    u_success_order.push(ch_success[i].value)
+                }
+                if(ch_refund[i].checked) {
+                    ck_count = ck_count + 1;
+                    tr.append($("<td>{0}</td>".format(ch_refund[i].value)));
+                    tr.append($("<td>充值退款</td>"));
+                    u_refund_order.push(ch_refund[i].value)
+                }
+                if(ch_process[i].checked) {
+                    ck_count = ck_count + 1;
+                    tr.append($("<td>{0}</td>".format(ch_process[i].value)));
+                    tr.append($("<td>充值处理中</td>"));
+                    u_process_order.push(ch_process[i].value)
+                }
+                if(ck_count > 1){
+                    alert("{0}有多个订单状态，同一订单只能有一个更新状态".format(ch_success[i].value))
+                    return
+                }
+                $("#more_table tbody").append(tr);
+            }
+            $("#mymodal").modal("toggle")
+        }
+
+        function update_nnk_order()
+        {
+            //截取出开始日期和结束日期
+            var start_date = g_date_control.val().substr(0,10);
+            var end_date = g_date_control.val().substr(13);
+
+            postJSON("{% url nnk_orders_update_ajax %}",
+                {
+                    start_date: start_date,
+                    end_date: end_date,
+                    u_success_order: u_success_order,
+                    u_refund_order: u_refund_order,
+                    u_process_order: u_process_order,
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data);
+                    updateDividePage();
+                    updateTable(1);
+                }
+            );
+            $("#mymodal").modal("hide")
+        }
+
+
+    </script>
+{% endblock %}

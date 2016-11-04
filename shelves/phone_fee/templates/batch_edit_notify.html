@@ -1,0 +1,118 @@
+<div class="modal" id="my_notify">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="notify_modal_title_">请填写提示语(长度:2-15)</h4>
+            </div>
+            <div class="modal-body">
+                <ul>
+                    <form>
+                        <input class="form-control" type="text" id="notify_input">
+                    </form>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="" onclick="batchEditNotify()">预览</button>
+            </div>
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<br/>
+<div class="modal" id="my_notify_show">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="notify_modal_title">您正在将以下商品的提示语修改</h4>
+            </div>
+            <div class="modal-body">
+                <table id="notify_show_table" class=" table-striped table-bordered table-hover data_detail"
+                       style="font-size: 12px">
+                    <tbody>
+                    <tr>
+                        <td>序号</td>
+                        <td>供应商</td>
+                        <td>省份</td>
+                        <td>运营商</td>
+                        <td>面值</td>
+                        <td>售价</td>
+                        <td>进货价</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="" onclick="batchEditSub()">确定</button>
+            </div>
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<script>
+    var notify = ''
+    //批量改提示语
+    function batchEditNotify() {
+        notify = $("#notify_input").val();
+        //document.getElementById("notify_input").value = '';
+        batchEditShow()
+        //$("#my_notify").modal('hide');
+    }
+    //显示更改
+    function batchEditShow() {
+        if (notify.length < 2 || notify.length > 15) {
+            alert('提示语在2~15之间!')
+            return
+        }
+        //console.log(notify, document.getElementById("notify_modal_title").value, select_list);
+        document.getElementById("notify_modal_title").innerHTML = '您正在将以下商品的提示语修改为"' + notify + '"';
+        $("#my_notify_show").modal('show');
+
+
+        $("[tr_notify_remove='yes']").remove();
+        //添加元素
+        for (var i = 0; i < select_list.length; i++) {
+            var tr = $("<tr tr_notify_remove='yes'></tr>");
+            for (var j in select_list[i]) {
+                tr.append($("<td>{0}</td>".format(i + 1)));
+                tr.append($("<td>{0}</td>".format(select_list[i][j][2])));
+                tr.append($("<td>{0}</td>".format(select_list[i][j][3])));
+                tr.append($("<td>{0}</td>".format(select_list[i][j][4])));
+                tr.append($("<td>{0}元</td>".format(select_list[i][j][5])));
+                tr.append($("<td>{0}元</td>".format(select_list[i][j][6])));
+                tr.append($("<td>{0}元</td>".format(select_list[i][j][7])));
+            }
+            $("#notify_show_table tbody").append(tr);
+        }
+    }
+
+    //提交修改提示语
+    function batchEditSub() {
+        postJSON("{% url 'phone_fee_batch_notify_ajax' %}",
+                {
+                    notify_data: JSON.stringify(select_list),
+                    notify: notify,
+                },
+                function (data) {
+                    //字符串转json
+                    no_data = eval('('+data+')');
+                    if (no_data.length == 0) {
+                        alert('ok');
+                        requestData(1);
+                        $("#my_notify").modal('hide')
+                        $("#my_notify_show").modal('hide')
+                    } else {
+                         alert(no_data.err);
+                    }
+                }
+        );
+    }
+
+</script>

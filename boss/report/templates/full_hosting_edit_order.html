@@ -1,0 +1,150 @@
+{% extends "report-base.html" %}
+{% block title %}编辑订单保障状态{% endblock %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <style type="text/css">
+    </style>
+{% endblock %}
+{% block content %}
+    {% if errors %}
+        <div class="alert alert-danger alert-dismissible fade in" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+            <p>{{ errors }}</p>
+        </div>
+    {% endif %}
+    <form class="form-horizontal" method="post">
+        {% csrf_token %}
+        <fieldset>
+            <legend>编辑订单保障状态 - {{ order_no }}</legend>
+            <div class="form-group">
+                <label for="module_auth" class="col-sm-2 control-label">超时接单</label>
+                <div class="col-sm-3">
+                    <input type="checkbox" id="check_overtime" name="check_overtime" {% if check_overtime %}checked{% endif %}{% if not show_overtime %}disabled="disabled"{% endif %}>
+                </div>
+                <span style="font-size: 12px;color:red;">已处理打勾, 未出理取消打勾</span>
+            </div>
+            <div class="form-group">
+                <label for="module_auth" class="col-sm-2 control-label">上门确认</label>
+                <div class="col-sm-3">
+                    <input type="checkbox" id="check_order_confirm" name="check_order_confirm" {% if check_order_confirm %}checked{% endif %}{% if not show_order_confirm %}disabled="disabled"{% endif %}>
+                </div>
+                <span style="font-size: 12px;color:red;">已确认打勾, 未确认取消打勾</span>
+            </div>
+            <div class="form-group">
+                <label for="module_auth" class="col-sm-2 control-label">服务回访</label>
+                <div class="col-sm-3">
+                    <input type="checkbox" id="check_feedback" name="check_feedback" {% if check_feedback %}checked{% endif %}{% if not show_feedback %}disabled="disabled"{% endif %}>
+                </div>
+                <span style="font-size: 12px;color:red;">已回访打勾, 未回访取消打勾</span>
+            </div>
+            <div class="form-group">
+                <label for="user_name" class="col-sm-2 control-label">超时接单标记</label>
+                <div class="col-sm-3">
+                    <input style="display:none"><!-- for disable autocomplete on chrome -->
+                    <input type="text" class="form-control" id="comment_overtime" name="comment_overtime" autocomplete="off" value="{{ comment_overtime }}"{% if not show_overtime %}disabled="disabled"  placeholder="该订单非超时接单订单" {% endif %}>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="user_name" class="col-sm-2 control-label">上门确认标记</label>
+                <div class="col-sm-3">
+                    <input style="display:none"><!-- for disable autocomplete on chrome -->
+                    <input type="text" class="form-control" id="comment_order_confirm" name="comment_order_confirm" autocomplete="off" value="{{ comment_order_confirm }}"{% if not show_order_confirm %}disabled="disabled" placeholder="该订单非上门确认订单"{% endif %}>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="user_name" class="col-sm-2 control-label">服务回访标记</label>
+                <div class="col-sm-3">
+                    <input style="display:none"><!-- for disable autocomplete on chrome -->
+                    <input type="text" class="form-control" id="comment_feedback" name="comment_feedback" autocomplete="off" value="{{ comment_feedback }}"{% if not show_feedback %}disabled="disabled" placeholder="该订单非服务回访订单"{% endif %}>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2">
+                    <a type="button" class="btn btn-default btn-block" href="{% url full_hosting %}">返回</a>
+                </div>
+                <div class="col-sm-3">
+                    <button type="submit" class="btn btn-success btn-block" onclick="submitMessage()">提交</button>
+                </div>
+            </div>
+        </fieldset>
+    </form>
+    <script type="application/javascript">
+    $(document).ready(function()
+    {
+        setLeftNav("nav_user_list");
+        var group = $('#group');
+        var module = $('#module');
+        var app = $('#app');
+        var zf = $('#zf');
+        group.multiselect({
+            disableIfEmpty: true,
+            maxHeight: 200,
+            filterPlaceholder: "搜索",
+            enableFiltering: true,
+            includeSelectAllOption: true,
+            //selectAllText: '全部选择',
+            onChange: function(option, checked, select) {
+                    updateModuleApp();
+            },
+            onDropdownHide: function(event) {
+                $(".multiselect-clear-filter").click();
+            }
+        });
+        module.multiselect({
+            disableIfEmpty: true,
+            maxHeight: 200,
+            filterPlaceholder: "搜索",
+            enableFiltering: true,
+            includeSelectAllOption: true,
+            //selectAllText: '全部选择',
+            onDropdownHide: function(event) {
+                $(".multiselect-clear-filter").click();
+            }
+
+        });
+        app.multiselect({
+            disableIfEmpty: true,
+            maxHeight: 200,
+            filterPlaceholder: "搜索",
+            enableFiltering: true,
+            includeSelectAllOption: true,
+            onDropdownHide: function(event) {
+                $(".multiselect-clear-filter").click();
+            }
+        });
+        zf.multiselect({
+            disableIfEmpty: true,
+            maxHeight: 200,
+            filterPlaceholder: "搜索",
+            enableFiltering: true,
+            includeSelectAllOption: true,
+            onDropdownHide: function(event) {
+                $(".multiselect-clear-filter").click();
+            }
+        });
+    });
+
+    function submitMessage()
+    {
+        alert("修改成功!!")
+    }
+    function updateModuleApp()
+    {
+        var module = $("#module");
+        var app = $("#app");
+
+        postJSON("{% url change_group %}",
+        {
+            group: $("#group").val()
+        },
+        function(data)
+        {
+            module.multiselect('deselectAll', false);
+            app.multiselect('deselectAll', false);
+            module.multiselect('select', eval(data)[2]);
+            app.multiselect('select', eval(data)[3]);
+        });
+    }
+    </script>
+{% endblock %}

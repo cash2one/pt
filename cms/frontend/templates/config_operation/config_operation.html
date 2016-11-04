@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}运营配置{% endblock %}
+{% block content %}
+    <section class="top-sec">
+        <ol class="breadcrumb" id="breadcrumb">
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+            <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+            <li class="active">运营配置</li>
+        </ol>
+        <!--<a class="adbtn-new" data-toggle="modal" data-target="#myModal_coupons" href="{% url 'new_config_operation' %}?channel={{ channel }}"><b style="font-size:.18rem">＋&nbsp</b>新增配置</a>-->
+
+        {% if perms.man.config %}
+               <a class="adbtn-new" data-toggle="modal" data-target="#myModal_shop"><b style="font-size:.18rem">＋&nbsp</b>新增配置</a>
+        {% endif %}
+
+    </section>
+    <section class="service-table">
+        <table id="table">
+            <caption></caption>
+            <thead class="my_thead">
+            <tr>
+                <th>序号</th>
+                <th>名称</th>
+                <th>值</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <!-- <div id="loading" style="display:none;">
+                  <img src="{% static 'images/loading.gif' %}"/>
+            </div> -->
+            <tbody id="tbody" class="tbody">
+
+            </tbody>
+
+        </table>
+
+        <div class="no_content"><p>暂无配置内容，请新增配置</p></div>
+
+        <div class="modal fade" id="myModal_shop" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">+ 添加运营配置</h4>
+                    </div>
+                    <div class="modal-body">
+                         <input type="hidden" name="channel" value="{{ channel }}" id="channel">
+                        <input type="hidden" name="status" value="0">
+                        <label>配置项：</label>
+                        <select class="input-group-lg form-control" name="configs" id="configs" required maxlength="11">
+                            <option class="form-control" data-idx="1" value="{{ OP_CONFIG.PUSH }}">{{ OP_CONFIG.PUSH_TEXT }}</option>
+                            <option class="form-control" data-idx="2" value="{{ OP_CONFIG.TAB_SHOW }}">{{ OP_CONFIG.TAB_SHOW_TEXT }}</option>
+                            <option class="form-control" data-idx="3" value="{{ OP_CONFIG.PAY_LIST }}">{{ OP_CONFIG.PAY_LIST_TEXT }}</option>
+                            <option class="form-control" data-idx="4" value="4">其他</option>
+
+                        </select>
+
+
+                        <!--新增push开关-->
+                        <div class="config-option" id="push">
+                            <label>选项：</label>
+                            <select class="input-group-lg form-control" name="push" id="push" required maxlength="11">
+                                <option class="form-control" value="{{ OP_CONFIG.PUSH_OPEN }}">{{ OP_CONFIG.PUSH_OPEN_TEXT }}</option>
+                                <option class="form-control" value="{{ OP_CONFIG.PUSH_CLOSE }}">{{ OP_CONFIG.PUSH_CLOSE_TEXT }}</option>
+                            </select>
+                        </div>
+                    <!--新增Tab打点-->
+                        <div class="config-option" id="tab">
+                            <label>选项：</label>
+                            <select class="input-group-lg form-control" name="tab" id="tab" required maxlength="11">
+                                <option class="form-control" value="{{ OP_CONFIG.TAB_SHOW_OPEN }}">{{ OP_CONFIG.TAB_SHOW_OPEN_TEXT }}</option>
+                                <option class="form-control" value="{{ OP_CONFIG.TAB_SHOW_CLOSE }}">{{ OP_CONFIG.TAB_SHOW_CLOSE_TEXT }}</option>
+                            </select>
+                        </div>
+                    <!--新增支付控制-->
+                        <div class="config-option" id="pay">
+                            <label>选项：</label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_WEIXIN_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_WEIXIN }}">{{ OP_CONFIG.PAY_LIST_WEIXIN_TEXT }}
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_ZHIFUBAO_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_ZHIFUBAO }}">{{ OP_CONFIG.PAY_LIST_ZHIFUBAO_TEXT }}
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_LENOVO_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_LENOVO }}">{{ OP_CONFIG.PAY_LIST_LENOVO_TEXT }}
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_4_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_4 }}">{{ OP_CONFIG.PAY_LIST_4_TEXT }}
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_5_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_5 }}">{{ OP_CONFIG.PAY_LIST_5_TEXT }}
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_JINLI_ZHIFUBAO_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_JINLI_ZHIFUBAO }}">{{ OP_CONFIG.PAY_LIST_JINLI_ZHIFUBAO_TEXT }}
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_JINLI_WEIXIN_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_JINLI_WEIXIN }}">{{ OP_CONFIG.PAY_LIST_JINLI_WEIXIN_TEXT }}
+                                </label>
+                        </div>
+                        <!--新增其他-->
+                        <div class="config-option" id="other">
+                            <label>选项：</label>
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="form-group">
+                                        <label><i>*</i>key：</label>
+                                        <input class="form-control" name="key" id="key" value="{{ key }}" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="form-group">
+                                        <label><i>*</i>value：</label>
+                                        <textarea class="form-control" name="value" id="value" rows="5" required></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="repeat-tips">提示：请勿添加重名的配置信息，您可以选择修改信息</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="common_ser_confirm" onclick=''>确定</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div>
+        </div><!-- /.modal -->
+
+        <div class="modal fade" id="myModal_edit" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">编辑运营配置</h4>
+                    </div>
+                    <div class="modal-body">
+                         <input type="hidden" name="channel" value="{{ channel }}" id="channel">
+                        <input type="hidden" name="status" value="0">
+                        <p>请修改<span id="edit-item" style="font-weight: bold;color: #f00;"></span>配置信息：</p>
+
+                        <!--新增push开关-->
+                        <div class="config-option" id="push-edit">
+                            <select class="input-group-lg form-control" name="push-edit" id="push-edit" required maxlength="11">
+                                <option class="form-control" name="{{ OP_CONFIG.PUSH_OPEN_TEXT }}" value="{{ OP_CONFIG.PUSH_OPEN }}">{{ OP_CONFIG.PUSH_OPEN_TEXT }}</option>
+                                <option class="form-control" name="{{ OP_CONFIG.PUSH_CLOSE_TEXT }}" value="{{ OP_CONFIG.PUSH_CLOSE }}">{{ OP_CONFIG.PUSH_CLOSE_TEXT }}</option>
+                            </select>
+                        </div>
+                    <!--新增Tab打点-->
+                        <div class="config-option" id="tab-edit">
+                            <select class="input-group-lg form-control" name="tab-edit" id="tab-edit" required maxlength="11">
+                                <option class="form-control" name="{{ OP_CONFIG.TAB_SHOW_OPEN_TEXT }}" value="{{ OP_CONFIG.TAB_SHOW_OPEN }}">{{ OP_CONFIG.TAB_SHOW_OPEN_TEXT }}</option>
+                                <option class="form-control" name="{{ OP_CONFIG.TAB_SHOW_CLOSE_TEXT }}" value="{{ OP_CONFIG.TAB_SHOW_CLOSE }}">{{ OP_CONFIG.TAB_SHOW_CLOSE_TEXT }}</option>
+                            </select>
+                        </div>
+                    <!--新增支付控制-->
+                        <div class="config-option" id="pay-edit">
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_WEIXIN_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_WEIXIN }}">{{ OP_CONFIG.PAY_LIST_WEIXIN_TEXT }}
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_ZHIFUBAO_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_ZHIFUBAO }}">{{ OP_CONFIG.PAY_LIST_ZHIFUBAO_TEXT }}
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_LENOVO_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_LENOVO }}">{{ OP_CONFIG.PAY_LIST_LENOVO_TEXT }}
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_4_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_4 }}">{{ OP_CONFIG.PAY_LIST_4_TEXT }}
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_5_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_5 }}">{{ OP_CONFIG.PAY_LIST_5_TEXT }}
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_JINLI_ZHIFUBAO_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_JINLI_ZHIFUBAO }}">{{ OP_CONFIG.PAY_LIST_JINLI_ZHIFUBAO_TEXT }}
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="{{ OP_CONFIG.PAY_LIST_JINLI_WEIXIN_TEXT }}" value="{{ OP_CONFIG.PAY_LIST_JINLI_WEIXIN }}">{{ OP_CONFIG.PAY_LIST_JINLI_WEIXIN_TEXT }}
+                                </label>
+                        </div>
+                        <!--新增其他-->
+                        <div class="config-option" id="other-edit">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="form-group">
+                                        <label><i>*</i>key：</label>
+                                        <input class="form-control" name="key-edit" id="key-edit" value="{{ key }}" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="form-group">
+                                        <label><i>*</i>value：</label>
+                                        <textarea class="form-control" name="value-edit" id="value-edit" rows="5" required></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="edit-confirm" onclick=''>确定</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div>
+        </div><!-- /.modal -->
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+                setNavBg({{t}});
+                requestData();
+            });
+
+            function CreateTable(data)//表格创建函数
+            {
+                if (data.length == 0) {
+                    $(".no_content").show();
+                    $(".my_thead").hide();
+                }
+                if (data.length > 0) {
+                    $(".my_thead").show();
+                    $(".no_content").hide();
+                }
+                var tbody = $("<tbody>");
+                //var cellCount = 3;
+                var rowCount = data.length;
+
+
+                $("#table tbody").remove();
+                tbody.appendTo($("#table"));
+                for (var i = 0; i < rowCount; i++) {
+                    var tr = $("<tr></tr>");
+                    var cellCount=data[i].length;
+                    tr.appendTo(table);
+                    for (var j = 0; j < cellCount-2; j++) {
+                        var td = $("<td>" + data[i][j] + "</td>");
+                        td.appendTo(tr);
+                    }
+                    //根据传递参数，显示操作状态，0为可见，1为可编辑
+                    if(data[i][cellCount-2]==1){
+                        var td = $("<td><a style='margin-right:.1rem;' data-toggle='modal' data-target='#myModal_edit' data-id='"+data[i][cellCount-1]+"' data-value='"+data[i][2]+"' data-text='"+data[i][1]+"' href='' title='编辑配置' class='edit glyphicon glyphicon-edit'></a><a href='' title='删除配置' class='del glyphicon glyphicon-trash' data-toggle='modal' data-target='#myModal-del' onclick='confirms(" + data[i][cellCount-1] + ")'></a></td>");
+                    }else if(data[i][cellCount-2]==0){
+                        //不显示编辑状态
+                        var td = $("<td><a class='glyphicon glyphicon-eye-open'></a></td>");
+                    }
+                    //console.log("要删除的数据id"+data[i][cellCount]);
+                    //var td = $("<td><a style='margin-right:.1rem;' data-toggle='modal' data-target='#myModal_edit' data-id='"+data[i][cellCount-1]+"' data-value='"+data[i][2]+"' data-text='"+data[i][1]+"' href='' title='编辑配置' class='edit glyphicon glyphicon-edit'></a><a href='' title='删除配置' class='del glyphicon glyphicon-trash' data-toggle='modal' data-target='#myModal-del' onclick='confirms(" + data[i][cellCount-1] + ")'></a></td>");
+                    td.appendTo(tr);
+                }
+                //console.log("id是"+data);
+
+                $("table").append("</tbody>");
+            }
+            function requestData() {
+                $.ajax("{% url 'search_config_operation' %}", {
+                    type: "get",
+                    cache: false,
+                    data: {
+                        channel: {{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        CreateTable(eval(result));
+                        checkAuthority();
+                    },
+                    error: function (result) {
+                        //console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            }
+            function confirms(id) {
+
+                var del_info = $(event.target).parent().siblings().eq(1).text();//获取当前元素的父节点的兄弟节点的第二个节点
+
+                $("span.del_info").text(del_info);
+                $(".btn-primary").off("click").one("click", function (event) {
+                    delCommonservice(id);
+                });
+            }
+            function delCommonservice(id) {
+                $.ajax("{% url 'delete_config_operation' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id: id,
+                        channel: {{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        if (result == 0) {
+                            requestData();
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").show();
+                    }
+                });
+            }
+
+            //根据选择不同展示不同的下拉框
+                $("#configs").on("input",function(){
+                    $(".repeat-tips").hide();
+                    var index=$(this).find("option:selected").data("idx");
+                    //console.log(index);
+                    if(index==1){
+                        $("#push").show();
+                        $("#push").siblings(".config-option").hide();
+                    }else if(index==2){
+                        $("#tab").show();
+                        $("#tab").siblings(".config-option").hide();
+                    }else if(index==3){
+                        $("#pay").show();
+                        $("#pay").siblings(".config-option").hide();
+                    }else {
+                        $("#other").show();
+                        $("#other").siblings(".config-option").hide();
+                    }
+                });
+
+
+
+            //添加运营配置
+            $("#common_ser_confirm").click(function(){
+                var index=$("#configs").find("option:selected").data("idx");
+                var varray=[];
+                var k=$("#configs").find("option:selected").val();
+                var v;
+                if(index==1){
+                    v= $("select[name='push']").find("option:selected").val();
+                }
+                if(index==2){
+                    v= $("select[name='tab']").find("option:selected").val();
+                }
+                if(index==3){
+                    var str=$("#pay").find("input:checkbox:checked");
+                    if(str.length==0){
+                        v ="{{ OP_CONFIG.PAY_LIST_NONE }}";
+                    } else {
+                        $(str).each(function(i,item){
+                            varray.push(parseInt($(item).val()));
+                        });
+                        v=JSON.stringify(varray);
+                    }
+                }
+                if(index==4){
+                    k=$("#key").val();
+                    v=$("#value").val();
+                }
+                $.ajax("{% url 'new_config_operation' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        channel_id : '{{ channel }}',
+                        key: k,
+                        value:v
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        //$("#myModal_shop").modal("hide");
+                        $("#loading").show();
+
+                    },
+                    success: function (result) {
+                        if (result == 0) {
+                            requestData();
+                            $("#myModal_shop").modal("hide");
+                        }else if(result==-1){
+                            //console.log("请勿重复添加");
+                            $(".repeat-tips").show();
+                            return false;
+                        }
+                    },
+                    error: function (result) {
+                        //console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            });
+
+
+            var config_id;
+            //编辑运营配置
+            $("table").on("click","a.edit",function(){
+                $(":checkbox").prop("checked",false);
+                var text=$(this).data("text");
+                var value=$(this).data("value");
+                config_id=$(this).data("id");
+                //console.log(text);
+                //console.log(value);
+                if(text=="{{ OP_CONFIG.TAB_SHOW_TEXT }}"){
+                    $("#tab-edit option[name='{{ OP_CONFIG.TAB_SHOW_OPEN_TEXT }}']").prop("selected",true);
+                    $("#edit-item").html(text);
+                    $("#tab-edit").show();
+                    $("#tab-edit").siblings(".config-option").hide();
+                    $("#tab-edit option[name='"+value+"']").prop("selected",true);
+
+                }else if(text=="{{ OP_CONFIG.PUSH_TEXT }}"){
+                    $("#push-edit option[name='{{ OP_CONFIG.PUSH_OPEN_TEXT }}']").prop("selected",true);
+                    $("#push-edit").show();
+                    $("#edit-item").html(text);
+                    $("#push-edit").siblings(".config-option").hide();
+                    $("#push-edit option[name='"+value+"']").prop("selected",true);
+                }else if(text=="{{ OP_CONFIG.PAY_LIST_TEXT }}"){
+                    $("#pay-edit").show();
+                    $("#pay-edit").siblings(".config-option").hide();
+                    $("#edit-item").html(text);
+                    if(value.constructor !== Array){
+                        var v_arr=value.split(",");
+                        for(var i=0;i<v_arr.length;i++){
+                            $("#pay-edit input[name='"+v_arr[i]+"']").prop("checked",true);
+                        }
+                    }
+                }else {
+                    $("#other-edit").show();
+                    $("#other-edit").siblings(".config-option").hide();
+                     $("#edit-item").html("");
+                    $("#other-edit").find("#key-edit").val(text).prop("disabled",true).end()
+                            .find("#value-edit").val(value);
+                }
+            });
+
+            //编辑后提交运营配置
+
+            $("#edit-confirm").click(function(){
+                var textstr=$("#edit-item").html();
+                var k='',v;
+                var varray=[];
+                if(textstr=="{{ OP_CONFIG.PUSH_TEXT }}"){
+                    k="push_time";
+                    v= $("select[name='push-edit']").find("option:selected").val();
+                }else if(textstr=="{{ OP_CONFIG.TAB_SHOW_TEXT }}"){
+                    k="tab_show";
+                    v= $("select[name='tab-edit']").find("option:selected").val();
+                }else if(textstr=="{{ OP_CONFIG.PAY_LIST_TEXT }}"){
+                    k="pay_list";
+                    var str=$("#pay-edit").find("input:checkbox:checked");
+                    if(str.length==0){
+                        v="{{ OP_CONFIG.PAY_LIST_NONE }}";
+                    }else {
+                        $(str).each(function(i,item){
+                            varray.push(parseInt($(item).val()));
+                        });
+                        v=JSON.stringify(varray);
+                    }
+
+                }else {
+                    k = $("#key-edit").val();
+                    v = $("#value-edit").val();
+                }
+                $.ajax("{% url 'edit_config_operation' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id : config_id,
+                        channel_id:{{ channel }},
+                        key: k,
+                        value:v
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#myModal_edit").modal("hide");
+                        $("#loading").show();
+
+                    },
+                    success: function (result) {
+                        if (result == 0) {
+                            requestData();
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            });
+
+        </script>
+    </section>
+
+
+{% endblock %}

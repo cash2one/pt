@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}套餐卡{% endblock %}
+
+{% block head %}
+<style>
+    .my_thead{
+        display: table-header-group;
+    }
+    /*   #table tr td:nth-child(2){
+           text-align: left;
+           padding-left: 20px;
+       }*/
+    #table .mimg{
+        width:100px;
+        height: 100px;
+        margin:10px 0;
+    }
+    #table td .mblock{
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    #table .noContent{
+        height: 200px;
+        font-size: 20px;;
+    }
+    #table .noContent:hover{
+        background: transparent;
+    }
+    table th{
+        border: 1px solid #aaa;
+        text-align: center;
+    }
+    /*hello world*/
+    .container {
+        padding: 15px;
+        width: 100%;
+        border: 1px solid #ccc;
+        display: flex;
+        -webkit-display: flex;
+        box-sizing: border-box;
+        justify-content: space-around;
+    }
+    .container .add,
+    .container .add:focus,
+    .container .add:active {
+        border-color: transparent;
+        background-color: transparent;
+        outline: none;
+    }
+    .container .list,
+    .container .has {
+        flex-grow: 0;
+        width: 40%;
+        height: 300px;
+        background-color: #ccc;
+    }
+    .container .list .lists {
+        margin-top: -1px;
+        height: calc(89%);
+        overflow-y: scroll;
+    }
+    .container .has .lists {
+        height: calc(100%);
+        overflow-y: scroll;
+    }
+    .container .list .lists option {
+        height: 20px;
+    }
+    .modal-dialog {
+        margin-top: 1rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="helper_fake">
+    <div id="loading" style="display:none;">
+        <img src="{% static 'images/loading.gif' %}"/>
+    </div>
+</div>
+<section class="service-table">
+    {% verbatim %}
+    <table id="table">
+        <caption></caption>
+        <thead class="my_thead">
+            <tr>
+                <th>套餐卡名称</th>
+                <th>所选商品</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tbody">
+            <tr v-for="list in lists">
+                <td><div data-id="{{list.id}}">{{ list.name }}</div></td>
+                <td>
+                    <template v-if="list.goods && list.goods.length">
+                        <div class="goods" v-for="it in list.goods">
+                            {{it.name}}
+                        </div>
+                    </template>
+                </td>
+                <td><span class="glyphicon glyphicon-edit" @click="update(list)"></span></td>
+            </tr>
+        </tbody>
+    </table>
+    <!-- 分页插件 -->
+    <div id="pagination" ></div>
+
+    <!-- 弹窗 -->
+    <div class="modal fade" id="pcard-goods" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="">
+                        {{info.goods.name}}
+                    </h4>
+                </div>
+                <div class="modal-body" style="text-align:center;">
+                    <div class="container">
+                        <div class="list">
+                            <input type="search" class="form-control" placeholder="查询商品" v-model="searchKey" >
+                            <select multiple class="form-control lists">
+                                <template v-if="info.searchs && info.searchs.length">
+                                    <option v-for="item in info.searchs | filterBy searchKey" debounce=300 @dblclick.stop.prevent="addGoods(item)" title="双击添加商品">{{item.name}}</option>
+                                </template>
+                                <template v-else>
+                                    <option value="" disabled>没有您想查找的商品</option>
+                                </template>
+                            </select>
+                        </div>
+                        <button class="btn add"><i class="glyphicon glyphicon-arrow-right"></i></button>
+                        <div class="has">
+                            <select multiple class="form-control lists">
+                                <template v-if="info.goods.goods && info.goods.goods.length">
+                                    <option v-for="item in info.goods.goods" @dblclick.stop.prevent="deleteGoods(item.id, $index)" title="双击删除商品">{{item.name}}</option>
+                                </template>
+                                <template v-else>
+                                    <option value="" disabled>当前套餐内没有任何商品</option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增辅助组件 -->
+    <div class="helper"></div>
+    {% endverbatim %}
+</section>
+    <script src="{% static 'js/cms/helper.js' %}"></script>
+    <script src="{% static 'js/cms/initTable.js' %}"></script>
+    <script type="text/javascript">
+        var myTable;
+        $(function () {
+            init();
+            myTable = new tableInit({});
+            myTable.getData();
+            /*绑定搜索部分功能*/
+            myTable.searchInit();
+        });
+
+        var vm = new Vue({
+            el: '.service-table',
+            data: {
+                    pcardId: '', // 套餐卡id
+                    searchKey: '',
+                    lists: [],
+                    info: {
+                        goods: [],
+                        searchs: []
+                    }
+            },
+            methods: {
+                update: function(list) {
+                    this.searchKey = '';
+                    this.pcardId = list.id;
+                    this.$set('info.goods', list);
+                    Vue.nextTick(function () {
+                        $('#pcard-goods').modal();
+                    })
+                },
+                addGoods: function(item) {
+                    var _this = this;
+                    $('#loading').show().css('z-index', 999999);
+                    $.post('/config/pcard/goods/', JSON.stringify({
+                        pid: _this.pcardId,
+                        gid: item.id
+                    })).done(function(res) {
+                        $('#loading').hide();
+                        if (res.code === 0) {
+                            _this.info.goods.goods.push({
+                                name: item.name,
+                                id: item.id
+                            });
+                        } else if (res.code === 1) {
+                            helper.alert({
+                                content: res.msg || '添加商品失败'
+                            });
+                        }
+                    }).fail(function(e) {
+                        $('#loading').hide();
+                        helper.alert({
+                            content: '调用添加商品接口失败，请稍后重试~'
+                        });
+                    });
+                },
+                deleteGoods: function(id, index) {
+                    var _this = this;
+                    $('#loading').show().css('z-index', 999999);
+                    $.ajax({
+                        url: '/config/pcard/goods/?pid=' + _this.pcardId + '&gid=' + id,
+                        type: 'DELETE',
+                        success: function(res) {
+                            $('#loading').hide();
+                            if (res.code === 0) {
+                                _this.info.goods.goods.splice(index, 1);
+                                $('#loading').hide();
+                            } else if (res.code === 1) {
+                                helper.alert({
+                                    content: res.msg || '删除商品失败'
+                                });
+                            }
+                        },
+                        error: function(e) {
+                            $('#loading').hide();
+                            helper.alert({
+                                content: '调用删除商品接口失败，请稍后重试~'
+                            });
+                        }
+                    });
+                }
+            },
+            ready: function() {
+                var _this = this;
+                $('#loading').show().css('z-index', 999999);
+                $.getJSON('/config/pcard/common/goods/')
+                .done(function(res) {
+                    Vue.set(_this.info, 'searchs', res);
+                }).fail(function(e) {
+                    helper.alert('获取可添加商品列表数据失败，请稍后重试~')
+                }).always(function() {
+                    $('#loading').hide();
+                });
+            }
+        });
+
+        function init() {
+            /*初始化页面*/
+            setNavBg("pcard");
+        }
+        function requestData(options) {
+            $.ajax({
+                url: "/config/pcard/goods/list/",
+                type: "GET",
+                cache: false,
+                dataType: 'json',
+                data: {
+                    page: options.curPage,
+                    limit: options.pageSize
+                },
+                beforeSend: function (XMLHttpRequest) {
+                    $("#" + options.loadImgId).show();
+                    $("#pagination").hide();
+                },
+                success: function (result) {
+                    var data = result.pcards, num_pages = result.totalpage;
+                    if (data.length == 0) {
+                        $('#' + myTable.default.tbodyId).empty();
+                        $("#pagination").hide();
+                        $(".no_content").show();
+                        $(".my_thead").hide();
+                    }
+                    else {
+                        $(".no_content").hide();
+                        dataInit(data)
+                        $(".my_thead").show();
+                        myTable.processData(data);
+                        if (num_pages >= 2) myTable.pageInit(num_pages);
+                    }
+                },
+                error: function (result) {
+                    console.log(result);
+                },
+                complete: function (result) {
+                    $("#" + options.loadImgId).hide();
+                    var currentpage = options.curPage - 1;
+                    $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                    if (currentpage > 5) {
+                        $(options.pageSelector).eq(currentpage - 5).prevAll().hide();
+                    }
+                }
+            })
+        }
+        /*处理后台返回数据*/
+        function dataInit(data_s) {
+            vm.$set('lists', data_s)
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,1356 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}标签库{% endblock %}
+
+{% block head %}
+<style>
+    .my_thead{
+        display: table-header-group;
+    }
+    /*   #table tr td:nth-child(2){
+           text-align: left;
+           padding-left: 20px;
+       }*/
+    #table .mimg{
+        width:100px;
+        height: 100px;
+        margin:10px 0;
+    }
+    #table td .mblock{
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    #table .noContent{
+        height: 200px;
+        font-size: 20px;;
+    }
+    #table .noContent:hover{
+        background: transparent;
+    }
+    table th{
+        border: 1px solid #aaa;
+        text-align: center;
+    }
+    .modal-dialog {
+        margin-top: 1rem !important;
+    }
+    a:focus,
+    a:active,
+    a:hover,
+    a {
+        text-decoration: none;
+    }
+    ul, ol {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+    .tabs li {
+        display: inline-block;
+        padding: 5px 10px;
+    }
+    .tabs a {
+        font-size: 20px;
+        color: #000;
+    }
+    .tabs li.active {
+        border-bottom: 2px solid #ccc;
+        text-align: center;
+    }
+    .nav-inline {
+        font-size: 20px;
+        margin: 0;
+    }
+    .nav-inline a.back {
+        border-bottom: 2px solid #ccc;
+        padding: 5px 10px;
+     }
+    .imgs {
+        display: inline-block;
+    }
+    a.add-tag-img .glyphicon {
+        padding: 5px 0;
+        color: #000;
+    }
+    .imgs img,
+    .add-tag-img  {
+        width: 64px;
+        height: 64px;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        border-radius: 4px;
+        border: 1px solid #eee;
+        outline: none;
+    }
+    .add-tag-img {
+        font-size: 36px;
+        outline: none;
+    }
+    .error-info {
+        margin: 0;
+        color: #a94442;
+    }
+    .goods-list {
+        min-height: 200px;
+        max-height: 500px;
+        overflow: auto;
+        margin-top: 15px;
+        margin-bottom: -15px;
+        border-top: 1px solid #eee;
+    }
+    .item {
+        padding: 4px 0;
+    }
+    .item span {
+        margin-left: 15px;
+    }
+    table td img {
+        max-width: 70px;
+        border: 1px solid transparent !important;
+    }
+    table td img:hover {
+        border: 1px solid #5cb85c !important;
+    }
+    .tag_order {
+        display: inline-block;
+        padding: 4px 6px;
+        width: 80px;
+        border: 1px solid #eee;
+        font-size: 16px;
+        text-align: center;
+    }
+    /*下拉多选样式覆盖*/
+    .muilti-select {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    .ms-choice {
+        height: 100% !important;
+        line-height: 34px !important;
+        border: 0 !important;
+    }
+    /*end*/
+    .loading {
+        -webkit-animation: load 2s infinite;
+        -o-animation: load 2s infinite;
+        animation: load 2s infinite;
+    }
+    @-webkit-keyframes load {
+        from {
+            color: #74c274;
+        }
+        to {
+            color: #5cb85c;
+        }
+    }
+    @-o-keyframes load {
+        from {
+            color: #74c274;
+        }
+        to {
+            color: #5cb85c;
+        }
+    }
+    @-moz-keyframes load {
+        from {
+            color: #74c274;
+        }
+        to {
+            color: #5cb85c;
+        }
+    }
+    @keyframes load {
+        from {
+            color: #74c274;
+        }
+        to {
+            color: #5cb85c;
+        }
+    }
+    /*覆盖pt-cms.css中的样式*/
+    .modal-body form input[type="text"] {
+        width: 100%;
+    }
+    a.text-warning {
+        color: #a94442 !important;
+    }
+    a.text-info {
+        color: #000 !important;
+    }
+    a.text-success {
+        color: #4cae4c !important;
+    }
+    a.text-default {
+        color: #66cccc !important;
+    }
+</style>
+<link rel="stylesheet" href="{% static 'css/multiple-select.css' %}">
+<link rel="stylesheet" href="{% static 'css/imgpicker.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="service-table">
+    {% verbatim %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <ul class="tabs" v-show="whichIndex === 0 || whichIndex === 1">
+                    <li :class="whichIndex === 0 ? 'active' : ''" @click.prevent.stop="tab(0)"><a href="#tags">标签组</a></li>
+                    <li :class="whichIndex === 1 ? 'active' : ''" @click.prevent.stop="tab(1)"><a href="#tags_all">全部标签</a></li>
+                </ul>
+                <p class="nav-inline" v-show="whichIndex === 10"><a href="" class="back text-info" @click.prevent.stop="tab(0)">标签组</a> > <span>{{editGroupName}}</span></p>
+                <p class="nav-inline" v-show="whichIndex === 11"><a href="" class="back text-info" @click.prevent.stop="tab(1)">全部标签</a> > <span>{{editTagName}}</span></p>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-success pull-right" v-show="whichIndex === 0" @click="addGroup">新建标签组</button>
+                <button class="btn btn-success pull-right" v-show="whichIndex === 1 || whichIndex === 10" @click="addTag">添加标签</button>
+                <button class="btn btn-success pull-right" v-show="whichIndex === 11" @click="addGoods">添加商品</button>
+            </div>
+        </div>
+    </div>
+    <!-- 标签组 -->
+    <table v-show="whichIndex === 0">
+        <caption></caption>
+        <thead class="my_thead">
+            <tr>
+                <th>标签组ID</th>
+                <th>标签组名称</th>
+                <th>名称备注</th>
+                <th>所含标签</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tbody">
+            <tr v-for="list in groupList">
+                <td><div>{{ list.id }}</div></td>
+                <td>
+                    <div>{{ list.name }}</div>
+                </td>
+                <td><div>{{ list.remark }}</div></td>
+                <td><div>{{ list.tags_name }}</div></td>
+                <td>
+                    <div class="btns">
+                        <a href="#" class="text-default" @click.prevent="editGroup(list)">管理</a>
+                        <a href="#" class="text-default" @click.prevent="updateGroup(list)">编辑</a>
+                        <a href="#" class="text-warning" @click.prevent="deleteGroup(list)">删除</a>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- 标签组管理列表 -->
+    <table v-show="whichIndex === 10">
+        <caption></caption>
+        <thead class="my_thead">
+            <tr>
+                <th>标签ID</th>
+                <th>标签名称</th>
+                <th>名称备注</th>
+                <th>所含服务</th>
+                <th>标签描述</th>
+                <th>排序</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tbody">
+            <tr v-for="list in editGroupList">
+                <td><div>{{ list.id }}</div></td>
+                <td><div>{{ list.name }}</div></td>
+                <td><div>{{ list.remark }}</div></td>
+                <td><div>{{ list.sku_names }}</div></td>
+                <td>
+                    <div>{{ list.desc }}</div>
+                </td>
+                <td>
+                    <div>
+                        <input class="tag_order" maxlength="9" data-id="{{list.id}}" value="{{list.sort}}"/>
+                        <br>
+                        <a href="#" class="text-default" @click="updateOrder(list)">修改</a>
+                    </div>
+                </td>
+                <td>
+                    <div class="btns">
+                        <a href="#" class="text-default" @click.prevent="editGroupTag(list)">管理</a>
+                        <a href="#" class="text-default" @click.prevent="updateGroupTag(list)">编辑</a>
+                        <a href="#" class="text-warning" @click.prevent="deleteGroupTag(list)">删除</a>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+
+
+    <!-- 全部标签 -->
+    <table v-show="whichIndex === 1">
+        <caption></caption>
+        <thead class="my_thead">
+            <tr>
+                <th>标签ID</th>
+                <th>标签图</th>
+                <th>标签名称</th>
+                <th>名称备注</th>
+                <th>标签描述</th>
+                <th>所含服务</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tbody">
+            <tr v-for="list in tagList">
+                <td><div>{{ list.id }}</div></td>
+                <td><div v-show="list.logo"><img :src="list.logo ? list.logo + '?imageView2/2/w/64/h/64' : ''" alt="logo"></div></td>
+                <td><div>{{ list.name }}</div></td>
+                <td><div>{{ list.remark }}</div></td>
+                <td><div>{{ list.desc }}</div></td>
+                <td><div>{{ list.goods_name }}</div></td>
+                <td>
+                    <div class="btns">
+                        <a href="#" class="text-default" @click.prevent="editTag(list)">管理</a>
+                        <a href="#" class="text-default" @click.prevent="updateTag(list)">编辑</a>
+                        <a href="#" class="text-warning" @click.prevent="deleteTag(list)">删除</a>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- 标签管理列表 -->
+    <table v-show="whichIndex === 11">
+        <caption></caption>
+        <thead class="my_thead">
+            <tr>
+                <th></th>
+                <th>服务名称</th>
+                <th>规格</th>
+                <th>图片</th>
+                <th>CP</th>
+                <th>描述</th>
+                <th>城市</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tbody">
+            <tr v-for="list in editTagList">
+                <td><div>{{$index+1}}</div></td>
+                <td><div>{{list.name}}</div></td>
+                <td><div>{{list.sku_name}}</div></td>
+                <td><img :src="list.icon_url" alt="tag img"></td>
+                <td><span>{{list.cp_name}}</span></td>
+                <td><span>{{list.desc}}</span></td>
+                <td><span>{{list.city}}</span></td>
+                <td>
+                    <div class="btns">
+                        <a href="/main/edit_goods/?id={{list.id}}" class="text-default">编辑</a>
+                        <a href="#" class="text-warning" @click.prevent="deleteTagGoods(list)">删除</a>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+
+    <!-- 分页插件 -->
+    <div id="pagination" ></div>
+
+
+
+    <!-- [添加|编辑]标签组弹窗 -->
+    <div class="modal fade" id="addGroup">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">{{ !!groupId ? "编辑标签组" : "添加标签组"}}</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right"><i>*</i>标签组名称：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <input type="text" class="form-control" v-model="groupName" placeholder="此名称会直接显示在客户端" maxlength="12" @keyup="checkGroupValid">
+                                <p class="error-info groupName" hidden>标签组名称不能为空</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">名称备注：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <input type="text" class="form-control" v-model="groupNote" placeholder="仅方便运营人员查找，不作用域客户端；格式会：名称备注_名称">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="groupEvent">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加标签弹窗 -->
+    <div class="modal fade" id="addTag">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">添加标签</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">选择标签：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <select name="" class="form-control" v-model="selectedTag">
+                                    <template v-for="list in exsistTags" v-if="exsistTags.length">
+                                        <option value="{{list.id}}">{{list.name}}</option>
+                                    </template>
+                                    <template v-else>
+                                        <option value="0" disabled>没有可选择标签</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">&nbsp;</label>
+                            <div class="col-md-9 col-sm-12">
+                                <a href="#" class="text-success" @click.prevent="newTag">新建标签</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="groupTagEvent">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建标签弹窗 -->
+    <div class="modal fade" id="newTag">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">添加标签</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">标签图：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <!-- 添加标签图，可新增可删除 -->
+                                <div class="imgs" v-show="tagImg">
+                                    <img :src="tagImg" alt="tag img">
+                                </div>
+                                <a class="btn btn-bg add-tag-img addpicbtn" @click="imgpick"><i class="glyphicon glyphicon-plus"></i></a>
+                                <p class="error-info fileupload" hidden>图片上传失败，请重新上传~</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">标签名称：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <input type="text" class="form-control" v-model="tagName" placeholder="此名称会直接显示在客户端" maxlength=12 @keyup="checkTagValid">
+                                <p class="error-info tagName" hidden>标签名称不能为空</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">名称备注：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <input type="text" class="form-control" v-model="tagNote" placeholder="仅方便运营人员查找，不作用域客户端；格式会：名称备注_名称" maxlength=20>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">标签描述：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <input type="text" class="form-control" v-model="tagDesc" placeholder="  用于辅助标签内容表达，若无需要请勿填此栏" maxlength=20>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="tagEvent">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <!-- 添加商品弹窗 -->
+    <div class="modal fade" id="newGoods">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">添加商品</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">选择二级分类：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <select name="select1" class="form-control muilti-select" multiple>
+                                    <template v-if="goodsList2.length">
+                                        <option value="{{list.id}}" v-for="list in goodsList2">{{list.name}}</option>
+                                    </template>
+                                    <template v-else>
+                                        <option value="0" disabled>没有可选择的分类</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">选择三级分类：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <select name="select2" class="form-control muilti-select" multiple>
+                                    <template v-if="goodsList3.length">
+                                        <option value="{{list.id}}" v-for="list in goodsList3">{{list.name}}</option>
+                                    </template>
+                                    <template v-else>
+                                        <option value="0" disabled>没有可选择的分类</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">选择商品：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <select name="select3" class="form-control muilti-select" multiple>
+                                    <template v-if="goodsListAdd.length">
+                                        <option value="{{list.cid + ',' + list.sku_id}}" v-for="list in goodsListAdd">{{list.name}}</option>
+                                    </template>
+                                    <template v-else>
+                                        <option value="0" disabled>没有可选择商品</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="tagGoodsEvent">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增辅助组件 -->
+    <div class="helper"></div>
+
+    <!-- 图片上传&选择组件 -->
+    <div class="imgpicker"></div>
+    {% endverbatim %}
+</section>
+    <script src="{% static 'js/cms/helper.js' %}"></script>
+    <script src="{% static 'js/cms/pager.js' %}"></script>
+    <script src="{% static 'js/plupload/plupload.full.min.js' %}"></script>
+    <script src="{% static 'js/multiple-select.js' %}"></script>
+    <script src="{% static 'js/cms/imgpicker.js' %}"></script>
+    <script type="text/javascript">
+        var myTable,
+            isAjaxing = false, // 是否在请求
+            is_upload_init = false; // 是否初始化了上传按钮
+
+        var vm = new Vue({
+            el: '.service-table',
+            data: {
+                    whichIndex: 0,
+                    groupList: [], // 标签组列表
+                    editGroupList: [], // 标签组下标签列表
+                    editGroupId: 0, // 管理的标签组的id
+                    editGroupName: '', // 管理的标签组的名称
+                    groupId: 0, // 新建&编辑 标签组
+                    groupName: '',
+                    groupNote: '',
+
+                    tagList: [], // 全部标签列表
+                    editTagList: [], // 标签下的商品列表
+                    editTagId: '', // 管理的标签的id
+                    editTagName: '', // 管理的标签的名称
+                    tagId: 0, // 新建&编辑 标签
+                    tagImg: '',
+                    tagName: '',
+                    tagNote: '',
+                    tagDesc: '',
+
+                    goodsList: [], // 标签下商品列表
+                    searchedList: [], // 搜索出的商品列表
+
+                    goodsList2: [], // 添加商品搜索二级分类
+                    goodsList3: [], // 添加商品搜索三级分类
+                    goodsListAdd: [], // 添加商品搜索商品列表
+                    goodsSearchsAdd: [],
+
+
+                    exsistTags: [], // 下拉标签列表,
+                    selectedTag: '', // 下拉选中的标签
+
+            },
+            methods: {
+                tab: function(index) {
+                    this.whichIndex = (index === 0 ? 0 : 1);
+                    if (index === 0) {
+                        myTable.getData(getGroupList, {
+                            curPage: 1
+                        });
+                    } else if (index === 1) {
+                        myTable.getData(getTagList, {
+                            curPage: 1
+                        });
+                    }
+                },
+                // 添加标签组
+                addGroup: function() {
+                    this.groupId = 0;
+                    this.groupName = '';
+                    this.groupNote = '';
+                    $('#addGroup').modal();
+                },
+                // 管理标签组
+                editGroup: function(list) {
+                    var _this = this;
+                    this.editGroupId = list.id;
+                    this.editGroupName = list.name;
+                    this.whichIndex = 10;
+
+                    myTable.getData(getEditGroupList, {
+                        curPage: 1
+                    });
+                },
+                // 编辑标签组
+                updateGroup: function(list) {
+                    this.groupId = list.id;
+                    this.groupName = list.name;
+                    this.groupNote = list.remark;
+                    $('#addGroup').modal();
+                },
+                // 删除标签组
+                deleteGroup: function(list) {
+                    helper.confirm({
+                        content: '确定删除该标签组"' + list.name + '"吗？',
+                        yes: function() {
+                            $.ajax({
+                                url: '/tag/group/?id=' + list.id,
+                                type: 'DELETE',
+                                dataType: 'json',
+                                success: function(res) {
+                                    if (res.code == 0) {
+                                        myTable.getData(getGroupList, {
+                                            curPage: 1
+                                        });
+                                    } else {
+                                        helper.alert({
+                                            content: res.msg
+                                        });
+                                    }
+                                },
+                                error: function(e) {
+                                    helper.alert({
+                                        content: '删除标签组失败，请稍后重试~'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                },
+                // 修改标签的排序
+                updateOrder: function(list) {
+                    var _this = this;
+                    $.ajax({
+                        url: '/tag/sort/',
+                        type: 'PUT',
+                        data: JSON.stringify({
+                            tid: list.id,
+                            gid: _this.editGroupId,
+                            sort: $('input[data-id="' + list.id + '"').val()
+                        }),
+                        dataType: 'json',
+                        success: function(res) {
+                            if (res.code == 0) {
+                                myTable.getData(getEditGroupList);
+                            } else {
+                                helper.alert({
+                                    content: res.msg,
+                                    yes: function() {
+                                        setTimeout(function() {
+                                            myTable.getData(getEditGroupList);
+                                        }, 400);
+                                    }
+                                });
+                            }
+                        },
+                        error: function(e) {
+                            helper.close();
+                            setTimeout(function() {
+                                helper.alert({
+                                    content: '修改标签排序失败，请稍后重试~'
+                                });
+                            }, 400);
+                        }
+                    });
+                },
+                // 标签组下标签管理
+                editGroupTag: function(list) {
+                    var _this = this;
+                    this.editTagId = list.id;
+                    this.editTagName = list.name;
+                    this.whichIndex = 11;
+
+                    myTable.getData(getEditTagList, {
+                        curPage: 1
+                    });
+                },
+                // 标签组下标签编辑
+                updateGroupTag: function(list) {
+                    this.tagId = list.id;
+                    this.tagImg = list.logo;
+                    this.tagName = list.name;
+                    this.tagNote = list.remark;
+                    this.tagDesc = list.desc;
+                    $('#newTag').modal();
+                },
+                // 标签组下标签删除
+                deleteGroupTag: function(list) {
+                    var _this = this;
+                    helper.confirm({
+                        content: '确定删除该标签"' + list.name + '"吗？',
+                        yes: function() {
+                            $.ajax({
+                                url: '/tag/group/tags/?group_id=' + _this.editGroupId + '&tag_id=' + list.id,
+                                type: 'DELETE',
+                                dataType: 'json',
+                                success: function(res) {
+                                    if (res.code == 0) {
+                                        myTable.getData(getEditGroupList, {
+                                            curPage: 1
+                                        });
+                                    } else {
+                                        helper.alert({
+                                            content: res.msg
+                                        });
+                                    }
+                                },
+                                error: function(e) {
+                                    helper.alert({
+                                        content: '删除标签失败，请稍后重试~'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                },
+                checkGroupValid: function() {
+                    var isValid = true;
+                    if (!$.trim(this.groupName).length) {
+                        isValid = false;
+                        $('.groupName').show();
+                    } else {
+                        $('.groupName').hide();
+                    }
+                    return isValid;
+                },
+                // 标签组列表添加标签组
+                groupEvent: function() {
+                    var _this = this;
+                    if (isAjaxing) {
+                        return;
+                    }
+                    if (!this.checkGroupValid()) {
+                        return;
+                    }
+
+                    isAjaxing = true;
+                    if (!!this.groupId) { // 编辑
+                        $.ajax({
+                            url: '/tag/group/?id=' + _this.groupId,
+                            type: 'PUT',
+                            data: JSON.stringify({
+                                name: _this.groupName,
+                                remark: _this.groupNote
+                            }),
+                            dataType: 'json',
+                            success: function(res) {
+                                isAjaxing = false;
+                                $('#addGroup').modal('hide');
+                                if (res.code == 0) {
+                                    myTable.getData(getGroupList, {
+                                        curPage: 1
+                                    });
+                                } else {
+                                    setTimeout(function() {
+                                        helper.alert({
+                                            content: res.msg
+                                        });
+                                    }, 400);
+                                }
+                            },
+                            error: function(e) {
+                                isAjaxing = false;
+                                helper.alert({
+                                    content: '更新标签组失败，请稍后重试~'
+                                });
+                            }
+                        })
+                    } else { // 添加
+                        $.post('/tag/group/', JSON.stringify({
+                            name: _this.groupName,
+                            remark: _this.groupNote
+                        })).done(function(res) {
+                            isAjaxing = false;
+                            $('#addGroup').modal('hide');
+                            if (res.code == 0) {
+                                myTable.getData(getGroupList, {
+                                    curPage: 1
+                                });
+                            } else {
+                                setTimeout(function() {
+                                    helper.alert({
+                                        content: res.msg
+                                    });
+                                }, 400);
+                            }
+                        }).fail(function(e) {
+                            helper.alert({
+                                content: '添加标签组失败，请稍后重试~'
+                            });
+                        });
+                    }
+                },
+                // 标签组添加标签
+                groupTagEvent: function() {
+                    var _this = this,
+                        tags = [];
+                    helper.close();
+                    if (isAjaxing) {
+                        return;
+                    }
+                    isAjaxing = true;
+                    tags.push(_this.selectedTag);
+                    $.ajax({
+                        url: '/tag/group/tags/',
+                        type: 'POST',
+                        data: JSON.stringify({
+                            tag_group_id: _this.editGroupId,
+                            tags_id: tags
+                        }),
+                        dataType: 'json',
+                        success: function(res) {
+                            isAjaxing = false;
+                            if (res.code == 0) {
+                                $('#addTag').modal('hide');
+
+                                myTable.getData(getEditGroupList, {
+                                    curPage: 1
+                                });
+                            } else {
+                                helper.alert({
+                                    content: res.msg
+                                });
+                            }
+                        },
+                        error: function(e) {
+                            isAjaxing = false;
+                            helper.alert({
+                                content: '添加标签失败，请稍后重试~'
+                            });
+                        }
+                    });
+                },
+                imgpick: function() {
+                    var _this = this;
+                    $('#imgpicker').modal();
+                    !is_upload_init && imgpicker.init({
+                        callback: function(url) {
+                            is_upload_init = true;
+                            _this.tagImg = url;
+                        }
+                    });
+                },
+                // 添加标签
+                addTag: function() {
+                    var _this = this;
+                    if (this.whichIndex == 10) {
+                        $.getJSON('/tags/list/?all=1').done(function(res) {
+                            _this.exsistTags = res;
+                            _this.selectedTag = res[0] ? res[0].id : '';
+                            Vue.nextTick(function() {
+                                $('#addTag').modal();
+                            });
+                        }).fail(function(e) {
+                            helper.alert({
+                                content: '获取下拉标签列表失败，请稍后重试~'
+                            });
+                        });
+                    } else if (this.whichIndex == 1) {
+                        this.tagId = '';
+                        this.tagImg = '';
+                        this.tagName = '';
+                        this.tagNote = '';
+                        this.tagDesc = '';
+                        this.newTag();
+                    }
+                },
+                // 新建标签
+                newTag: function() {
+                    var _this = this;
+                    $('#addTag').modal('hide');
+                    setTimeout(function() {
+                        _this.tagId = '';
+                        _this.tagImg = '';
+                        _this.tagName = '';
+                        _this.tagNote = '';
+                        _this.tagDesc = '';
+                        $('#newTag').modal('show');
+                    }, 400);
+                },
+                checkTagValid: function() {
+                    var isValid = true;
+                    if (!$.trim(this.tagName).length) {
+                        isValid = false;
+                        $('.tagName').show();
+                        return isValid;
+                    } else {
+                        $('.tagName').hide();
+                    }
+                    return isValid;
+                },
+                tagEvent: function() {
+                    var _this = this;
+                    helper.close();
+                    if (isAjaxing) {
+                        return;
+                    }
+                    if (!this.checkTagValid()) {
+                        return;
+                    }
+                    if (!_this.tagId) { // 添加
+                        updateTag({
+                            url: '/tag/',
+                            type: 'POST',
+                            data: {
+                                logo: _this.tagImg,
+                                name: _this.tagName,
+                                remark: _this.tagNote,
+                                desc: _this.tagDesc,
+                                callback: _this.whichIndex == 10 ? getEditGroupList : getTagList
+                            }
+                        });
+                    } else { // 修改
+                        updateTag({
+                            url: '/tag/?id=' + _this.tagId,
+                            type: 'PUT',
+                            data: {
+                                logo: _this.tagImg,
+                                name: _this.tagName,
+                                remark: _this.tagNote,
+                                desc: _this.tagDesc,
+                                callback: _this.whichIndex == 10 ? getEditGroupList : getTagList
+                            }
+                        });
+                    }
+
+                    function updateTag(option) {
+                        isAjaxing = true;
+                        $.ajax({
+                            url: option.url,
+                            type: option.type,
+                            data: JSON.stringify(option.data),
+                            dataType: 'json',
+                            success: function(res) {
+                                isAjaxing = false;
+                                if (res.code == 0) {
+                                    $('#newTag').modal('hide');
+                                    _this.tagId = '';
+                                    _this.tagImg = '';
+                                    _this.tagName = '';
+                                    _this.tagNote = '';
+                                    _this.tagDesc = '';
+
+                                    myTable.getData(option.callback, {
+                                        curPage: 1
+                                    });
+                                } else {
+                                    helper.alert({
+                                        content: res.msg
+                                    });
+                                }
+                            },
+                            error: function(e) {
+                                isAjaxing = false;
+                                helper.alert({
+                                    content: '添加标签失败，请稍后重试~'
+                                });
+                            }
+                        });
+                    }
+                },
+                // 管理标签
+                editTag: function(list) {
+                    var _this = this;
+                    this.editTagId = list.id;
+                    this.editTagName = list.name;
+                    this.whichIndex = 11;
+
+                    myTable.getData(getEditTagList, {
+                        curPage: 1
+                    });
+                },
+                // 编辑标签
+                updateTag: function(list) {
+                    this.tagId = list.id;
+                    this.tagImg = list.logo;
+                    this.tagName = list.name;
+                    this.tagNote = list.remark;
+                    this.tagDesc = list.desc;
+                    $('#newTag').modal();
+                },
+                // 删除标签
+                deleteTag: function(list) {
+                    helper.confirm({
+                        content: '确定删除该标签"' + list.name + '"吗？',
+                        yes: function() {
+                            $.ajax({
+                                url: '/tag/?id=' + list.id,
+                                type: 'DELETE',
+                                dataType: 'json',
+                                success: function(res) {
+                                    if (res.code == 0) {
+                                        myTable.getData(getTagList, {
+                                            curPage: 1
+                                        });
+                                    } else {
+                                        helper.alert({
+                                            content: res.msg
+                                        });
+                                    }
+                                },
+                                error: function(e) {
+                                    helper.alert({
+                                        content: '删除标签失败，请稍后重试~'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                },
+                // 添加商品弹窗
+                addGoods: function() {
+                    var _this = this;
+                    var DEFAULT = {
+                        // width: 400,
+                        // maxHeight: 200,
+                        filter: true,
+                        single: false,
+                        placeholder: '多选下拉框',
+                        selectAllText: '全选',
+                        allSelected: '已全选',
+                        countSelected: '共%个，已选择#个',
+                        noMatchesFound: '没有找到匹配项'
+                    };
+
+                    var sec_cat_ids = [];
+                    _this.goodsSearchsAdd = [];
+
+                    $.getJSON('/category/list/').done(function(res) {
+                        _this.goodsList2 = res;
+                        Vue.nextTick(function() {
+                            callback1();
+                        });
+                    }).fail(function(e) {
+                        helper.alert({
+                            content: '获取二级分类下拉列表失败，请稍后重试~'
+                        });
+                    });
+
+                    function callback1() {
+                        $('#newGoods').modal();
+                        $('select[name="select1"]').multipleSelect($.extend({}, DEFAULT, {
+                            onClose: function() {
+                                var selected = $('select[name="select1"]').multipleSelect('getSelects');
+                                sec_cat_ids = selected;
+                                !!selected.length && $.post('/third/category/list/', JSON.stringify({
+                                    cat_ids: selected
+                                })).done(function(res) {
+                                    _this.goodsList3 = res;
+                                    Vue.nextTick(function() {
+                                        callback2();
+                                    });
+                                }).fail(function(e) {
+                                    helper.alert({
+                                        content: '获取三级分类下拉列表失败，请稍后重试~'
+                                    });
+                                });
+                            },
+                            onCheckAll: function() {
+                                this.onClose();
+                            }
+                        })).multipleSelect('checkAll');
+                    }
+                    function callback2() {
+                        $('select[name="select2"]').multipleSelect($.extend({}, DEFAULT, {
+                            onClose: function() {
+                                var selected = $('select[name="select2"]').multipleSelect('getSelects');
+                                $.post('/third/category/goods/', JSON.stringify({
+                                    tid: _this.editTagId,
+                                    cat_ids: selected,
+                                    sec_cat_ids: sec_cat_ids
+                                })).done(function(res) {
+                                    _this.goodsListAdd = res;
+                                    Vue.nextTick(function() {
+                                        callback3();
+                                    });
+                                }).fail(function(e) {
+                                    helper.alert({
+                                        content: '获取商品下拉列表失败，请稍后重试~'
+                                    });
+                                });
+                            },
+                            onCheckAll: function() {
+                                this.onClose();
+                            }
+                        })).multipleSelect('checkAll');
+                    }
+                    function callback3() {
+                        $('select[name="select3"]').multipleSelect($.extend({}, DEFAULT, {
+                            onClose: function() {
+                                var selected = $('select[name="select3"]').multipleSelect('getSelects');
+                                _this.goodsSearchsAdd = selected;
+                            }
+                        }));
+                    }
+                },
+                // 添加商品
+                tagGoodsEvent: function() {
+                    var _this = this;
+                    var gids = [],
+                        i = 0,
+                        goods = _this.goodsSearchsAdd,
+                        length = goods.length;
+                    if (!length) {
+                        return;
+                    }
+                    for (; i < length; i++) {
+                        var arr = goods[i].split(',');
+                        gids.push({
+                            cid: arr[0],
+                            sid: arr[1]
+                        });
+                    }
+                    $.post('/tag/goods/', JSON.stringify({
+                        tag_id: _this.editTagId,
+                        goods_id: gids
+                    })).done(function(res) {
+                        if (res.code == 0) {
+                            $('#newGoods').modal('hide');
+                            _this.goodsSearchsAdd = [];
+                            myTable.getData(getEditTagList, {
+                                curPage: 1
+                            });
+                        } else {
+                            helper.alert({
+                                content: res.msg
+                            });
+                        }
+                    }).fail(function(e) {
+                        helper.alert({
+                            content: '添加商品失败，请稍后重试~'
+                        });
+                    });
+
+                },
+                deleteTagGoods: function(list) {
+                    var _this = this;
+                    helper.confirm({
+                        content: '确定删除该商品"' + list.name + '"吗？',
+                        yes: function() {
+                            $.ajax({
+                                url: '/tag/goods/?tag_id=' + _this.editTagId + '&goods_id=' + list.gid + '&sku_id=' + list.sku_id,
+                                type: 'DELETE',
+                                dataType: 'json',
+                                success: function(res) {
+                                    if (res.code == 0) {
+                                        myTable.getData(getEditTagList, {
+                                            curPage: 1
+                                        });
+                                    } else {
+                                        helper.alert({
+                                            content: res.msg
+                                        });
+                                    }
+                                },
+                                error: function(e) {
+                                    helper.alert({
+                                        content: '删除商品失败，请稍后重试~'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            },
+            ready: function() {
+                var _this = this;
+                /*初始化页面*/
+                setNavBg("tags");
+                myTable = new tableInit({});
+                // 处理[快捷预约]跳转
+                if (localStorage.tagGroupId && localStorage.editGroupName && document.referrer.indexOf('tag_quick_order') > -1) {
+                    _this.editGroup({
+                        id: localStorage.tagGroupId,
+                        name: localStorage.editGroupName
+                    });
+                } else {
+                    myTable.getData(getGroupList);
+                }
+            }
+        });
+
+        // 标签组列表
+        function getGroupList(options) {
+            helper.loading();
+            $.getJSON('/tag/group/list', {
+                page: options.curPage,
+                limit: options.pageSize
+            }).done(function(data) {
+                myTable.processData(data, function(data) {
+                    vm.$set('groupList', data.groups);
+                    Vue.nextTick(function() {
+                        helper.close();
+                    });
+                });
+                if (data.totalpage >= 2) {
+                    myTable.pageInit(data.totalpage);
+                    $('#pagination').show();
+                } else {
+                    $('#pagination').hide();
+                }
+
+                // 处理分页的代码，TODO
+                var currentpage = options.curPage - 1;
+                $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                if (currentpage > 5) {
+                    $(options.pageSelector).eq(currentpage - 5).prevAll().hide();
+                }
+            }).fail(function(e) {
+                helper.close();
+                setTimeout(function() {
+                    helper.alert({
+                        content: '获取标签组列表数据失败，请稍后重试~'
+                    });
+                }, 400);
+            });
+        }
+
+        // 全部标签列表
+        function getTagList(options) {
+            helper.loading();
+            $.getJSON('/tags/list/', {
+                page: options.curPage,
+                limit: options.pageSize
+            }).done(function(data) {
+                myTable.processData(data, function(data) {
+                    vm.$set('tagList', data.tags);
+                    Vue.nextTick(function() {
+                        helper.close();
+                    });
+                });
+                if (data.totalpage >= 2) {
+                    myTable.pageInit(data.totalpage);
+                    $('#pagination').show();
+                } else {
+                    $('#pagination').hide();
+                }
+
+
+                // 处理分页的代码，TODO
+                var currentpage = options.curPage - 1;
+                $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                if (currentpage > 5) {
+                    $(options.pageSelector).eq(currentpage - 5).prevAll().hide();
+                }
+            }).fail(function(e) {
+                helper.close();
+                setTimeout(function() {
+                    helper.alert({
+                        content: '获取全部标签列表数据失败，请稍后重试~'
+                    });
+                }, 400);
+            });
+        }
+
+        // 标签组下标签列表
+        function getEditGroupList(options) {
+            helper.loading();
+            var url = '/tag_group/tags/list/?gid=' + ((vm && vm.editGroupId) ? vm.editGroupId : localStorage.tagGroupId) + 'page=' + options.curPage + '&limit=' + options.pageSize;
+            $.getJSON(url).done(function(data) {
+                myTable.processData(data, function(data) {
+                    vm.$set('editGroupList', data.tags);
+                    // 处理[快捷预约]跳转
+                    localStorage.tagGroupId = null;
+                    localStorage.editGroupName = null;
+                    Vue.nextTick(function() {
+                        helper.close();
+                    });
+                });
+                if (data.totalpage >= 2) {
+                    myTable.pageInit(data.totalpage);
+                    $('#pagination').show();
+                } else {
+                    $('#pagination').hide();
+                }
+
+                // 处理分页的代码，TODO
+                var currentpage = options.curPage - 1;
+                $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                if (currentpage > 5) {
+                    $(options.pageSelector).eq(currentpage - 5).prevAll().hide();
+                }
+            }).fail(function(e) {
+                helper.close();
+                setTimeout(function() {
+                    helper.alert({
+                        content: '获取标签组下标签列表数据失败，请稍后重试~'
+                    });
+                }, 400);
+            });
+        }
+
+        // 标签下商品列表
+        function getEditTagList(options) {
+            helper.loading();
+            var url = '/tag/goods/list/?tag=' + vm.editTagId + '&page=' + options.curPage + '&limit=' + options.pageSize;
+            $.getJSON(url).done(function(data) {
+                myTable.processData(data, function(data) {
+                    vm.$set('editTagList', data.tag_goods);
+                    Vue.nextTick(function() {
+                        helper.close();
+                    });
+                });
+                if (data.totalpage >= 2) {
+                    myTable.pageInit(data.totalpage);
+                    $('#pagination').show();
+                } else {
+                    $('#pagination').hide();
+                }
+
+                // 处理分页的代码，TODO
+                var currentpage = options.curPage - 1;
+                $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                if (currentpage > 5) {
+                    $(options.pageSelector).eq(currentpage - 5).prevAll().hide();
+                }
+            }).fail(function(e) {
+                helper.close();
+                setTimeout(function() {
+                    helper.alert({
+                        content: '获取标签下商品列表数据失败，请稍后重试~'
+                    });
+                }, 400);
+            });
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "man-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <style type="text/css">
+    </style>
+{% endblock %}
+{% block title %}所有账户{% endblock %}
+{% block content %}
+    分组选择：
+    <select id="group">
+        <option value="all_groups">全部分组</option>
+        {% for group in groups %}
+            <option value="{{ group.0 }}">{{ group.0 }}</option>
+        {% endfor %}
+        <option value="">其他</option>
+    </select>
+    <br />
+    <br />
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail">
+        <thead>
+            <tr>
+                <th colspan="3">
+                    <span>账户列表</span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="width:25%">账户名称</td>
+                <td style="width:25%">所属分组</td>
+                <td style="width:50%">操作</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="modal fade" id="delItem" tabindex="-1" role="dialog" aria-labelledby="delItemLabel" data-backdrop="static">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="delItemLabel">
+                        <span class="glyphicon glyphicon-trash" style="margin-right: 0"></span>
+                            删除账户
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    您确定要删除&nbsp;<span style="font-weight: bold" id="delEventId"></span>&nbsp;账户吗？
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="del_user()">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="application/javascript">
+    //本文件一些全局变量
+    var g_data = [];
+    var g_userid = 0;
+    $(document).ready(function()
+    {
+        setLeftNav("nav_user_list");
+        loading.init(".loading_gif", "#data_table");
+        $('#group').multiselect({
+            disableIfEmpty: true,
+            maxHeight: 200,
+            filterPlaceholder: "搜索",
+            enableFiltering: true,
+            onChange: function(option, checked, select) {
+                updateTable($("#group").val());
+            },
+            onDropdownHide: function(event) {
+                $(".multiselect-clear-filter").click();
+            }
+        });
+        requestData();
+    });
+
+    function requestData()
+    {
+        postJSON("{% url user_list_ajax %}",
+            {
+            },
+            function(data)
+            {
+                //字符串转json
+                g_data = eval(data);
+                updateTable("all_groups");
+            }
+        );
+    }
+
+    function del_user(g)
+    {
+        postJSON("{% url del_user %}",
+            {
+                u: g_userid
+            },
+            function(data)
+            {
+                //字符串转json
+                g_data = eval(data);
+                updateTable("all_groups");
+            }
+        );
+    }
+
+    function before_del(userid, username)
+    {
+        g_userid = userid;
+        $("#delEventId").html(username);
+    }
+
+    function updateTable(group)
+    {
+        //在添加之前，先把现有元素移除掉
+        $("[tr_can_remove='yes']").remove();
+        //添加元素
+        for(var i = 0; i < g_data.length; i++)
+        {
+            if(group == "all_groups" || group == g_data[i][1])
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                if(g_data[i][0] == "putao")
+                {
+                    tr.append($("<td style='font-weight:bold'>{0}（超级管理员）</td>".format(g_data[i][0])));
+                    tr.append($("<td>{0}</td>".format(g_data[i][1])));
+                    tr.append($("<td>{0}{1}</td>".format(
+                            "<a style='cursor:pointer' href='{% url view_user %}?u={0}&n={1}'><span class='glyphicon glyphicon-list'></span>查看权限</a>".format(g_data[i][2], g_data[i][0]),
+                            "<a style='cursor:pointer;margin-left:30px;' href='{% url edit_user %}?u={0}'><span class='glyphicon glyphicon-edit'></span>编辑账户</a>".format(g_data[i][2]))
+                    ));
+                }
+                else
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][0])));
+                    tr.append($("<td>{0}</td>".format(g_data[i][1])));
+                    tr.append($("<td>{0}{1}{2}</td>".format(
+                            "<a style='cursor:pointer' href='{% url view_user %}?u={0}&n={1}'><span class='glyphicon glyphicon-list'></span>查看权限</a>".format(g_data[i][2], g_data[i][0]),
+                            "<a style='cursor:pointer;margin-left:30px;' href='{% url edit_user %}?u={0}'><span class='glyphicon glyphicon-edit'></span>编辑账户</a>".format(g_data[i][2]),
+                            "<a style='cursor:pointer;margin-left:30px;' data-toggle='modal' data-target='#delItem' onclick='before_del({0}, \"{1}\")'><span class='glyphicon glyphicon-trash'></span>删除账户</a>".format(g_data[i][2], g_data[i][0])
+                    )));
+                }
+                $("#data_table tbody").append(tr);
+            }
+        }
+    }
+    </script>
+{% endblock %}

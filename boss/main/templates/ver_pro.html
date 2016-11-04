@@ -1,0 +1,244 @@
+{% extends "main-base.html" %}
+{% block title %}版本分布{% endblock %}
+{% block content %}
+    <a id="export_csv" href="{% url ver_pro_csv %}" style="margin-left: 20px;">
+        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+    </a>
+    <br />
+    <br />
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail">
+        <thead>
+            <tr>
+                <th colspan="7">
+                    <span>版本统计</span>
+                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                    <span style="position: absolute;right:30px;" id="vp_type">
+                        <a id="vp_type_1" href="javascript:void(0);" class="period_normal period_active" onclick="updateTime(1)">今日</a>
+                        <a id="vp_type_2" href="javascript:void(0);" class="period_normal" onclick="updateTime(2)">昨日</a>
+                        <a id="vp_type_3" href="javascript:void(0);" class="period_normal" onclick="updateTime(3)">最近7天</a>
+                    </span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="cols">
+                <td onclick="sortTable('ver', this)" style="cursor:pointer">应用版本<span class="glyphicon glyphicon-sort"></span></td>
+                <td id="ver_acc_col" onclick="sortTable('acc', this)" style="cursor:pointer" class="sort_col">截至今日版本累计用户(%)<span class="glyphicon glyphicon-sort"></span></td>
+                <td onclick="sortTable('new', this)" style="cursor:pointer">新增用户<span class="glyphicon glyphicon-sort"></span></td>
+                <td onclick="sortTable('upt', this)" style="cursor:pointer">升级用户<span class="glyphicon glyphicon-sort"></span></td>
+                <td onclick="sortTable('new_upt', this)" style="cursor:pointer">新增+升级<span class="glyphicon glyphicon-sort"></span></td>
+                <td onclick="sortTable('act', this)" style="cursor:pointer">活跃用户<span class="glyphicon glyphicon-sort"></span></td>
+                <td onclick="sortTable('use', this)" style="cursor:pointer">启动次数<span class="glyphicon glyphicon-sort"></span></td>
+            </tr>
+        </tbody>
+    </table>
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;
+        var g_current_page = 1;
+        var g_data = {{ data|safe }};
+        var g_cols = [
+            ['ver', 'str'],
+            ['acc', 'int'],
+            ['new', 'int'],
+            ['upt', 'int'],
+            ['new_upt', 'int'],
+            ['act', 'int'],
+            ['use', 'int']
+        ];
+        var g_order = ["acc", "desc"];
+
+        $(document).ready(function()
+        {
+            setLeftNav("nav_ver_pro");
+            loading.init(".loading_gif", "#data_table");
+            modifyCsvHref(1);
+
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>截至今日版本累计用户（%）：</span>截止到今日，该版本的累计用户+（占当日所有版本累计用户的比例）；若该版本的用户升级到其他版本，则累计用户会减少</p>',
+                    '<p><span>新增用户：</span>第一次打开应用的用户总数</p>',
+                    '<p><span>升级用户：</span>从其他版本升级到该版本的用户</p>',
+                    '<p><span>活跃用户：</span>启动过应用的用户（去重）</p>',
+                    '<p><span>启动次数：</span>打开应用即视为1次启动,完全退出或后台运行超过30s后再次进入应用，视为1次新的启动；</p>',
+                    '<p><span>最近7天：</span>最近7天的各项总和</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+            //初始化分页框
+            updateDividePage();
+            //初始化table第一页
+            updateTable(1);
+        });
+
+        function updateDividePage()
+        {
+            var count = 1 + parseInt((g_data.length - 1) / g_per);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+        //参数i是页数
+        function updateTable(page)
+        {
+            var total_page = 1 + parseInt((g_data.length - 1) / g_per);
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for(var i = (page - 1) * g_per; i < g_per * page && i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(j in g_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //更新显示行数
+        function updatePer(per)
+        {
+            g_per = per;
+            updateDividePage();
+            updateTable(1);
+        }
+
+        function requestData(type)
+        {
+            //修改导出文件的href地址
+            modifyCsvHref(type);
+            postJSON("{% url ver_pro_ajax %}",
+                {
+                    app: getURLParam("app"),
+                    type: type
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data);
+                    updatePeriodColor(type);
+                    updateDividePage();
+                    updateTable(1);
+                    updateCol(type);
+                }
+            );
+        }
+
+        //更新时间，点击了"今日"、"昨日"、"最近7天"
+        function updateTime(type)
+        {
+
+            requestData(type);
+        }
+
+        function modifyCsvHref(type)
+        {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url ver_pro_csv %}?app={0}&type={1}".
+                format(getURLParam("app"), type));
+        }
+
+        function updatePeriodColor(type)
+        {
+            $("#vp_type a").removeClass("period_active");
+            $("#vp_type_" + type).addClass("period_active");
+        }
+
+        function sortTable(col, obj)
+        {
+            var index = get2Index(g_cols, col);
+            var order = "desc";
+
+            $("#cols td").removeClass("sort_col");
+            $(obj).addClass("sort_col");
+
+            if(g_order[0] != col)
+                order = "desc";
+            else if(g_order[1] == "asc")
+                order = "desc";
+            else if(g_order[1] == "desc")
+                order = "asc";
+
+            g_data = listSort(g_data, index, order, g_cols[index][1]);
+            g_order = [col, order];
+            updateTable(1);
+        }
+
+        function updateCol(type)
+        {
+            if(type == 1 || type == 2)
+            {
+                $("#ver_acc_col").show();
+                g_cols = [
+                    ['ver', 'str'],
+                    ['acc', 'int'],
+                    ['new', 'int'],
+                    ['upt', 'int'],
+                    ['new_upt', 'int'],
+                    ['act', 'int'],
+                    ['use', 'int']
+                ];
+            }
+            else
+            {
+                $("#ver_acc_col").hide();
+                g_cols = [
+                    ['ver', 'str'],
+                    ['new', 'int'],
+                    ['upt', 'int'],
+                    ['new_upt', 'int'],
+                    ['act', 'int'],
+                    ['use', 'int']
+                ];
+            }
+        }
+    </script>
+{% endblock %}

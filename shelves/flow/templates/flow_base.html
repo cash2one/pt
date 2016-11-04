@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block module %}
+    <nav class="navbar navbar-default" style="height: 35px;margin-bottom:0px;">
+        <div class="container-fluid" style="margin-top: 5px;">
+            <span>请您选择需要查看的应用：</span>
+            <select class="chosen-select" id="global_apps" style="height: 40px">
+{#                <option value="">全部应用</option>#}
+                <script type="application/javascript">
+                    var apps = {_tongji_begin_apps_end_};
+                    for (var i in apps)
+                    {
+                        if(!apps[i][0])
+                            document.write('<option value="{0}">{1}</option>'.format(apps[i][0], apps[i][1]));
+                    }
+                    for (var i in apps)
+                    {
+                        if(apps[i][0])
+                            document.write('<option value="{0}">{1}</option>'.format(apps[i][0], apps[i][1]));
+                    }
+                </script>
+            </select>
+        </div>
+    </nav>
+    <div class="container-fluid" style="margin-top: 0px;">
+        <div class="row">
+            <div class="col-md-10" style="width: 92%; left: 4%">
+                {% block content %}{% endblock %}
+                <a id="scrollUp" href="#" title="返回到顶部"></a>
+            </div>
+        </div>
+    </div>
+     <script>
+        function selectApps(argv) {
+            if (argv == "?app=") {
+                location.assign("{% url 'flow_goods_management' %}")
+            }else{
+
+            location.assign("{% url 'app_flow_goods_management' %}{0}".format(argv))
+            }
+        }
+    </script>
+{% endblock %}

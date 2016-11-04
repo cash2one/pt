@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}精品分类{% endblock %}
+{% block content %}
+    <style type="text/css">
+        #table td .mblock {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+    </style>
+    <section class="top-sec">
+        <ol class="breadcrumb" id="breadcrumb">
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+            <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+            <li class="active">精品分类</li>
+        </ol>
+
+        {% if perms.man.config %}
+            <a class="adbtn-new" href="{% url 'new_choiceness_category' %}?channel={{ channel }}"><b
+                    style="font-size:.18rem">＋&nbsp</b>新建精品分类</a>
+        {% endif %}
+
+    </section>
+    <section class="service-table ">
+        <table id="table">
+            <caption></caption>
+            <thead class="my_thead">
+            <tr>
+                <th>排序</th>
+                <th>类别名</th>
+                <th>图片</th>
+                <th>选中图片</th>
+                <th>背景颜色</th>
+                <th>有效时间</th>
+                <th>城市</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <div id="loading" style="display:none;">
+                <img src="{% static 'images/loading.gif' %}"/>
+            </div>
+            <tbody id="tbody" class="tbody">
+
+            </tbody>
+
+        </table>
+        <div class="no_content"><p>暂无精品分类，请新建精品分类</p></div>
+        <div id="pagination"></div>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                setNavBg({{t}});//导航高亮设置函数
+                requestData();
+            });
+
+            function CreateTable(data) //表格创建函数
+            {
+                if (data.length > 0) {
+                    $(".my_thead").show();
+                }
+                if (data.length == 0) {
+                    $(".no_content").show();
+                    $(".my_thead").hide();
+                }
+                var tbody = $("<tbody>"); //创建tbody
+                var cellCount = 8;
+                var rowCount = data.length;
+                $("#table tbody").remove();
+                tbody.appendTo($("#table")); //将tbody插入到#table中
+                for (var i = 0; i < rowCount; i++) {
+                    var tr = $("<tr class='" + data[i][cellCount+1] + "'></tr>"); //建立表格列
+                    tr.appendTo(table); //将列插入到table中
+
+                    for (var j = 0; j < cellCount; j++) {
+                        var td = $("<td>" + data[i][j] + "</td>"); //动态添加td的数据
+                        var td_status=data[i][cellCount];
+                        if (j == 2) //当第三个td时加上img，展示图片。
+                        {
+                            var td = $("<td style='overflow:visible'> <img src=" + getImgURL(data[i][j]) + " class='small' data-toggle='modal' data-target='#myModal_img'></td>");
+                        }
+                        if (j == 3) //当第三个td时加上img，展示图片。
+                        {
+                            var td = $("<td style='overflow:visible'> <img src=" + getImgURL(data[i][j]) + " class='small' data-toggle='modal' data-target='#myModal_img'></td>");
+                        }
+                        if (j == 4) {
+                            var td = $("<td><span class='mblock' style='background-color:" + data[i][j] + "'></span></td>");
+                        }
+                        td.appendTo(tr); //将td插入到tr中
+                    }
+
+                    //根据传递参数，显示操作状态，0为可见，1为可编辑
+                    if(data[i][cellCount]==1){
+                        var td = $("<td class='edit-td' data-status='" + td_status + "'><a href='{% url 'edit_choiceness_category' %}?id=" + data[i][cellCount+1] + "&channel={{ channel }}' class='edit glyphicon glyphicon-edit'></a><a  class='del glyphicon glyphicon-trash' data-toggle='modal' data-target='#myModal-del' onclick='confirms(" + data[i][cellCount+1] + ")'></a> <a style='cursor:pointer' class='glyphicon glyphicon-arrow-up' onclick='sortUp()'></a><a style='cursor:pointer' class='glyphicon glyphicon-arrow-down' onclick='sortDown()'></a></td> "); //最后一列表格的按钮创建
+                    }else if(data[i][cellCount]==0){
+                        //不显示编辑状态
+                        var td = $("<td class='edit-td' data-status='" + td_status + "'><a class='glyphicon glyphicon-eye-open'></a></td>");
+                    }
+
+                    //var td = $("<td><a href='{% url 'edit_choiceness_category' %}?id=" + data[i][cellCount] + "&channel={{ channel }}' class='edit glyphicon glyphicon-edit'></a><a  class='del glyphicon glyphicon-trash' data-toggle='modal' data-target='#myModal-del' onclick='confirms(" + data[i][cellCount] + ")'></a> <a style='cursor:pointer' class='glyphicon glyphicon-arrow-up' onclick='sortUp()'></a><a style='cursor:pointer' class='glyphicon glyphicon-arrow-down' onclick='sortDown()'></a></td> "); //最后一列表格的按钮创建
+
+                    td.appendTo(tr); //将td插入到tr
+                    $("table tbody tr:first").find(".glyphicon-arrow-up").remove();
+                }
+                $("table").append("</tbody>");
+                $("table td:nth-child(4)").css('background', '#f6f6f6');
+                $("table tbody tr:last-child").find(".glyphicon-arrow-down").remove();
+            }
+
+            function sortUp() {
+                var id1 = $(event.target).parents("tr").prev()[0].className;
+                var id2 = $(event.target).parents("tr")[0].className;
+                sort(id1, id2);
+            }
+
+            function sortDown() {
+                var id2 = $(event.target).parents("tr")[0].className; //查找当前元素所在列的Id
+                var id1 = $(event.target).parents("tr").next()[0].className; //查找当前元素所在列的下一列的Id
+                sort(id1, id2);
+            }
+            function sort(id1, id2) {
+                // console.log(id1, id2)
+                $.ajax("{% url 'exchange_choiceness_categories' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id1: id1,
+                        id2: id2,
+                        channel: {{ channel}}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        // alert(result);
+                        if (result == 0)
+                            window.location.reload();
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            }
+            function requestData() {
+                $.ajax("{% url 'search_choiceness_categories' %}", {
+                    type: "get",
+                    cache: false,
+                    data: {
+                        channel: {{ channel}}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        CreateTable(eval(result));
+                        hideExhangeIcon();
+                        checkAuthority();
+
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            }
+            function confirms(id) {
+                var del_info = $(event.target).parent().siblings("td:nth-last-child(8)").text();
+
+                $("span.del_info").text(del_info);
+                $(".btn-primary").off("click").one("click", function (event) {
+                    delCategory(id);
+                });
+            }
+            function delCategory(id) {
+                $.ajax("{% url 'delete_choiceness_category' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id: id,
+                        channel: {{ channel}}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        if (result == 0) {
+                            requestData();
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").show();
+                    }
+                });
+            }
+        </script>
+    </section>
+
+
+{% endblock %}

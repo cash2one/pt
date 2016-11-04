@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block module %}
+    <div class="container-fluid" style="margin-top: 40px;">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="well sidebar-nav">
+                    <ul class="nav nav-list">
+                        <li class="nav-header"><span class="glyphicon glyphicon-user"></span>个人管理</li>
+                        <li id="nav_group_list"><a href="{% url man_index %}">我的权限</a></li>
+                        <li id="nav_group_list"><a href="{% url redirect_edit_user %}">编辑权限</a></li>
+                        <li class="nav-header"><span class="glyphicon glyphicon-cloud"></span>分组管理</li>
+                        <li id="nav_group_list"><a href="{% url group_list %}">所有分组</a></li>
+                        <li id="nav_add_group"><a href="{% url add_group %}">添加分组</a></li>
+                        <li class="nav-header"><span class="glyphicon glyphicon-user"></span>账户管理</li>
+                        <li id="nav_user_list"><a href="{% url user_list %}">所有账户</a></li>
+                        <li id="nav_add_user"><a href="{% url add_user %}">添加账户</a></li>
+                        <li class="nav-header"><span class="glyphicon glyphicon-wrench"></span>页面模块配置</li>
+                        <li id="nav_add_group"><a href="{% url modules_group %}">模块页面分组</a></li>
+                        <li id="nav_add_group"><a href="{% url modules_list %}">模块列表</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-10">
+                {% block content %}{% endblock %}
+                <a id="scrollUp" href="#" title="返回到顶部"></a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,215 @@
+    {% extends 'base.html' %}
+    {% load static %}
+    {% block title %}配置项{% endblock %}
+    {% block content %}
+
+    <section class="top-sec top-bar" style="border: none;">
+        <div class="cms-subtitle">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+                <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+                <li class="active">{{ c }}</li>
+            </ol>
+        </div>
+       <!--  <div style="margin-right:30px;">
+            <a href="javascript:void(0)"><div class="btn-del btn-export" data-toggle="modal" data-target="#myModal-export"
+            style="background:#1E90FF"><b style="font-size:.12rem;font-weight:900;"></b>导出</div></a>
+            <a href="javascript:void(0)"><div class="btn-edit" >
+            <b style="font-size:.12rem;font-weight:900;" class="glyphicon glyphicon-edit"></b>&nbsp编辑</div></a>
+            <a href="javascript:void(0)"><div class="btn-cancel" style="display:none;margin-right:30px;" onClick="reload()">取消</div></a>
+        </div> -->
+    </section>
+    <section class="cont-sec config_item">
+        <h4>配置项内容</h4>
+        <div class="common_service pt_banner" style="background:#4397fb">
+            <a href="{% url 'ads' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>广告</span>
+            </a>
+        </div>
+        <div class="common_service"> <a href="{% url 'common_services' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>常用服务</span>
+            </a>
+        </div>
+
+        <div class="common_service category_page">
+            <a href="{% url 'category_pages_services' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>分类页服务</span>
+            </a>
+        </div>
+
+        <div class="common_service index_page">
+            <a href="{% url 'homepage_specialtopic' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>首页专题</span>
+            </a>
+        </div>
+
+        <div class="common_service find_page">
+            <a href="{% url 'foundpage_specialtopic' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>发现页专题</span>
+            </a>
+        </div>
+
+        <div class="common_service content_flow">
+            <a href="{% url 'streams' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>内容流</span>
+            </a>
+        </div>
+
+        <div class="common_service operate_config">
+            <a href="{% url 'config_operation' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>运营配置</span>
+            </a>
+        </div>
+
+        <div class="common_service likes" style="background:#D2691E">
+            <a href="{% url 'likes' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>猜你喜欢</span>
+            </a>
+        </div>
+
+        <div class="common_service" style="background:#DDA0DD">
+            <a href="{% url 'activities' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>活动</span>
+            </a>
+        </div>
+        <div class="common_service " style="background:#66CDAA">
+        <a href="{% url 'choiceness_categories' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+        <span>精品分类</span>
+        </a>
+    </div>
+
+    <div class="common_service " style="background:#FF6347">
+        <a href="{% url 'config_coupons' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+        <span>优惠券</span>
+        </a>
+    </div>
+
+    <div class="common_service " style="background:#B6CA2D">
+        <a href="{% url 'second_category' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+        <span>二级分类</span>
+        </a>
+    </div>
+    <div class="common_service " style="background:#FF3D00">
+        <a href="{% url 'screen_ads' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+        <span>开屏广告</span>
+        </a>
+    </div>
+    <div class="common_service" style="background:#36C37C">
+            <a href="{% url 'native_activities' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>Native活动</span>
+            </a>
+    </div>
+    <div class="common_service" style="background:#9154B7">
+            <a href="{% url 'config_cp_list' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>品牌区</span>
+            </a>
+    </div>
+    <div class="common_service" style="background:#289C52">
+            <a href="{% url 'coupon_activities' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>活动-v3.7</span>
+            </a>
+    </div>
+    <div class="common_service" style="background:#DB4796">
+            <a href="{% url 'share_coupon' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>分享券</span>
+            </a>
+    </div>
+    <div class="common_service" style="background:#3a3634">
+            <a href="{% url 'seckills' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>秒杀活动</span>
+            </a>
+    </div>
+    <div class="common_service" style="background:#4c2114">
+        <a href="{% url 'tab_config' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>Tab配置</span>
+        </a>
+    </div>
+    <div class="common_service" style="background:#46e65b">
+        <a href="{% url 'cover_ads_config' %}?t={{ t }}&c={{ c }}&v={{ v }}">
+            <span>闪屏配置</span>
+        </a>
+    </div>
+</section>
+<!-- 导出 -->
+<div class="modal fade" id="myModal-export" tabindex="-1" role="dialog"
+    aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" style="width: 480px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close"
+                data-dismiss="modal" aria-hidden="true">
+                &times;
+                </button>
+                <h4 class="modal-title" id="myModalLabel">
+                <div class="delete_icon"><img src="{% static 'images/excel.png' %}"></div>CMS导出
+                </h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" role="form">
+                    <div class="form-group">
+                        <div class="col-lg-10">
+                            <select class="form-control pt-form-control" style="width:100%;margin-left:40px;" >
+                                <option>请选择导出内容</option>
+                                <option>全部</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default"
+                data-dismiss="modal" onclick="reload()">取消
+                </button>
+                <button type="button" class="btn btn-primary" onclick="delete_ver_channels()">
+                确定
+                </button>
+            </div>
+        </div><!-- /.modal-content
+        </div><!-- /.modal -->
+    </div>
+</div>
+<!-- 编辑版本 -->
+<div class="modal fade" id="myModal-edit-items" tabindex="-1" role="dialog"
+    aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" style="width: 480px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close"
+                data-dismiss="modal" aria-hidden="true">
+                &times;
+                </button>
+                <h4 class="modal-title" id="myModalLabel">
+                <div class="delete_icon"><img src="{% static 'images/edit1.png' %}"></div>编辑版本
+                </h4>
+            </div>
+            <div class="modal-body">
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                    data-dismiss="modal" >取消
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="edit_version()">
+                    确定
+                    </button>
+                </div>
+            </div><!-- /.modal-content
+            </div><!-- /.modal -->
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    setNavBg({{t}});
+    $(".btn-edit").one('click', function(event)
+        {
+            $(".config_item a").attr('href', 'javascript:void(0)');
+            $(".config_item a").attr({
+            "data-toggle": "modal",
+            "data-target": "#myModal-edit-items"
+            });
+            $(".btn-cancel").show();
+
+            // $(".version,.channels").attr('contenteditable', 'true');
+        });
+</script>
+
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block module %}
+    <nav class="navbar navbar-default" style="min-height: 40px;background-color: rgba(139, 0, 0, 0.55)">
+        <div class="container-fluid" style="margin-top: 5px;">
+            <span>请您选择需要查看的应用：</span>
+            <select class="chosen-select" id="global_apps" style="height: 40px">
+                <script type="application/javascript">
+                    var apps = {_tongji_begin_apps_end_};
+                    for (var i in apps)
+                    {
+                        document.write('<option value="{0}">{1}</option>'.format(apps[i][0], apps[i][1]));
+                    }
+                </script>
+            </select>
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="well sidebar-nav">
+                    <ul class="nav nav-list">
+                        <li class="nav-header"><span class="glyphicon glyphicon-th-large"></span>概况</li>
+                        {% if user_on %}
+                        <li id="nav_real_time"><a href="{% url real_time %}">实时统计</a></li>
+                        <li id="nav_all_trend"><a href="{% url all_trend %}">整体趋势</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-pawn"></span>用户分析</li>
+                        {% if user_on %}
+                        <li id="nav_new_users"><a href="{% url new_users %}">新增用户</a></li>
+                        <li id="nav_active_users"><a href="{% url active_users %}">活跃用户</a></li>
+                        <li id="nav_start_times"><a href="{% url start_times %}">启动次数</a></li>
+                        <li id="nav_ver_pro"><a href="{% url ver_pro %}">版本分布</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-filter"></span>留存分析</li>
+                        {% if user_on %}
+                        <li id="nav_lave_users"><a href="{% url lave_users %}">留存用户</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-indent-left"></span>渠道分析</li>
+                        {% if user_on %}
+                        <li id="nav_period_details"><a href="{% url period_details %}">时段详情</a></li>
+                        <li id="nav_channel_list"><a href="{% url channel_list %}">渠道列表</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-user"></span>用户参与度</li>
+                        {% if user_on %}
+                        <li id="nav_used_time"><a href="{% url used_time %}">使用时长</a></li>
+                        <li id="nav_used_frequency"><a href="{% url used_frequency %}">使用频率</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-grain"></span>功能使用</li>
+                        {% if user_on %}
+                        <li id="nav_custom_event"><a href="{% url custom_event %}">自定义事件</a></li>
+                        <li id="nav_page_access_path"><a href="{% url page_access_path %}">页面访问路径</a></li>
+                        <li id="loudou_index"><a href="{% url loudou_index %}">漏斗分析主流程</a></li>
+                        <li id="loudou_detail_index"><a href="{% url loudou_detail_index %}">漏斗分析详细流程</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-cog"></span>设置</li>
+                        {% if user_on %}
+                        <li id="nav_events"><a href="{% url events %}">事件</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-10">
+                {% block content %}{% endblock %}
+                <a id="scrollUp" href="#" title="返回到顶部"></a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

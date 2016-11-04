@@ -1,0 +1,279 @@
+{% extends "main-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+{% endblock %}
+{% block title %}自定义事件{% endblock %}
+{% block content %}
+    版本选择：
+    <select id="ver">
+        <option value="">全部版本</option>
+        {% for ver in versions %}
+            <option value="{{ ver }}">{{ ver }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    业务分类：
+    <select id="category">
+        <option value="">全部分类</option>
+        {% for k,v in categorys.items %}
+            <optgroup label="{{ k }}">
+                {% for a in v %}
+                    <option value="{{ a.0 }}">{{ a.1 }}</option>
+                {% endfor %}
+            </optgroup>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+
+    选择查看事件详情：
+    <select class="chosen-select" id="event" style="height: 40px">
+        <option value=""></option>
+    </select>
+    <span class="glyphicon glyphicon-cog" style="margin-left: 40px;"></span><a id="event_set" href="{% url events %}">设置事件</a>
+    <br />
+    <br />
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail">
+        <thead>
+            <tr>
+                <th colspan="7">
+                    <span>事件列表</span>
+                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                    <a id="export_csv" href="{% url custom_event_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="cols">
+                <td onclick="sortTable('id', this)" style="cursor:pointer;width:30.8%">事件ID<span class="glyphicon glyphicon-sort"></span></td>
+                <td onclick="sortTable('name', this)" style="cursor:pointer;width:30.8%" class="sort_col">事件名称<span class="glyphicon glyphicon-sort"></span></td>
+                <td onclick="sortTable('yes', this)" style="cursor:pointer;width:15.4%">昨日消息数<span class="glyphicon glyphicon-sort"></span></td>
+                <td onclick="sortTable('tod', this)" style="cursor:pointer;width:15.4%">今日消息数<span class="glyphicon glyphicon-sort"></span></td>
+                <td style="width:7.7%">详情</td>
+            </tr>
+        </tbody>
+    </table>
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;
+        var g_current_page = 1;
+        var g_data = {{ data|safe }};
+        var g_cols = [
+            ['id', 'str'],
+            ['name', 'str'],
+            ['yes', 'int'],
+            ['tod', 'int']
+        ];
+        var g_order = ["id", "asc"];
+
+        function set_event_url()
+        {
+            var event_set = $("#event_set");
+            var new_href = addURLParam(event_set.attr("href"), "app", getURLParam("app"));
+            event_set.attr("href", new_href);
+        }
+
+        $(document).ready(function()
+        {
+            setLeftNav("nav_custom_event");
+            loading.init(".loading_gif", "#data_table");
+            set_event_url();
+            $('#ver').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                /*
+                onDropdownHidden: function(event)//multiselect  onDropdownHidden
+                {
+
+                }
+                */
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+            $('#category').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                /*
+                onDropdownHidden: function(event)//multiselect  onDropdownHidden
+                {
+
+                }
+                */
+                onChange: function(option, checked, select) {
+                    requestData();
+                }
+            });
+            modifyCsvHref();
+
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p>如果想使用自定义事件统计，必须先在设置—事件页面注册事件ID。</p>',
+                    '<p><span>事件ID：</span>在事件管理页面添加的事件ID</p>',
+                    '<p><span>事件名称：</span>为事件ID命名，方便管理和使用报表</p>',
+                    '<p><span>昨日消息数：</span>昨日该事件被触发的次数</p>',
+                    '<p><span>今日消息数：</span>今日该事件被触发的次数</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+            //初始化分页框
+            updateDividePage();
+            //初始化table第一页
+            updateTable(1);
+            //初始化事件选择框
+            initEventSelect();
+        });
+
+        function updateDividePage()
+        {
+            var count = 1 + parseInt((g_data.length - 1) / g_per);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+        //参数i是页数
+        function updateTable(page)
+        {
+            var total_page = 1 + parseInt((g_data.length - 1) / g_per);
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for(var i = (page - 1) * g_per; i < g_per * page && i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(j in g_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                tr.append($("<td><a style='cursor:pointer' href='{% url event_detail %}?app={0}&eventid={1}'>查看</a>".format(getURLParam("app"), g_data[i][0])));
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //更新显示行数
+        function updatePer(per)
+        {
+            g_per = per;
+            updateDividePage();
+            updateTable(1);
+        }
+
+        function requestData()
+        {
+            //修改导出文件的href地址
+            modifyCsvHref();
+            postJSON("{% url custom_event_ajax %}",
+                {
+                    app: getURLParam("app"),
+                    ver: $("#ver").val(),
+                    cid: $("#category").val()
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data);
+                    updateDividePage();
+                    updateTable(1);
+                }
+            );
+        }
+
+        function modifyCsvHref()
+        {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url custom_event_csv %}?app={0}&ver={1}&cid={2}".
+                format(getURLParam("app"), $("#ver").val(), $("#category").val()));
+        }
+
+        function sortTable(col, obj)
+        {
+            var index = get2Index(g_cols, col);
+            var order = "desc";
+
+            $("#cols td").removeClass("sort_col");
+            $(obj).addClass("sort_col");
+
+            if(g_order[0] != col)
+                order = "desc";
+            else if(g_order[1] == "asc")
+                order = "desc";
+            else if(g_order[1] == "desc")
+                order = "asc";
+
+            g_data = listSort(g_data, index, order, g_cols[index][1]);
+            g_order = [col, order];
+            updateTable(1);
+        }
+
+        function initEventSelect()
+        {
+            var event = $("#event");
+            for(var i in g_data)
+            {
+                event.append($("<option value='{0}'>{0}</option>".format(g_data[i][0])));
+            }
+            event.chosen({
+                no_results_text: "Oops, nothing found!",//搜索不到的提示语
+                search_contains: true,//可以让chosen搜索选项的中间字符
+                width: "250px"
+            }).change(function(){
+                //document.location.href 返回完整的 URL。 如：http://www.cftea.com/foo.asp?p=1
+                //location.search是从当前URL的?号开始的字符串
+                location.href = "{% url event_detail %}?app={0}&eventid={1}".format(getURLParam("app"), event.val());
+            });
+        }
+    </script>
+{% endblock %}

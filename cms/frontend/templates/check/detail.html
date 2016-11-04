@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}审核详情{% endblock %}
+{% block head %}
+<style>
+    .service-table li{
+        font-size: 16px;
+        margin:5px 0;
+        list-style-position: inside;
+    }
+    .service-table h3{
+        color: #fff;
+        background-color: #337ab7;
+        padding: 5px 15px;
+        border-radius: 10px;
+        width: 50%;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<section class="service-table">
+    <div>
+        <h3>新增</h3>
+        <ol  class="add">
+            <li class="none">暂无内容</li>
+        </ol>
+    </div>
+    <div>
+        <h3>编辑</h3>
+        <ol class="edit">
+            <li class="none">暂无内容</li>
+        </ol>
+    </div>
+    <div >
+        <h3>删除</h3>
+        <ol class="remove">
+            <li class="none">暂无内容</li>
+        </ol>
+    </div>
+    <a class="btn btn-primary" href="{% url 'check' %}">返回</a>
+</section>
+<script>
+    var titleList = ['.add','.edit','.remove'],urlArray = ["{% url 'check_detail_data' %}","{% url 'check_history_detail' %}"];;
+    $(function(){
+        var index = parseInt(getURLParam("tabIndex")),
+                data= {},
+                param = (index == 0) ? "ids":"id";
+        data[param] = getURLParam("ids");
+        getData(data,index);
+
+    })
+    /*提交记录信息*/
+    function getData(data,index){
+        $.ajax(urlArray[index], {
+            type: "get",
+            cache: false,
+            data: data,
+            beforeSend: function (XMLHttpRequest) {
+                $("#loading").show();
+            },
+            success: function (result) {
+                var content = JSON.parse(result),html='';
+                console.log(content)
+                if(content.length>0){
+                   // $(titleList[parseInt(ele.type)-1]).empty();
+                }
+                $.each(content,function(i,ele){
+                    var contentStr = '<li>';
+                    if(ele!= null){
+                        html = ele.content.split('<br />');
+                        $(titleList[parseInt(ele.type)-1]).find(".none").remove();
+                        $.each(html,function(i,element){
+                            var mIndex = element.indexOf(": "),boldstr;
+                            boldstr = (mIndex == -1)? "" :(element.substring(0,mIndex+1));
+                            contentStr += boldstr+element.substring(mIndex+1)+'<br>';
+                        })
+                        contentStr += '</li>';
+                        $(contentStr).appendTo( $(titleList[parseInt(ele.type)-1]));
+                    }
+                })
+            },
+            error: function (result) {
+                //console.log(eval(result));
+                $("body").append(JSON.parse(result))
+            },
+            complete: function (result) {
+                $("#loading").hide();
+            }
+        });
+    }
+</script>
+{% endblock %}
+

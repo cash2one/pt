@@ -1,0 +1,756 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}新建一级分类{% endblock %}
+
+{% block head %}
+<style>
+    * {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .dashhr {
+        margin: 10px 0;
+        border-top: 1px dashed #ccc;;
+    }
+
+    .sendmsg-form label {
+        width: 16%;
+        text-align: right;
+        margin-right: 1%;
+    }
+
+    .sendmsg-form .form-control, .sendmsg-form select {
+        display: inline-block;
+        width: 80%;
+    }
+
+    .sendmsg-form .col-lg-12 .form-control {
+        width: 90%;
+        vertical-align: middle;
+    }
+
+    .sendmsg-form a.addpicbtn {
+        cursor: pointer;
+        font-size: 40px;
+        padding: 10px 22px;
+        border: 2px solid #999;
+        color: #999;
+        cursor: pointer;
+    }
+
+    .citylist {
+        width: 90%;
+        display: inline-block;
+        vertical-align: top;
+    }
+
+    .correctbtn {
+        color: #337ab7;
+        margin-left: 470px;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .correctbtn:hover {
+        color: blue;
+        cursor: pointer;
+    }
+
+    #validataDiv {
+        padding-left: 10%;
+    }
+
+    #validataDiv .form-group label {
+        width: 4%;
+        text-align: left;
+    }
+
+</style>
+<link rel="stylesheet" href="{% static 'css/selectImg.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/webuploader.css' %}"/>
+{% endblock %}
+
+{% block content %}
+<div class="cms-subtitle">
+    <ol class="breadcrumb">
+        <li><a href="{% url 'category' %}">分类</a></li>
+        <li class="active">新建一级分类</li>
+    </ol>
+</div>
+
+
+<div id="error-hints">
+
+</div>
+
+
+<form class="sendmsg-form" action="{% url 'new_category_first' %}" method="post"
+      enctype="multipart/form-data">{% csrf_token %}
+    <!--<input name="open_service_id" value="0" id="open_service_id" type="hidden"/>
+    <input name="name_style" value="#000000" id="name_style" type="hidden"/>
+  <input name="open_goods_id" value="0" id="open_goods_id" type="hidden"/>
+    <input name="open_cp_id" value="0" id="open_cp_id" type="hidden"/>-->
+    <input name="strategy" value="0" type="hidden" id="strategy">
+
+    <div style="display: none;">
+        <label>城市</label>
+        <input name="city" value="" type="hidden" id="citystr"/>
+    </div>
+
+    <input name="type" value="0" type="hidden" id="type"/>
+
+    <input name="valid_time" value="" type="hidden" id="valid_time"/>
+
+    <input name="parent_id" value="0" id="parent_id" type="hidden"/>
+    <input name="fatherid" value="0" id="fatherid" type="hidden"/>
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label><!--<i>*</i>-->大图标:</label>
+                <a class="addpicbtn">+</a>
+                <input name="icon_url" value="" id="icon_url"  type="hidden"/>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label><!--<i>*</i>-->小图标:</label>
+                <a class="addpicbtn">+</a>
+                <input name="small_icon_url" value=""   id="small_icon_url" type="hidden" />
+            </div>
+        </div>
+    </div>
+    <p class="dashhr"></p>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label><i>*</i>一级分类名称:</label>
+                <input type="text" class="form-control" name="name" id="name" required/>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label><i>*</i> 名称颜色:</label>
+                <input type="color" class="form-control" name="name_style" value="#000" required/>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label>描述:</label>
+                <input type="text" class="form-control" name="desc" id="desc"/>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label><i>*</i> 描述颜色:</label>
+                <input type="color" class="form-control" name="desc_style" value="#000" required/>
+            </div>
+        </div>
+
+
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label><i>*</i>排序:</label>
+                <input type="text" class="form-control" name="location" required/>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label>打点信息:</label>
+                <input type="text" class="form-control" name="dot_info" id="dot_info"/>
+            </div>
+        </div>
+
+    </div>
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label><i>*</i>场景:</label>
+                <select class="input-group-lg form-control" name="scene_id" id="scene_id" required maxlength="11">
+                    <option class="form-control" value=""></option>
+                    {% for scene in scenes %}
+                    <option class="form-control" value="{{ scene.0 }}">{{ scene.1 }}</option>
+                    {% endfor %}
+                    {#                        <option class="form-control">测试0</option>#}
+                    {#                        <option class="form-control">测试1</option>#}
+                    {#                        <option class="form-control">测试2</option>#}
+                </select>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label><i>*</i>动作:</label>
+
+                <div style="position: relative;display: inline-block;width: 80%;">
+
+                    <div class="input-group-lg form-control"
+                         style="width:100%;height: 300px;padding: 6px 0;overflow-y: auto;position: absolute;z-index: 999;top: 33px;display: none"
+                         id="actionselect" name="action_id">
+                        <a data-value=""></a>
+                        {% for action in actions %}
+                        <a data-value="{{ action.0 }}" onclick="selectAction(this)">{{ action.1 }}</a>
+                        {% endfor %}
+                          </div>
+
+                    <input type="hidden" id="action_id" name="action_id" class="form-control" style="width:400px;"/>
+                    <input type="text" id="action_uid" name="action_uid" class="form-control" style="width:100%;"
+                           required maxlength="11" placeholder="请选择下拉列表中的动作或输入搜索"/>
+
+                </div>
+            </div>
+            <a class="correctbtn">修改Action Json</a>
+        </div>
+    </div>
+
+
+    <div class="row correctcontent" style="display: none">
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label>Action Json：</label>
+                <textarea class="form-control" name="action_json" id="action_json"></textarea>
+            </div>
+
+        </div>
+    </div>
+
+
+    <script>
+
+
+    </script>
+
+    {#        <div class="row correctcontent" style="display: none">#}
+        {#            <div class="col-lg-12">#}
+            {#                <div class="form-group">#}
+                {#                    <label>备注：</label>#}
+                {#                    <input class="form-control" name="servicenote"/>#}
+                {#                </div>#}
+            {##}
+            {#            </div>#}
+        {#        </div>#}
+
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label><i>*</i>展现形式:</label>
+                <select class="input-group-lg form-control" name="show_style" id="show_style" required maxlength="11">
+                    <!--<option class="form-control" value=""></option>-->
+                     {% for showstyle in show_style_list %}
+                    <option class="form-control" value="{{ showstyle.0 }}">{{ showstyle.1 }}</option>
+                    {% endfor %}
+                    <!--        {#                        <option class="form-control">测试0</option>#}
+                    {#                        <option class="form-control">测试1</option>#}
+                    {#                        <option class="form-control">测试2</option>#}-->
+                </select>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="form-group">
+                <label><i>*</i>是否为开放平台使用:</label>
+                <select class="input-group-lg form-control" name="used_by_op" required >
+                    <option class="form-control" checked value="1">是</option>
+                    <option class="form-control" value="0">否</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label>备注：</label>
+                <input class="form-control" name="memo" id="memo"/>
+            </div>
+        </div>
+    </div>
+    <p class="dashhr"></p>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><!--<i>*</i>-->搜索关键词：</label>
+                <input type="text" class="form-control" name="search_keyword" id="search_keyword"/>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label>有效时间：</label>
+                <select class="form-control" id="validateTime">
+                    <option selected value="* * * * *" name="valid_time">不限</option>
+                    <option value="1">选择有效时间</option>
+                </select>
+            </div>
+            <div id="validataDiv" class="" style="display: none">
+                <div class="form-group field-cmsvalidtimemodel-month">
+                    <label class="control-label" for="cmsvalidtimemodel-month">月</label>
+                    <input type="hidden" name="CmsValidTimeModel[month]" value="*">
+
+                    <div id="cmsvalidtimemodel-month">
+                        <label><input type="checkbox" name="CmsValidTimeModel[month][]" value="1"> 一月</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[month][]" value="2"> 二月</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[month][]" value="3"> 三月</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[month][]" value="4"> 四月</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[month][]" value="5"> 五月</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[month][]" value="6"> 六月</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[month][]" value="7"> 七月</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[month][]" value="8"> 八月</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[month][]" value="9"> 九月</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[month][]" value="10"> 十月</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[month][]" value="11"> 十一月</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[month][]" value="12"> 十二月</label>
+                    </div>
+                </div>
+
+
+                <div class="form-group field-cmsvalidtimemodel-day">
+                    <label class="control-label" for="cmsvalidtimemodel-day">日</label>
+                    <input type="hidden" name="CmsValidTimeModel[day]" value="*">
+
+                    <div id="cmsvalidtimemodel-day">
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="1"> 1</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="2"> 2</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="3"> 3</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="4"> 4</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="5"> 5</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="6"> 6</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="7"> 7</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="8"> 8</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="9"> 9</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="10"> 10</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="11"> 11</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="12"> 12</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="13"> 13</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="14"> 14</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="15"> 15</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="16"> 16</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="17"> 17</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="18"> 18</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="19"> 19</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="20"> 20</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="21"> 21</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="22"> 22</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="23"> 23</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="24"> 24</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="25"> 25</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="26"> 26</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="27"> 27</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="28"> 28</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="29"> 29</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="30"> 30</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[day][]" value="31"> 31</label></div>
+                </div>
+
+
+                <div class="form-group field-cmsvalidtimemodel-week">
+                    <label class="control-label" for="cmsvalidtimemodel-week">周</label>
+                    <input type="hidden" name="CmsValidTimeModel[week]" value="*">
+
+                    <div id="cmsvalidtimemodel-week"><label><input type="checkbox" name="CmsValidTimeModel[week][]"
+                                                                   value="1"> 周一</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[week][]" value="2"> 周二</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[week][]" value="3"> 周三</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[week][]" value="4"> 周四</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[week][]" value="5"> 周五</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[week][]" value="6"> 周六</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[week][]" value="7"> 周日</label></div>
+
+                </div>
+
+                <div class="form-group field-cmsvalidtimemodel-hour">
+                    <label class="control-label" for="cmsvalidtimemodel-hour">小时</label>
+                    <input type="hidden" name="CmsValidTimeModel[hour]" value="*">
+
+                    <div id="cmsvalidtimemodel-hour"><label><input type="checkbox" name="CmsValidTimeModel[hour][]"
+                                                                   value="0"> 0</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="1"> 1</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="2"> 2</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="3"> 3</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="4"> 4</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="5"> 5</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="6"> 6</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="7"> 7</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="8"> 8</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="9"> 9</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="10"> 10</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="11"> 11</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="12"> 12</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="13"> 13</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="14"> 14</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="15"> 15</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="16"> 16</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="17"> 17</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="18"> 18</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="19"> 19</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="20"> 20</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="21"> 21</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="22"> 22</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[hour][]" value="23"> 23</label></div>
+                </div>
+
+                <div class="form-group field-cmsvalidtimemodel-minute">
+                    <label class="control-label" for="cmsvalidtimemodel-minute">分</label>
+                    <input type="hidden" name="CmsValidTimeModel[minute]" value="*">
+
+                    <div id="cmsvalidtimemodel-minute">
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="0"> 0</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="1"> 1</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="2"> 2</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="3"> 3</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="4"> 4</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="5"> 5</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="6"> 6</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="7"> 7</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="8"> 8</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="9"> 9</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="10"> 10</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="11"> 11</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="12"> 12</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="13"> 13</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="14"> 14</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="15"> 15</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="16"> 16</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="17"> 17</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="18"> 18</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="19"> 19</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="20"> 20</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="21"> 21</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="22"> 22</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="23"> 23</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="24"> 24</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="25"> 25</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="26"> 26</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="27"> 27</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="28"> 28</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="29"> 29</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="30"> 30</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="31"> 31</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="32"> 32</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="33"> 33</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="34"> 34</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="35"> 35</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="36"> 36</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="37"> 37</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="38"> 38</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="39"> 39</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="40"> 40</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="41"> 41</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="42"> 42</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="43"> 43</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="44"> 44</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="45"> 45</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="46"> 46</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="47"> 47</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="48"> 48</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="49"> 49</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="50"> 50</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="51"> 51</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="52"> 52</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="53"> 53</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="54"> 54</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="55"> 55</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="56"> 56</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="57"> 57</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="58"> 58</label>
+                        <label><input type="checkbox" name="CmsValidTimeModel[minute][]" value="59"> 59</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label>城市：</label>
+                <select class="input-group-lg form-control" name="cityselect_id" value="" id="cityselect_id">
+                    <option class="form-control" value="0">不限（全国）</option>
+                    <option class="form-control" value="1">选择其他城市</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="city-selection" style="display: none">
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group city-wrap">
+                    <label></label>
+
+                    <div class="city-spec"></div>
+                    <div class="citylist">
+                        <div class="list-group">
+                            <!--                <div class="width1in8">
+                                                <div class="col-lg-10 list-group-item list-inline">
+                                                    <input type="checkbox"/>
+                                                    全国
+                                                </div>
+                                            </div>
+                                            <div class="width1in8">
+                                                <div class="col-lg-10 list-group-item list-inline">
+                                                    <input type="checkbox"/>
+                                                    广东省
+                                                </div>
+                                            </div>-->
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--the end of the cityselection-->
+
+
+    <div class="row text-center">
+        <a class="btn btn-default col-lg-1 col-lg-offset-4" href="{% url 'category' %}">取消</a>
+        <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="确定"/>
+    </div>
+
+    <div id="dialogUpload" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog"
+         aria-labelledby="myLargeModalLabel" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <div class="header">
+                        <input id="searchImg" class="input-sm" type="text" placeholder="请输入关键词搜索"/>
+                        <button class="btn btn-info" id="searchBtn">搜索</button>
+                        <p class="toolbar pull-right">
+                            <button id="usepic" class="btn btn-warning">确认使用</button>
+                            <button type="button" class="btn btn-primary" id="addLocalImg">本地上传</button>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                    aria-hidden="true">×</span></button>
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs pull-right" role="tablist" id="pic-nav">
+                        <li class="active"><a href="#">广告图片</a></li>
+                        <li><a href="#">大图标</a></li>
+                        <li><a href="#">小图标</a></li>
+                        <li><a href="#">优惠券</a></li>
+                        <li><a href="#">其他</a></li>
+                    </ul>
+                    <div class="tab-content" style="clear:both">
+                        <div class="tab-pane active" id="adspic">
+                            <div id="loading" style="display:none;    position: inherit;    margin: 1.5rem 420px;">
+                                <img src="{% static 'images/loading.gif' %}"/>
+                            </div>
+                            <div class="imglist">
+
+                            </div>
+                            <div id="pagination"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+
+
+    <div id="UploadModal" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog"
+         aria-labelledby="myLargeModalLabel" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    上传图片到图库<!--<h4 class="modal-title" id="myLargeModalLabel"></h4>-->
+                    <p class="pull-right">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">×</span></button>
+                        <button class="btn btn-info pull-right" id="useTheImg" style="display: none;">使用该图片</button>
+                    </p>
+
+                    <!--<input type="button" class="btn btn-primary" value="浏览本地文件"/>-->
+                </div>
+                <div class="modal-body">
+                    <div id="uploader-demo">
+                        <!--用来存放item-->
+                        <div id="fileList" class="uploader-list"></div>
+                        <div id="filePicker" style="text-align: right"> 选择图片</div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+
+
+</form>
+<script type="text/javascript" src="{% static 'js/cms/addCityList.js' %}"></script>
+<script type="text/javascript">
+    window.onload = function(){
+        $(".guide-ul li").removeClass('current_li').eq(5).addClass("current_li");
+        setInPutValue();
+    }
+
+    setNavBg("services");
+    var g_cities =
+    {{ cities|safe }} ||{};
+
+
+    //选中城市分组后，将数据填充到对应的城市列表
+
+    $("#group_id").change(function () {
+        chooseCityGroup(this, '{% url 'get_city_from_group_id' %}');
+    });
+
+
+    $("form").submit(function () {
+        var citystr = "";
+        var city_idex = $("#cityselect_id").find("option:selected").val();
+        //判断选择的是不限（全国），还是其它城市
+        if (city_idex == 0) {
+            citystr += '*';
+        } else if (city_idex == 1) {
+            var ckd = $(".citydetailist input[type='checkbox']");
+            var ckd_city = $(".list-group-item input[type='checkbox']");
+            var ckd_city_len = ckd_city.length;
+            var ckd_len = ckd.length;
+            for (var j = 0; j < ckd_city_len; j++) {
+                if (ckd_city[j].checked && ($(ckd_city[j]).val() == "全国")) {
+                    citystr += '*,';
+                }
+                if (ckd_city[j].checked && ( $(ckd_city[j]).val() == "上海" || $(ckd_city[j]).val() == "重庆" || $(ckd_city[j]).val() == "天津" || $(ckd_city[j]).val() == "北京")) {
+                    citystr += $(ckd_city[j]).val() + ',';
+                }
+            }
+            for (var i = 0; i < ckd_len; i++) {
+                if (ckd[i].checked) {
+                    citystr += $(ckd[i]).val() + ',';
+                }
+            }
+            citystr = citystr.substring(0, citystr.length - 1);
+        }
+
+        $("#citystr").val(citystr);
+        sendTime();
+
+
+        var actions ={{ actions|safe }};
+    var action_val = $("#action_uid").val();
+    var count_times = 0;
+    $.each(actions, function (key, item) {
+        if ((item[0]) == action_val) {
+            count_times++;
+        }
+    });
+    if (count_times <= 0) {
+        var errorstr = '<ul><li>动作 ： 请选择下拉框内的可选动作。</li></ul>';
+        $("#error-hints").html(errorstr).show();
+        $("#action_uid").css("border", "1px solid #D9534F");
+        return false;
+    } else {
+        return true;
+    }
+
+    });
+    checkForm({{ errors|safe }});
+
+
+    function setInPutValue(){
+        {% for key,value in fields.items %}
+            $("[name='{{ key }}']").val({{ value|safe }});
+        {% endfor %}
+        checkDate();
+        if($("#action_id").val()==-1){
+            $(".correctcontent").show();
+        }
+        $(".addpicbtn").next("input[type=hidden]").each(function(){
+            if(this.value != ''){
+                var addbtn = $(this).prev(".addpicbtn");
+                $('<div  class="newImg"><img src="'+getImgURL(this.value)+'"/><span class="glyphicon glyphicon-remove"></span>           </div>').insertAfter(addbtn);
+                addbtn.hide();
+            }
+        });
+        cityDrop();
+        returnCityValue();
+    }
+    $("form input").focus(function () {
+        $(this).css("border", "1px solid #ccc");
+    });
+</script>
+<script type="text/javascript" src="{% static 'js/cms/selectImg.js' %}"></script>
+<script>
+    (function () {
+        $(".correctcontent").hide();
+        $("#action_uid").focus(function () {
+            $("#actionselect").show();
+        });
+
+
+        $("#action_uid").on("input propertychange", function () {
+            var action_str = $(this).val();
+            var action_arr = $("#actionselect a");
+            var act_len = action_arr.length;
+            for (var i = 0; i < act_len; i++) {
+                var htmlstr = $(action_arr[i]).html();
+                if (htmlstr.indexOf(action_str) >= 0) {
+                    $(action_arr[i]).show();
+                } else {
+                    $(action_arr[i]).hide();
+                }
+            }
+        });
+        $(".correctbtn").click(function () {
+            $(".correctcontent").show();
+            $(this).hide();
+        });
+
+    })();
+
+
+    selectCity();
+
+
+    function requestData(cur_page) {
+        g_cur_page = cur_page;
+        $.ajax("{% url 'get_images' %}", {
+            type: "get",
+            cache: false,
+            data: {
+                key: searchkeywords,
+                cur_page: cur_page,
+                per_page: g_per_page,
+                image_category: cur_category
+            },
+            dataType: 'json',
+            beforeSend: function (XMLHttpRequest) {
+                $("#loading").show();
+
+            },
+            success: function (result) {
+                //   console.log(result);
+                var data = result[0];
+                var num_pages = result[1];
+                CreateImgList(data);
+                pagination(num_pages);
+            },
+            error: function (result) {
+                console.log(result);
+            },
+            complete: function (result) {
+                $("#loading").hide();
+            }
+
+        })
+    }
+
+</script>
+<script type="text/javascript" src="{% static 'js/cms/webuploader.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/cms/uploadimg.js' %}"></script>
+{% endblock %}
+

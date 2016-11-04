@@ -1,0 +1,303 @@
+{% extends "report-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <style type="text/css">
+    </style>
+{% endblock %}
+{% block title %}用券{% endblock %}
+{% block content %}
+    版本选择：
+    <select id="ver">
+        <option value="">全部版本</option>
+        {% for ver in vers %}
+            <option value="{{ ver }}">{{ ver }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    渠道选择：
+    <select id="channel">
+        <option value="">全部渠道</option>
+        {% for channel in channels %}
+            <option value="{{ channel }}">{{ channel }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    活动选择：
+    <select id="activity_id">
+        <option value="">全部活动</option>
+        {% for activity_id in activity_ids %}
+            <option value="{{ activity_id }}">{{ activity_id }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    券类型选择：
+    <select id="scope">
+        <option value="">全部类型</option>
+        {% for scope in scopes %}
+            <option value="{{ scope.0 }}">{{ scope.1 }}</option>
+        {% endfor %}
+    </select>
+    <br />
+    <br />
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    <br />
+    <br />
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail">
+        <thead>
+            <tr>
+                <th colspan="6">
+                    <span id="table_title">用券情况</span>
+                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                    <a id="export_csv" href="{% url coupon_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="colname">
+                <td style="width:16.67%">日期</td>
+                <td style="width:16.67%">活动ID</td>
+                <td style="width:16.67%">发券数</td>
+                <td style="width:16.67%">用券数</td>
+                <td style="width:16.67%">优惠券金额</td>
+                <td style="width:16.67%">优惠券详情</td>
+            </tr>
+        </tbody>
+    </table>
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;
+        var g_current_page = 1;
+        var g_date_control = $("#date_control");
+        var g_data = [];
+        $(document).ready(function()
+        {
+            setLeftNav("nav_coupon");
+            loading.init(".loading_gif", "#data_table");
+            modifyCsvHref(getDateStr("{{ currentdate }}", -29).replace(/-/g, ""), "{{ currentdate }}".replace(/-/g, ""));
+            $('#ver').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#channel').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#activity_id').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#scope').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            g_date_control.daterangepicker(
+                {
+                    locale:
+                    {
+                        applyLabel: "确定",
+                        cancelLabel: "取消"
+                    },
+                    format: 'YYYY-MM-DD',
+                    separator: ' 到 ', //前后有空格
+                    startDate: getDateStr("{{ currentdate }}", -29),
+                    endDate: "{{ currentdate }}",
+                    maxDate: getDateStr("{{ currentdate }}", 1)// < maxDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+            ).val(getDateStr("{{ currentdate }}", -29) + " 到 {{ currentdate }}");
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function(ev, picker){
+                requestData();
+            });
+
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>发券数：</span>当日该活动发出的优惠券数量</p>',
+                    '<p><span>用券数：</span>用户领取并使用的优惠券数量</p>',
+                    '</div>'
+                ]).join("")
+            });
+            requestData();
+        });
+
+        function updateDividePage()
+        {
+            var count = 1 + parseInt((g_data.length - 1) / g_per);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+        function updateTable(page)
+        {
+            var total_page = 1 + parseInt((g_data.length - 1) / g_per);
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for(var i = (page - 1) * g_per; i < g_per * page && i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(j in g_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //更新显示行数
+        function updatePer(per)
+        {
+            g_per = per;
+            updateDividePage();
+            updateTable(1);
+        }
+
+        function requestData()
+        {
+            //截取出开始日期和结束日期
+            var start_date = g_date_control.val().substr(0,10);
+            var end_date = g_date_control.val().substr(13);
+            //修改导出文件的href地址
+            modifyCsvHref(start_date, end_date);
+            postJSON("{% url coupon_ajax %}",
+                {
+                    start_date: start_date,
+                    end_date: end_date,
+                    app: getURLParam("app"),
+                    ver: $("#ver").val(),
+                    channel: $("#channel").val(),
+                    activity_id: $("#activity_id").val(),
+                    scope: $("#scope").val()
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data);
+                    updateDividePage();
+                    updateTable(1);
+                }
+            );
+        }
+
+        //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+        function updateTime(delay)
+        {
+            var start_date = getDateStr("{{ currentdate }}", delay);
+            var end_date = "{{ currentdate }}";
+
+            g_date_control.data('daterangepicker').setStartDate(start_date);
+            g_date_control.data('daterangepicker').setEndDate(end_date);
+            g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+            requestData();
+        }
+
+        function modifyCsvHref(start_date, end_date)
+        {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url coupon_csv %}?start_date={0}&end_date={1}&app={2}&ver={3}&channel={4}&activity_id={5}&scope={6}".
+                format(start_date, end_date, getURLParam("app"), $("#ver").val(), $("#channel").val(), $("#activity_id").val(), $("#scope").val()));
+        }
+    </script>
+{% endblock %}

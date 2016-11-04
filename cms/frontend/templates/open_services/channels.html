@@ -1,0 +1,514 @@
+{% extends 'base.html' %}
+{% block title %}首页{% endblock %}
+{% block content %}
+<style type="text/css">
+    /*将首页新建编辑按钮设置为固定定位，方便用户操作*/
+article .content .btn-new {
+  position: fixed;
+  right: 20px;
+  z-index: 999;
+}
+article .content .top-sec .btn-del{
+  position: fixed;
+  right: 260px;
+  z-index: 999;
+}
+article .content .top-sec .btn-edit{
+  position: fixed;
+  right: 150px;
+  z-index: 999;
+}
+article .content .top-sec .del-confirm{
+ position: fixed;
+ right:160px;
+ z-index: 999;
+}
+article .content .top-sec .btn-cancel{
+  position: fixed;
+  right: 75px;
+  z-index: 999;
+}
+.changeColor{
+    width: 1rem;
+    height: .3rem;
+    background: #f41;
+    line-height: .3rem;
+    display: inline-block;
+    text-align: center;
+    border-radius: 0.05rem;
+    position: fixed;
+    right: 370px;
+}
+</style>
+<section class="top-sec">
+    {% if perms.man.config %}
+{#        <a href="javascript:void(0)"><div class="changeColor" style="right:370px;"><b style="font-size:.12rem;font-weight:900;"></b>换肤</div></a>#}
+        <a href="javascript:void(0)"><div class="btn-del" ><b style="font-size:.12rem;font-weight:900;">一&nbsp</b>删除</div></a>
+        <a href="javascript:void(0)"><div class="btn-edit" style="background:#1E90FF" ><b style="font-size:.12rem;font-weight:900;" class="glyphicon glyphicon-edit"></b>&nbsp编辑</div></a>
+        <a href="javascript:void(0)"><div class="del-confirm" data-toggle="modal"
+        data-target="#myModal-delete" style="display:none;">确认删除</div></a>
+        <a href="javascript:void(0)"><div class="btn-cancel" style="display:none;" onClick="reload()">取消</div></a>
+        <a href="javascript:void(0)"><div class="btn-new" data-toggle="modal"
+        data-target="#myModal-addnew" ><b style="font-size:.18rem">＋&nbsp</b>新建版本</div></a>
+    {% endif %}
+
+</section>
+<div id="loading" >
+    <img src='/static/images/loading.gif' />
+</div>
+  {% for ver, channels in ver_channels %}
+<section class="cont-sec">
+    <!--  <button class="cancal_checked" style="display:none"></button> -->
+    <span class="version select" data-toggle="modal">
+    <div class="check-all" style="display:none"><img src="/static/images/check.png" ></div><p class="verInfo">{{ ver }}</p>
+    </span>
+    <div class="version-way">
+        {% for channel in channels %}
+        <a class="channel_name" href="{% url 'open_services_list' %}?v={{ ver }}&c={{ channel.0 }}"  data-toggle="modal"><label class="channels">
+        <span class="pt-channel">{{ channel.0 }}</span></label></a>
+        {% endfor %}
+        <label class="add-qudao" data-toggle="modal"
+            data-target="#myModal-newway" data-toggle="modal"
+            data-target="#myModal-del" onclick="setCurrentVer('{{ ver }}')">
+            <b>+</b>
+        </label>
+    </div>
+</section>
+{% endfor %}
+<!-- 删除版本 -->
+<div class="modal fade" id="myModal-delete" tabindex="-1" role="dialog"
+    aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" style="width: 480px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close"
+                data-dismiss="modal" aria-hidden="true">
+                &times;
+                </button>
+                <h4 class="modal-title" id="myModalLabel">
+                <div class="delete_icon"><img src="/static/images/delete.png"></div>删除版本
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p class='del-tips' style="text-align:center">请勾选需要删除的版本或渠道</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default"
+                data-dismiss="modal" onclick="reload()">取消
+                </button>
+                <button type="button" class="btn btn-primary" onclick="delete_ver_channels()">
+                确定
+                </button>
+            </div>
+        </div><!-- /.modal-content
+        </div><!-- /.modal -->
+    </div>
+</div>
+
+<!-- 新建版本 -->
+<div class="modal fade" id="myModal-addnew" tabindex="-1" role="dialog"
+    aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" style="width: 480px;">
+        <div class="modal-content">
+            <form class="form-horizontal"   autocomplete="off">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <button type="button" class="close"
+                    data-dismiss="modal" aria-hidden="true">
+                    &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel1">
+                    <div class="icon_add"><img src="/static/images/add.png"></div>
+                    新建版本
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <p><span class="p_version">版本号:</span><input style="margin-left:0;" class="form-control pt-form-control" id="version_name" maxlength="64"  name="version_name" type="text" placeholder="请输入版本号" required /></p>
+                </div>
+                <div class="form-group">
+                        <label for="name" class="pt-label" style="margin-left:.28rem;">复制版本</label>
+                        <select class="form-control pt-form-control" id="copy_version_name" name="src_ver_id" style="width: 56%;">
+                            <option></option>
+                            {% for ver in ver_channels %}
+                            <option value="{{ ver.0 }}">版本：{{ ver.0 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                    data-dismiss="modal">取消
+                    </button>
+                    <button type="button" class="btn btn-primary confirm-btn" onClick="new_version()">
+                    确定
+                    </button>
+                </div>
+            </form>
+        </div><!-- /.modal-content
+        </div><!-- /.modal -->
+    </div>
+</div>
+<!-- 编辑版本 -->
+<div class="modal fade" id="myModal-edit-ver" tabindex="-1" role="dialog"
+    aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" style="width: 480px;">
+        <div class="modal-content">
+            <form class="form-horizontal"   autocomplete="off">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <button type="button" class="close"
+                    data-dismiss="modal" aria-hidden="true">
+                    &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel1">
+                    <div class="icon_add"><img src="/static/images/add.png"></div>
+                    编辑版本
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <p><span class="p_version">版本号:</span><input  class="app_version" maxlength="64" name="app_version" type="text" required style="text-indent:.5em;">
+                    <input class="old_app_version" maxlength="64" name="" type="hidden"  value=""/></p>
+                    <p class="pt-version-error" style="color:red;display:none;padding-left:85px;">请输入版本名称</p>
+                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                    data-dismiss="modal">取消
+                    </button>
+                    <button type="button" class="btn btn-primary confirm-btn" onClick="edit_version()">
+                    确定
+                    </button>
+                </div>
+            </form>
+        </div><!-- /.modal-content
+        </div><!-- /.modal -->
+    </div>
+</div>
+    <!-- 新建渠道 -->
+<div class="modal fade" id="myModal-newway" tabindex="-1" role="dialog"
+    aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" style="width: 480px;">
+        <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                    data-dismiss="modal" aria-hidden="true">
+                    &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel1">
+                    <div class="icon_add"><img src="/static/images/add.png"></div>
+                    新建渠道
+                    </h4>
+                </div>
+                <div class="modal-body">
+                <p><span>版本号:</span> <span id="span_app_version"></span></p>
+                <p><span style="margin-right:-.08rem;">渠道名称：</span><input  id="channel_name" maxlength="256" name="channel_no" placeholder="请输入渠道名称" type="text" required class="new_channel_no form-control pt-form-control" /></p>
+                <p class="pt-channel-error" style="color:red;display:none;padding-left:85px;">请输入渠道名称</p>
+                <div class="form-group">
+                        <label for="name" class="pt-label" style="margin-left:0rem;">复制渠道</label>
+                        <select class="form-control pt-form-control pt-single-select" id="channel_id">
+                            <option></option>
+                              {% for ver, channels in ver_channels %}
+                                <option disabled>版本：{{ ver}}</option>
+                               {% for channel in channels %}
+                                <option value="{{ channel.1 }}" style="cursor:pointer;">└&nbsp;&nbsp;渠道：{{ channel.0 }}({{ ver }})</option>
+                               {% endfor %}
+                             {% endfor %}
+                        </select>
+                </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                    data-dismiss="modal">取消
+                    </button>
+                    <button type="button" class="btn btn-primary confirm-btn" onClick="new_channel()">
+                    确定
+                    </button>
+                </div>
+
+        </div><!-- /.modal-content
+        </div><!-- /.modal -->
+    </div>
+</div>
+
+ <!-- 编辑渠道 -->
+<div class="modal fade" id="myModal-edit-channel" tabindex="-1" role="dialog"
+    aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" style="width: 480px;">
+        <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close"
+                    data-dismiss="modal" aria-hidden="true">
+                    &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel1">
+                    <div class="icon_add"><img src="/static/images/add.png"></div>
+                    编辑渠道
+                    </h4>
+                </div>
+                <div class="modal-body">
+                 <p><span>版本号:</span><span style="margin-right:30px;"></span> <span class="ch-app_version"></span></p>
+                <p><span style="margin-right:.08rem;">渠道名称：</span><input id="id_channel_no" class="channel_no" maxlength="256" name="channel_no" required placeholder="请输入渠道号" type="text" required />
+                <p class="pt-channel-error" style="color:red;display:none;padding-left:85px;">请输入渠道名称</p>
+                <input class="old_channel_no" maxlength="64" name="" type="hidden" required value=""/></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                    data-dismiss="modal">取消
+                    </button>
+                    <button type="button" class="btn btn-primary confirm-btn" onClick="edit_channel()">
+                    确定
+                    </button>
+                </div>
+
+        </div><!-- /.modal-content
+        </div><!-- /.modal -->
+    </div>
+</div>
+<script type="text/javascript" src="/static/js/cms/common.js" ></script>
+<script type="text/javascript">
+        //控制权限
+        window.onload=function(){
+            if("{{ perms.man.config }}" != "True"){
+                $("label.add-qudao").each(function(){
+                    $(this).remove();
+                })
+            }
+        };
+       setNavBg("open_service");
+        var g_vers = [];
+        var g_channels = {};
+
+        function setCurrentVer(ver) {
+            $("#span_app_version").html(ver);
+            $("#span_app_versionE").html(ver);
+        }
+        $(".btn-del").one('click', function(event) {
+            $(".btn-del,.btn-new,.add-qudao,.btn-edit").hide();
+            $(".del-confirm,.btn-cancel").show();
+            $(".version-way a").attr({ //点击删除按钮后，将跳转链接还有onclick事件去掉
+                'href': 'javascript:void(0)',
+                'onclick': ''
+            });
+            select();
+        });
+        $(".btn-edit").one('click', function(event) {
+            $(".btn-del,.btn-new,.btn-edit,.add-qudao").hide();
+            $(".btn-cancel").show();
+            $(".version-way a.channel_name").attr({
+                'href': 'javascript:void(0)',
+                'onclick': '',
+                'data-target': '#myModal-edit-channel'
+            });
+            $(".select").attr('data-target', '#myModal-edit-ver');
+            $(".no-select").attr('data-target', '#myModal-check-status');
+            $(".version-way a.under-check").attr({
+                'data-target': '#myModal-check-status'
+            });
+            // $(".version,.channels").attr('contenteditable', 'true');
+        });
+        $(".version").click(function(event) { //点击version后获取其名称
+            var ver = $(this).find("p").html();
+            // $(".app_version").attr('value', ver);
+            $(".app_version").prop('value', ver);
+            // $(".old_app_version").attr('value', ver);
+            $(".old_app_version").prop('value', ver);
+            $(".check-status-tips").text("当前版本正在审核中，请稍微再试。");
+        });
+        $("a").click(function(event) {
+        $(".check-status-tips").text("当前渠道正在审核中，请稍微再试。");
+        });
+        $("a.channel_name").click(function(event) { //点击渠道后获取渠道名
+            var channel = $(this).find(".pt-channel").text();
+            var ver = $(this).parent().siblings().find("p.verInfo").html();
+            $(".ch-app_version").text(ver);
+            $(".ch-app_version").prop('value', ver);
+            // $(".channel_no").attr('value', channel);
+            $(".channel_no").prop('value', channel);
+            // $(".old_channel_no").attr('value', channel);
+            $(".old_channel_no").prop('value', channel);
+        });
+            function select() { //删除时，选择特效函数
+                $('a.channel_name').click(function() {
+                    $(this).toggleClass('selected');
+                    // $(".del-tips").text("确定删除已勾选的版本或者渠道吗？");
+                    var channel = $(this).find(".pt-channel").text();
+                    var ver = $(this).parent().siblings().find("p.verInfo").text();
+                    // mypush(g_vers, ver);
+                    console.log(ver);
+                    if (getIndex(g_vers, ver) == -1) {
+                        if (g_channels[ver])
+                            mypush(g_channels[ver], channel);
+                        else
+                            g_channels[ver] = [channel];
+                    }
+                });
+                $('.select').click(function() { //点击版本号相当于全选该版本下的所有渠道
+                    var len = $(this).siblings().children("a.channel_name").length - 1;
+                    if ($(this).siblings().children("a.selected").length < len || !$(this).hasClass("selected")) {
+                        $(this).siblings().children("a.channel_name").addClass('selected');
+                        $(this).addClass('selected');
+                        $(this).children(".check-all").show();
+                        var ver = $(this).find("p").html();
+                        mypush(g_vers, ver);
+                    } else {
+                        $(this).siblings().children("a.channel_name").removeClass('selected');
+                        $(this).removeClass('selected');
+                        $(this).children(".check-all").hide();
+                        var ver = $(this).find("p").html();
+                        mypush(g_vers, ver);
+                    }
+                });
+            }
+            $(".select,.channels").click(function(event) {
+                $(".del-tips").text("确定删除已勾选的版本或者渠道吗？"); //当版本或渠道被点击时重新设置弹出框语句
+            });
+            $('.pt-single-select').click(function(event) {
+                    singleVal = $(this).val();
+            });
+                function delete_ver_channels() {
+                    for (var ver in g_channels) {
+                        if (getIndex(g_vers, ver) != -1) {
+                            delete g_channels[ver];
+                        }
+                    }
+                    var data = {
+                        vers: JSON.stringify(g_vers),
+                        channels: JSON.stringify(g_channels)
+                    };
+                    $.ajax("{% url 'open_services_version_delete' %}", {
+                        type: "post",
+                        cache: false,
+                        data: data,
+                        beforeSend: function(XMLHttpRequest) {
+                            // $("#loading").show();
+                            $("#loading").css('display', 'block');
+                        },
+                        success: function(result) {
+                            if (result == 0) {
+                                window.location.reload();
+                            }
+                        },
+                        error: function(result) {
+                            console.log(result);
+                        },
+                        complete: function(result) {
+                            $("#loading").hide();
+                        }
+                    })
+                }
+                
+            function new_version() {
+                    var version_name = $("#version_name").val();
+                    var copy_version_name = $("#copy_version_name").val();
+                    console.log(copy_version_name);
+                     if ($("#version_name").val() == "") {
+                         $(".pt-version-error").show();
+                     } else
+                     {
+                    $.ajax("{% url 'open_services_version_new' %}", {
+                        type: "post",
+                        dataType: "json",
+                        data: {
+                            version_name:version_name,
+                            copy_name:copy_version_name
+                        },
+                        success: function(data) {
+                            if (data == 0) {
+                                window.location.reload();
+                            }
+                        },
+                        error: function(data) {
+                            console.log("errors is" + data);
+                        }
+                    })
+                  }
+                }
+
+                function new_channel() {
+                    var channel_name = $("#channel_name").val();
+                    var channel_id = $("#channel_id").val();
+                    var version_name = $("#span_app_version").text();
+                    console.log(channel_id);
+                     if ($("#channel_name").val() == "") {
+                         $(".pt-channel-error").css('display', 'block');
+                     } else
+                     {
+                    $.ajax("{% url 'open_services_channel_new' %}", {
+                        type: "post",
+                        dataType: "json",
+                        data: {
+                            channel_name:channel_name,
+                            version_name:version_name,
+                            channel_id:channel_id
+                        },
+                        success: function(data) {
+                            if (data == 0) {
+                                window.location.reload();
+                            }
+                        },
+                        error: function(data) {
+                            console.log("errors is" + data);
+                        }
+                    })
+                  }
+                }
+                     function edit_version() {
+                    var old_ver = $(".old_app_version").val();
+                    var new_ver = $(".app_version").val();
+                     if ($(".app_version").val() == "") {
+                         $(".pt-version-error").show();
+                     } else
+                     {
+                    $.ajax("{% url 'edit_version' %}", {
+                        type: "post",
+                        dataType: "json",
+                        data: {
+                            old_ver: old_ver,
+                            new_ver: new_ver
+                            // dataType:"json",
+                        },
+                        success: function(data) {
+                            if (data == 0) {
+                                window.location.reload();
+                            }
+                        },
+                        error: function(data) {
+                            console.log("errors is" + data);
+                        }
+                    })
+                  }
+                }
+                function edit_channel() {
+                    var old_channel = $(".old_channel_no").val();
+                    var new_channel = $(".channel_no").val();
+                    var ver = $(".ch-app_version").text();
+                    console.log(old_channel,new_channel);
+                     if ($(".channel_no").val() == "") {
+                         $(".pt-channel-error").show();
+                     } else
+                     {
+                    $.ajax("{% url 'edit_channel' %}", {
+                        type: "post",
+                        dataType: "json",
+                        data: {
+                            old_channel: old_channel,
+                            new_channel: new_channel,
+                            ver: ver
+                        },
+                        success: function(data) {
+                            window.location.reload();
+                        },
+                        error: function(data) {
+                            console.log("errors is" + data);
+                        }
+                     })
+                   }
+                }
+                function reload() { //页面刷新函数
+                    window.location.reload();
+                }
+                $(window).load(function() { //当页面加载完毕后，隐藏loading效果
+                    $("#loading").hide();
+                });
+
+</script>
+{% endblock %}

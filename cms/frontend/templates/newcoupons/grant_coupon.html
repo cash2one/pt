@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}新建优惠券{% endblock %}
+
+{% block head %}
+<style>
+    * {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .dashhr {
+        margin: 10px 0;
+        border-top: 1px dashed #ccc;;
+    }
+
+    .sendmsg-form label {
+        width: 16%;
+        text-align: right;
+        margin-right: 1%;
+    }
+
+    .sendmsg-form .form-control, .sendmsg-form select {
+        display: inline-block;
+        width: 80%;
+    }
+
+    .sendmsg-form .col-lg-12 .form-control {
+        width: 90%;
+        vertical-align: middle;
+    }
+
+    .sendmsg-form a.addpicbtn {
+        cursor: pointer;
+        font-size: 40px;
+        padding: 10px 22px;
+        border: 2px solid #999;
+        color: #999;
+        cursor: pointer;
+    }
+
+    .citylist {
+        width: 90%;
+        display: inline-block;
+        vertical-align: top;
+    }
+
+    .correctbtn {
+        color: #337ab7;
+        margin-left: 470px;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .correctbtn:hover {
+        color: blue;
+        cursor: pointer;
+    }
+
+    #validataDiv {
+        padding-left: 10%;
+    }
+
+    #validataDiv .form-group label {
+        width: 4%;
+        text-align: left;
+    }
+    .clean {
+        padding: 0;
+        border: 0;
+        -webkit-box-shadow: none;
+        box-shadow: none;
+    }
+    .container-right {
+        margin-left: 12.5%;
+        display: table;
+        margin-bottom: 15px;
+        padding: 0 15px;
+    }
+    .container-right:before,
+    .container-right:after {
+        content: '';
+        display: table;
+    }
+    .item {
+        margin-top: 10px;
+        margin-right: 10px;
+    }
+    .half {
+        width: 36% !important;
+        margin-right: 4%;
+        display: inline-block;
+    }
+    .text-warning .warning {
+        width: 15px;
+        height: 15px;
+        line-height: 15px;
+        border-radius: 100%;
+        background-color: #c7254e;
+        display: inline-block;
+        text-align: center;
+        color: #fff;
+        margin-right: 8px;
+    }
+    .sendmsg-form .col-lg-12 label {
+        width: 12% !important;
+    }
+    .sendmsg-form .col-lg-12 .form-control {
+        width: 80% !important;
+    }
+</style>
+<link rel="stylesheet" href="{% static 'css/selectImg.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/multiple-select.css' %}"/>
+{% endblock %}
+
+{% block content %}
+<ul class="titlebar">
+    <li><a href="{% url 'open_activity_channels' %}" >优惠券管理</a></li>
+    <li class="active" href="{% url 'open_coupon_create' %}"><a href="#">优惠券发放</a></li>
+</ul>
+
+<h4 class="back">
+    <a href="{% url 'open_coupon_create' %}"> <i class="glyphicon glyphicon-chevron-left"></i>返回优惠券发放</a>
+</h4>
+
+
+<div id="error-hints">
+
+</div>
+
+<h6 class="warning"><span class="glyphicon glyphicon-exclamation-sign"></span>提交后立即向用户发放，且不可修改和撤回，请认真填写</h6>
+
+<form class="sendmsg-form" id="coupons">
+        <div class="row">
+            {% verbatim %}
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label><i>*</i>优惠券选择：</label>
+                    <select name="uid" id="uid" class="form-control" required="required" multiple="multiple" size="8">
+                        <template v-if="coupons.length" v-for="coupon in coupons">
+                            <option value="{{coupon.cid}}" v-if="coupon.name" @dblclick="add(coupon)">[{{coupon.cid}}]-{{coupon.name}}</option>
+                        </template>
+                        <template v-else>
+                            <option disabled="disabled"><span class="text-warning">获取券名称列表失败，请刷新页面重试~</span></option>
+                        </template>
+                    </select>
+                </div>
+            </div>
+            <div class="container-right">
+                <div class="btn btn-info item" v-show="couponses.length" v-for="cpes in couponses">
+                    <span class="name">{{cpes.name}}</span>
+                    <span class="del" @click="del(cpes.cid, $index)">&times;</span>
+                </div>
+            </div>
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>
+                        <i>*</i>
+                        <select class="form-control" v-model="flag" @change="setFlag(flag, this)">
+                            <option value="0" selected>用户ID：</option>
+                            <option value="1">用户手机号：</option>
+                        </select>
+                    </label>
+                    <textarea type="text" class="form-control" rows=4 v-model="ids" required placeholder="请输入用户的用户ID，若需给多个用户发券，请用分号间隔"></textarea>
+                </div>
+            </div>
+            <div class="container-right" :class="isValid ? 'hidden' : 'show'">
+                <p class="text-warning"><span class="warning">!</span>{{invalidMsg}}</p>
+            </div>
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>备注：</label>
+                    <input type="text" class="form-control" v-model="reason" placeholder="此栏仅内部人员可见，建议填写该券的用处与建券人"/>
+                </div>
+            </div>
+            {% endverbatim %}
+            <div class="form-group">
+                <div class="col-sm-10 col-sm-offset-2">
+                    <div class="row text-center">
+                        <a class="btn btn-default col-lg-1 col-lg-offset-4" href="{% url 'open_coupon_create' %}">取消</a>
+                        <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="提交" @click.stop.prevent="upload"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+</form>
+<!-- 新增辅助组件 -->
+<div class="helper"></div>
+
+<script src="{% static 'js/cms/helper.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/multiple-select.js' %}"></script>
+<script type="text/javascript">
+    var curCId,editFlag= false,databaseObject ={};
+    window.onload = function(){
+        setNavBg("activity_config");
+        bindEvent();
+        function bindEvent(){
+
+            new Vue({
+                el: '#coupons',
+                data: function() {
+                    return {
+                        coupons: [],
+                        isValid: true,
+                        invalidMsg: '',
+                        couponses: [], // 选中的优惠券
+                        ids: '',
+                        flag: '',
+                        pids: [], // 用户手机号
+                        uids: [], // 用户ID列表
+                        cids: [], // 所发券券名列表
+                        reason: '' // 发券备注
+                    };
+                },
+                methods: {
+                    add: function(coupon) {
+                        var _this = this;
+                        function checkExsist() {
+                            var flag = false;
+                            for (var i = 0, length = _this.couponses.length; i < length; i++) {
+                                if (_this.couponses[i].cid == coupon.cid) {
+                                    flag = true;
+                                    break;
+                                } else {
+                                    flag = false;
+                                }
+                            }
+                            return flag;
+                        }
+                        if (checkExsist()) {
+                            helper.alert({
+                                content: '不允许重复添加'
+                            });
+                        } else {
+                            _this.couponses.push(coupon);
+                            _this.cids.push(coupon.cid);
+                        }
+                    },
+                    del: function(cid, index) {
+                        var _this = this;
+                        _this.couponses.splice(index, 1);
+                        _this.cids.splice(index, 1);
+                    },
+                    setFlag: function(flag, el) {
+                        var textarea = el.$el.querySelector('textarea');
+                        if (flag == 0) {
+                            textarea.value = '';
+                            textarea.setAttribute('placeholder', '请输入用户的用户ID，若需给多个用户发券，请用分号间隔');
+                        } else if (flag == 1) {
+                            // 手机号不做校验处理
+                            this.isValid = true;
+                            textarea.value = '';
+                            textarea.setAttribute('placeholder', '请输入用户的用户手机号，若需给多个用户发券，请用分号间隔');
+                        }
+                    },
+                    upload: function() {
+                        console.log(this.flag);
+                        var _this = this;
+                        var ids = _this.ids.replace(/^;*/g, '').replace(/;*$/g, '');
+                        // 检查优惠券
+                        if (!_this.cids.length) {
+                            helper.alert({
+                                content: '请选择优惠券~'
+                            });
+                            return;
+                        }
+                        if (!$.trim(ids).length) {
+                            helper.alert({
+                                content: (_this.flag == 1 ? '请输入用户手机号~' : '请输入用户ID~')
+                            });
+                            return;
+                        }
+                        if (_this.flag == 0) {
+                            _this.invalidMsg = '';
+                            _this.isValid = true;
+                            Ajaxpost('/allot/coupon/', {
+                                uids: ids.split(';'),
+                                cids: _this.cids,
+                                is_p: _this.flag,
+                                reason: _this.reason
+                            });
+                        } else if (_this.flag == 1) {
+                            _this.invalidMsg = '';
+                            _this.isValid = true;
+                            Ajaxpost('/allot/coupon/', {
+                                pids: ids.split(';'),
+                                cids: _this.cids,
+                                is_p: _this.flag,
+                                reason: _this.reason
+                            });
+                        }
+                        function Ajaxpost(url, data) {
+                            // helper.loading();
+                            $.post(url, JSON.stringify(data)).done(function(res) {
+                                helper.close();
+                                if (res.code == 1) {
+                                    helper.alert({
+                                        content: res.msg
+                                    });
+                                } else {
+                                    // 发放成功
+                                    helper.alert({
+                                        content: '发放优惠券成功',
+                                        yes: function() {
+                                            location.href = '/config/open_coupon_create/list/';
+                                        }
+                                    });
+                                    setTimeout(function() {
+                                        helper.close();
+                                        location.href = '/config/open_coupon_create/list/';
+                                    }, 200);
+                                }
+                            }).fail(function(e) {
+                                helper.close();
+                                helper.alert({
+                                    content: '发放优惠券失败，请稍后重试~'
+                                });
+                            });
+                        }
+                    }
+                },
+                ready: function() {
+                    var _this = this;
+                    helper.loading();
+                    $.getJSON('/coupons/').done(function(res) {
+                        _this.coupons = res;
+                        Vue.nextTick(function() {
+                            helper.close();
+                        })
+                    }).fail(function(e) {
+                        helper.alert({
+                            content: '获取券名称列表失败，请稍后重试~'
+                        });
+                    })
+                }
+            });
+
+        }
+    }
+</script>
+{% endblock %}
+

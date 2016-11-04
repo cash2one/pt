@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>403</title>
+    <style>
+        #not {
+            margin-top: 15%;
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div id="not">
+    <h1>就是不准你访问(￣～￣) 嚼!</h1>
+    <h1><span id="mes"></span>后跳转到<a href="javascript:window.history.back(-1)" style="color: blue;">上一页</a>或返回<a
+            href="/" style="color: blue;">主页</a>或<a href="/accounts/login/" style="color: blue;">登录</a></h1>
+</div>
+</body>
+</html>
+
+<script type="text/javascript">
+    var s = 3, t;
+    function times() {
+        s--;
+        if (s< 0){
+            return
+        }
+        document.getElementById('mes').innerHTML = s;
+        t = setTimeout('times()', 1000);
+        if (s <= 0) {
+            window.location.href = 'javascript:window.history.back(-1)';
+        }
+    }
+
+    times();
+
+</script>

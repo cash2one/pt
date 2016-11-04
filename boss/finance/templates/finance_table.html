@@ -1,0 +1,400 @@
+{% extends "finance_base.html" %}
+{% block myhead %}
+<link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+<script type="text/javascript" src="/static/js/multiselect.js" ></script>
+<!-- <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script> -->
+<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<style type="text/css">
+                    {#     td#}
+                                    {#        {#}
+                                                    {#            white-space: nowrap;/*不允许td换行*/#}
+                                    {#        }#}
+</style>
+{% endblock %}
+{% block title %}日/月收支汇总报表{% endblock %}
+{% block content %}
+<style>
+
+        /*.my_thead{display:none;}*/
+.tabTitle{
+        width:95%;
+        margin: 0 auto;
+        margin-top: 10px;
+}
+.tabTitle > li{
+            padding:0;
+}
+.tabTitle a{
+    background: #f0f0f0;
+    color:#333
+}
+.active{
+    display: block;
+}
+.pt-finance-table table td {
+border: 1px solid #aaa;
+height:.4rem;
+min-width: .3rem;
+max-width: 1.2rem;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+.pt-finance-table2{display: none;}
+.nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
+color: #ffffff;
+background-color: #337ab7;
+}
+.nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
+    background-color: #337ab7;
+    color: #fff;
+}
+.headerTitle {
+    background-color: #eee;
+    border-bottom:none;
+    /* position: relative; */
+    line-height: 80px;
+    width: 200px;
+    color: #fff;
+}
+.pt-finance-table #tbody1 tr:nth-child(1) {
+    background-color: #eee;
+    font-size: 15px;
+    font-weight: 600;
+}
+.pt-finance-table #tbody1 tr:nth-child(2) {
+    background-color: #eee;
+    font-size: 15px;
+    font-weight: 600;
+}
+.pt-finance-table table tbody tr:nth-child(2n){
+    display: none;
+}
+.pt-finance-table table tbody tr:nth-child(2n+1){
+    background: #f1f5f9;
+    cursor: pointer;
+}
+#table2{display: none;}
+#table3{display: none;}
+/*tbody{display: none;}
+*//*#tbody{display: none;}
+#tbody{display: none;}*/
+</style>
+<div class="container-fluid">
+    <!--    <a class="btn btn-success">日汇总</a>
+                    <a class="btn btn-default">月汇总</a>
+                    <a href="#"><span class="glyphicon glyphicon-triangle-left"></span></a>
+                    <a href="#" class="disabled"><span class="glyphicon glyphicon-triangle-right"></span></a>
+    <span>2015年10月</span>-->
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                            <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <a class="btn btn-primary pull-right" id="downloadExcel" href="#">下载CSV账单</a>
+</div>
+<ul class="nav nav-pills tabTitle nav-justified">
+    <li role="presentation" class="active col-md-6 pt-table1"><a href="#">支付渠道数据汇总</a></li>
+    <li role="presentation" class="col-md-6 pt-table2"><a href="#">CP数据汇总</a></li>
+</ul>
+<div class="pt-finance-table pt-finance-table1">
+    <table id="table1" class="table1">
+        <caption>支付渠道数据汇总</caption>
+        <thead class="my_thead my_thead1">
+            <tr>
+                <th style="background:#d4e1ed;">名称</th>
+                <th colspan="2" style="background:#b1c9dd;">收入</th>
+                <th colspan="4" style="background:#8DB0CE;">支出</th>
+                <th style="background:#d4e1ed;">余额</th>
+            </tr>
+        </thead>
+        <tbody id="tbody1">
+        </tbody>
+    </table>
+    <div class="loading_gif"></div>
+    <table id="table2" class="table2">
+        <thead class="my_thead my_thead2">
+            <tr>
+                <th style="background:#d4e1ed;">名称</th>
+                <th style="background:#b1c9dd;">订单收入</th>
+                <th style="background:#b1c9dd;">其他</th>
+                <th style="background:#8DB0CE;">在线支付</th>
+                <th style="background:#8DB0CE;">提现</th>
+                <th style="background:#8DB0CE;">订单退款</th>
+                <th style="background:#8DB0CE;">服务费</th>
+                <th style="background:#d4e1ed;">账户余额</th>
+            </tr>
+        </thead>
+        <tbody id="tbody2">
+        </tbody>
+    </table>
+    <table id="table3" class="table3">
+        <thead class="my_thead my_thead3">
+            <tr class="tr-first">
+                <th style="background:#d4e1ed;">渠道名称</th>
+                <th style="background:#b1c9dd;">订单收入</th>
+                <th style="background:#b1c9dd;">其他</th>
+                <th style="background:#8DB0CE;">在线支付</th>
+                <th style="background:#8DB0CE;">提现</th>
+                <th style="background:#8DB0CE;">订单退款</th>
+                <th style="background:#8DB0CE;">服务费</th>
+                <th style="background:#d4e1ed;">账户余额</th>
+            </tr>
+        </thead>
+        <tbody id="tbody3">
+        </tbody>
+    </table>
+</div>
+<div class="pt-finance-table pt-finance-table2" style="z-index:990;">
+    <table id="table4" class="table4">
+        <caption>CP数据汇总</caption>
+        <thead class="my_thead">
+            <div class="loading_gif" ></div>
+            <tr>
+                <th rowspan="2">项目名称</th>
+                <th colspan="3">CP数据汇总</th>
+            </tr>
+            <tr>
+                <th >应付CP</th>
+                <th >实付CP</th>
+                <th >CP余额</th>
+            </tr>
+        </thead>
+        <tbody id="tbody4">
+        </tbody>
+    </table>
+</div>
+<script type="text/javascript">
+$(document).ready(function() {
+    $("table").on('click', 'tbody tr:nth-child(2n+1)', function(event) {
+        $(this).next().toggle();
+    });
+    // $("table").on('click', 'thead', function(event) {
+    // $(this).siblings('tbody').toggle();
+    // });
+    $("table").on('click', 'thead.my_thead1', function(event) {
+    $("#table2").toggle();
+    });
+    $("table").on('click', 'thead.my_thead2', function(event) {
+    $("#table3").toggle();
+    });
+    });
+    var g_date_control = $("#date_control");
+    $(function(){
+        setTopNav(0,0);
+        // loading.init(".loading_gif", ".mydata");
+        // loading.show();
+        g_date_control.daterangepicker(
+                {
+                    locale:
+                    {
+                        applyLabel: "确定",
+                        cancelLabel: "取消"
+                    },
+                    format: 'YYYY-MM-DD',
+                    separator: ' 到 ', //前后有空格
+                    startDate: getDateStr("{{ currentdate }}", -29),
+                    endDate: "{{ currentdate }}",
+                    maxDate: getDateStr("{{ currentdate }}", 1)// < maxDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+        ).val(getDateStr("{{ currentdate }}", -29) + " 到 {{ currentdate }}");
+        //点击apply触发事件
+        g_date_control.on('apply.daterangepicker', function(ev, picker){
+            requestData();
+        });
+        requestData();
+        // bindEvent();
+    })
+            
+        function CreateTable1(data) {
+            
+                    
+        // console.log(data[1][1]);
+    if (data.length > 0) {
+        $(".my_thead").show();
+    }
+    if (data.length == 0) {
+        $(".no_content").show();
+        $(".my_thead").hide();
+    }
+    var tbody = $("<tbody>");
+                var cellCount = 4;
+                var rowCount = data[0][0].length;
+                $("#table1 tbody").remove();
+                tbody.appendTo($("#table1"));
+                for (var i = 0; i < rowCount; i++) {
+        var tr1 = $("<tr class='sum'></tr>");
+        tr1.appendTo(tbody);
+        
+        for (var j = 0; j < cellCount; j++) {
+            
+        if(j == 1){
+            var td = $("<td colspan='2'>" + data[0][0][i][j]+ "</td>");
+            td.appendTo(tr1);
+            }
+            else if(j == 2){
+            var td = $("<td colspan='4'>" + data[0][0][i][j]+ "</td>");
+            td.appendTo(tr1);
+            }
+            else{ var td = $("<td>" + data[0][0][i][j]+ "</td>");
+            td.appendTo(tr1);
+            }
+            }
+        }
+    
+    $(".sums td").attr('rowspan', '2');
+    $("#table1").append("</tbody>");
+}
+// $("#table1 td").css('background', 'red');
+    function CreateTable2(data) {
+    var tbody = $("<tbody>");
+    var cellCount = 8;
+    var rowCount = data[0][1].length;
+    
+    $("#table2 tbody").remove();
+    tbody.appendTo($("#table2"));
+    for (var i = 0; i < rowCount; i++) {
+        var tr = $("<tr class='sum'></tr>");
+        tr.appendTo(tbody);
+        for (var j = 0; j < cellCount; j++) {
+        
+            var td = $("<td>" + data[0][1][i][j]+ "</td>");
+            td.appendTo(tr);
+            }
+        }
+    
+    $("#table2").append("</tbody>");
+}
+    function CreateTable3(data) {
+            
+    if (data.length > 0) {
+        $(".my_thead").show();
+    }
+    if (data.length == 0) {
+        $(".no_content").show();
+        $(".my_thead").hide();
+    }
+    var tbody = $("<tbody id='tbody3'>");
+    var cellCount = 8;
+    var rowCount = data[0][2].length;
+    // var klen = data[0][i][j].length;
+    $("#table3 tbody").remove();
+    tbody.appendTo($("#table3"));
+    for (var i = 0; i < rowCount; i++) {
+        var tr1 = $("<tr class='sum'></tr>");
+        tr1.appendTo(tbody);
+        for (var j = 0; j < cellCount; j++) {
+        
+            var td = $("<td>" + data[0][2][i][j]+ "</td>");
+            td.appendTo(tr1);
+            }
+        }
+    
+    $("#table3").append("</tbody>");
+}
+function CreateTable4(data) {
+    var tbody = $("<tbody id='tbody4'>");
+    var cellCount = 4;
+    var rowCount = data[1][0].length;
+    $("#table4 tbody").remove();
+    tbody.appendTo($("#table4"));
+    for (var i = 0; i < rowCount; i++) {
+        var tr1 = $("<tr class='sum'></tr>");
+        tr1.appendTo(tbody);
+        for (var j = 0; j < cellCount; j++) {
+        
+            var td = $("<td>" + data[1][0][i][j]+ "</td>");
+            td.appendTo(tr1);
+            }
+        }
+    
+    $("#table4").append("</tbody>");
+}
+        
+    var mydata = "";
+    function requestData()
+    {
+        //截取出开始日期和结束日期
+        var start_date = g_date_control.val().substr(0,10);
+        var end_date = g_date_control.val().substr(13);
+        $("#downloadExcel").attr("href",'/finance/finance_table_csv?start_date={0}&end_date={1}&app={2}'.format(start_date, end_date, $("#global_apps").val()));
+        $(".mydata .item").remove();
+        $(".mydata").hide();
+        
+        postJSON("{% url finance_table_ajax %}",
+                {
+                    start_date: start_date,
+                    end_date: end_date,
+                    app:$("#global_apps").val(),
+                },
+                function(data)
+                {
+                    //字符串转json
+                    mydata = eval(data);
+                    console.log(mydata);
+                    // CreateTable(data);
+                    // JSON.stringifier(myObject);
+                    var mdata = JSON.parse(data);
+                
+                    CreateTable1(mdata);
+                    CreateTable2(mdata);
+                    CreateTable3(mdata);
+                    CreateTable4(mdata);
+                }
+        );
+    }
+    // loading效果
+        $(document).ajaxStart(function() {
+            $(".loading_gif").show();
+        });
+        $(document).ajaxComplete(function() {
+            $(".loading_gif").hide();
+        });
+            //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+            function updateTime(delay)
+            {
+                var start_date = getDateStr("{{ currentdate }}", delay);
+                var end_date = "{{ currentdate }}";
+                g_date_control.data('daterangepicker').setStartDate(start_date);
+                g_date_control.data('daterangepicker').setEndDate(end_date);
+                g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+                requestData();
+            }
+            $(".tabTitle li").on("click",function(){
+                $(this).addClass("active").siblings().removeClass("active");
+                tabIndex = $(this).index();
+                // requestData(myTable.default);
+            })
+                $(".pt-table1").click(function(event) {
+                    // $(this).css('background', '#FF7F50');
+                    $(".pt-finance-table1").show();
+                    $(".pt-finance-table2").hide();
+                });
+                $(".pt-table2").click(function(event) {
+                    // $(this).css('background', '#FF7F50');
+                    $(".pt-finance-table2").show();
+                    $(".pt-finance-table1").hide();
+                });
+                
+</script>
+{% endblock %}

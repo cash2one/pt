@@ -1,0 +1,287 @@
+<div class="modal" id="my_sale_price">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modal_title">修改售价</h4>
+            </div>
+            <div class="modal-body">
+                <form class="bs-example bs-example-form" role="form">
+                    <div class="input-group">
+                        <label class="input-group-addon">
+                            <input type="radio" name="optionsRadios" class="optionsRadios" id="optionsRadios1" value="0"
+                                   checked/>提价倍数
+                        </label>
+                        <input type="text" class="form-control" name="multiple" maxlength="10"
+                               placeholder="">
+                    </div>
+                    <br/>
+                    <div class="input-group">
+                        <label class="input-group-addon">
+                            <input type="radio" name="optionsRadios" class="optionsRadios" id="optionsRadios2"
+                                   value="1"/>&nbsp;&nbsp;价格&nbsp;&nbsp;
+                        </label>
+                        <input type="text" class="form-control" name="sale_price" maxlength="10"
+                               placeholder=""></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="" onclick="salePriceShow()">预览</button>
+            </div>
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<br/>
+<div class="modal" id="my_sale_show">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="sale_price_modal_title">本次共修改X条商品的售价</h4>
+            </div>
+            <div class="modal-body">
+                <table id="sale_price_show_table" class=" table-striped table-bordered table-hover data_detail"
+                       style="font-size: 12px">
+                    <tbody>
+                    <tr>
+                        <td>序号</td>
+                        <td>供应商</td>
+                        <td>商品名</td>
+                        <td>运营商</td>
+                        <td>面值</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <hr/>
+                <h4 class="modal-title" id="">详细修改记录如下</h4>
+                <table id="sale_price_show_table_d" class=" table-striped table-bordered table-hover data_detail"
+                       style="font-size: 12px">
+                    <tbody>
+                    <tr>
+                        <td>序号</td>
+                        <td>供应商</td>
+                        <td>省份</td>
+                        <td>运营商</td>
+                        <td>面值</td>
+                        <td>进货价</td>
+                        <td>修改前价格</td>
+                        <td>修改后价格</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="" onclick="batchEditSalePrice(0)">确定</button>
+            </div>
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<br/>
+<div class="modal" id="my_sale_special_show">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="special_title">以下渠道商品价格被特殊修改过:</h4>
+            </div>
+            <div class="modal-body">
+                <table id="special_price_show_table" class=" table-striped table-bordered table-hover data_detail"
+                       style="font-size: 12px">
+                    <tbody>
+                    <tr>
+                        <td><input type="checkbox" id="special_check_all"/>全选</td>
+                        <td>渠道</td>
+                        <td>商品</td>
+                        <td>原售价</td>
+                        <td>修改后售价</td>
+                    </tr>
+                    </tbody>
+                </table>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="" onclick="batchEditSalePrice(1)">确定覆盖</button>
+            </div>
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<script>
+    var sale_select = ''
+    var sale_price = ''
+    var sale_price_edit = ''
+    var not_cover = []
+
+
+    function salePriceShow() {
+        for (var i = 0; i < 2; i++) {
+            if ($('.optionsRadios').eq(i).prop('checked') == true) {
+                sale_select = $('.optionsRadios').eq(i).val()
+            }
+        }
+
+        if (sale_select == '0') {
+            document.getElementsByName('sale_price')[0].value = ''
+            sale_price = $("input[name='multiple']").val()
+            if (sale_price.length == 0) {
+                alert('请填写倍数!')
+                return
+            }
+            var re = /^\d+(\.\d+)?$/;
+            var v_sale_price_float = parseFloat(sale_price);
+            if (!re.test(sale_price) || v_sale_price_float <= 0) {
+                alert('（必填）售价要为正数');
+                return
+            }
+            editSalePrice(sale_select, sale_price)
+        } else {
+            document.getElementsByName('multiple')[0].value = ''
+            sale_price = $("input[name='sale_price']").val()
+            if (sale_price.length == 0) {
+                alert('请填写价格!')
+                return
+            }
+            var re = /^\d+(\.\d+)?$/;
+            var v_sale_price_float = parseFloat(sale_price);
+            if (!re.test(sale_price) || v_sale_price_float <= 0) {
+                alert('（必填）售价要为正数');
+                return
+            }
+            editSalePrice(sale_select, sale_price)
+        }
+        console.log(sale_price, select_list)
+        batchEditPriceShow()
+        $("#my_sale_show").modal('show')
+
+    }
+
+
+    function editSalePrice(agv, price) {
+        if (agv == '0') {
+            for (var i = 0; i < select_list.length; i++) {
+                //console.log(select_list[i][0][6],price)
+                select_list[i][0][10] = (parseFloat(select_list[i][0][6]) * parseFloat(price)).toFixed(2)
+            }
+        } else {
+            for (var i = 0; i < select_list.length; i++) {
+                select_list[i][0][10] = parseFloat(price).toFixed(2)
+            }
+        }
+
+    }
+
+    //显示更改
+    function batchEditPriceShow() {
+        document.getElementById("sale_price_modal_title").innerHTML = '本次共修改' + eval(select_list.length) + '条商品的售价' + '<br/>' + '其中以下商品价格修改后低于进货价';
+
+        $("[tr_sale_price_remove='yes']").remove();
+        //添加元素
+        for (var i = 0; i < select_list.length; i++) {
+            var tr = $("<tr tr_sale_price_remove='yes'></tr>");
+            var trt = $("<tr tr_sale_price_remove='yes'></tr>");
+            for (var j in select_list[i]) {
+                //console.log(parseFloat(select_list[i][j][10]),parseFloat(select_list[i][j][7]))
+                if (parseFloat(select_list[i][j][10]) < parseFloat(select_list[i][j][7])) {
+                    //console.log(i)
+                    trt.append($("<td>{0}</td>".format(i + 1)));
+                    trt.append($("<td>{0}</td>".format(select_list[i][j][2])));
+                    trt.append($("<td>{0}</td>".format(select_list[i][j][3])));
+                    trt.append($("<td>{0}</td>".format(select_list[i][j][4])));
+                    trt.append($("<td>{0}元</td>".format(select_list[i][j][5])));
+                    $("#sale_price_show_table tbody").append(trt);
+                }
+                tr.append($("<td>{0}</td>".format(i + 1)));
+                tr.append($("<td>{0}</td>".format(select_list[i][j][2])));
+                tr.append($("<td>{0}</td>".format(select_list[i][j][3])));
+                tr.append($("<td>{0}</td>".format(select_list[i][j][4])));
+                tr.append($("<td>{0}元</td>".format(select_list[i][j][5])));
+                tr.append($("<td>{0}元</td>".format(select_list[i][j][7])));
+                tr.append($("<td>{0}元</td>".format(select_list[i][j][6])));
+                tr.append($("<td>{0}元</td>".format(select_list[i][j][10])));
+
+            }
+            $("#sale_price_show_table_d tbody").append(tr);
+        }
+    }
+
+    // 提交售价修改
+    function batchEditSalePrice(ag) {
+        if (ag == 1) {
+            not_cover = []
+            for (var i = 0; i < $('.special_check').length; i++) {
+                if ($('.special_check').eq(i).prop('checked') == false) {
+                    not_cover.push($('.special_check').eq(i).val())
+                }
+            }
+        }
+        postJSON("{% url 'phone_fee_batch_sale_price_ajax' %}",
+                {
+                    sale_data: JSON.stringify(select_list),
+                    sale_status: ag,
+                    not_cover: JSON.stringify(not_cover),
+                },
+                function (data) {
+                    //字符串转json
+                    no_data = eval('(' + data + ')');
+                    //console.log(no_data);
+                    if (no_data.sale_status == '0') {
+                        if (no_data.data.length == 0) {
+                            batchEditSalePrice(1)
+                        }
+                        else {
+                            specialShow(no_data.data)
+                        }
+
+                    } else if (no_data.sale_status == '1') {
+                        if (no_data.data.length == 0) {
+
+                            alert('ok');
+                            requestData(1)
+                            $("#my_sale_price").modal('hide')
+                            $("#my_sale_show").modal('hide')
+                            $("#my_sale_special_show").modal('hide')
+                        } else {
+                            alert(no_data.data)
+                        }
+                    }
+                }
+        );
+    }
+
+    //  特殊显示
+    function specialShow(data) {
+        $("#my_sale_special_show").modal('show')
+        $("[tr_special_price_remove='yes']").remove();
+        //添加元素
+        for (var i = 0; i < data.length; i++) {
+            var tr = $("<tr tr_special_price_remove='yes'></tr>");
+            tr.append($("<td><input type='checkbox' class='special_check' value='{0}' ></td>".format(data[i][0])));
+            tr.append($("<td>{0}</td>".format(data[i][4])));
+            tr.append($("<td>{0}</td>".format(data[i][1] + data[i][2])));
+            tr.append($("<td>{0}</td>".format(data[i][3])));
+            tr.append($("<td>{0}</td>".format(data[i][5])));
+            $("#special_price_show_table tbody").append(tr);
+        }
+    }
+
+    $('#special_check_all').click(function () {
+        if ($('#special_check_all').prop('checked')) {
+            $('.special_check').prop('checked', true)
+        } else {
+            $('.special_check').prop('checked', false)
+        }
+    })
+</script>

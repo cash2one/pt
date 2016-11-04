@@ -1,0 +1,838 @@
+{% extends "flow_base.html" %}
+
+{% block myhead %}
+{% endblock %}
+{% block title %}流量商品管理{% endblock %}
+{% block content %}{% include 'app_flow_apps_select.html' %}{% include 'app_flow_batch_edit_notify.html' %}
+    {% include 'app_flow_batch_edit_sale_price.html' %}
+    <style>
+        .form-group {
+            margin-top: 0px;
+            width: 20%;
+            padding-left: 0%;
+            left: 0%;
+        }
+
+        .modal-content {
+            margin-top: 0px;
+        }
+
+        .li-style {
+            float: left;
+            padding-left: 10px;
+
+        }
+
+        .modal-body > ul > li > input {
+            width: 300px;
+        }
+    </style>
+    <div class="form-inline">
+        <div class="form-group">
+            <input type="text" class="form-control" id="search" style="width: 250px" placeholder="供应商、省份、运营商、面值检索">
+        </div>
+        <button class="btn btn-success" onclick="requestData(1)" style="margin-left:50px;margin-right:10%">搜索</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <ul style="float: right">
+            <li class="li-style">
+                <button type="button" class="btn btn-primary" id="batch_edit_notify" shelves="batch_shelve"
+                        data-toggle="modal" >批量改提示语
+                </button>
+            </li>
+            <li class="li-style">
+                <button type="button" class="btn btn-primary" id="batch_edit_sale_price" shelves="batch_shelve"
+                        data-toggle="modal" >批量改售价
+                </button>
+            </li>
+            <li class="li-style">
+                <button type="button" class="btn btn-success" shelves="batch_shelve" data-toggle="modal"
+                         onclick="isUpdown(1)">批量上架
+                </button>
+            </li>
+            <li class="li-style">
+                <button type="button" class="btn btn-info" shelves="batch_shelve" data-toggle="modal"
+                         onclick="isUpdown(0)">批量下架
+                </button>
+            </li>
+            <li class="li-style">
+                <button type="button" class="btn btn-info" id="add_new_product" data-toggle="modal"
+                        data-target="#mymodal" onclick="beforeEdit(-1)" disabled="disabled">新增商品
+                </button>
+            </li>
+        </ul>
+    </div>
+    <br/>
+    <div class="form-inline">
+        省份选择：
+        <select id="flow_provinces" multiple="multiple">
+            {% for province in provinces %}
+                <option value="{{ province }}">{{ province }}</option>
+            {% endfor %}
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+        供应商选择：
+        <select id="cp_name" multiple="multiple">
+            {% for c_name in cp_names %}
+                <option value="{{ c_name }}">{{ c_name }}</option>
+            {% endfor %}
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+        运营商选择：
+        <select id="flow_carriers" multiple="multiple">
+            {% for carrier in carriers %}
+                <option value="{{ carrier }}">{{ carrier }}</option>
+            {% endfor %}
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+        <div hidden>
+        流量商品管理显示项：
+        <select id="pf_product_table" multiple="multiple">
+            {% for column in table_columns %}
+                <option value="{{ column.1 }}" {% if column.2 == 1 %}
+                        selected="selected"{% endif %}>{{ column.1 }}</option>
+            {% endfor %}
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+    </div>
+    <br/>
+    <div class="modal" id="mymodal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                            class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="modal_title">流量商品编辑</h4>
+                </div>
+                <div class="modal-body">
+                    <ul>
+                        <li>
+                        <span>
+                            <label>供应商:</label><span class="v_cp_name" style="color:red"> </span>
+                        </span>
+                            {#                            <input class="form-control" id="v_cp_name">#}
+                            <select class="input-group-lg form-control pt-a-select" id="v_cp_name"
+                                    required maxlength="11" style="width:57%;">
+                                <option class="form-control" value="">请选择CP</option>
+                                {% for c_name in cp_names %}
+                                    <option value="{{ c_name }}">{{ c_name }}</option>
+                                {% endfor %}
+                            </select>
+
+                        </li>
+
+                        <li id="prod_province_id">
+                        <span>
+                            <label>商品城市:</label><span class="v_prod_province_id" style="color:red"> </span>
+                        </span>
+                            {#                            <input class="form-control" id="v_prod_province_id">#}
+                            <select class="input-group-lg form-control pt-a-select" id="v_prod_province_id"
+                                    required maxlength="11" style="width:57%;">
+                                <option class="form-control" value="">请选择城市</option>
+                                {% for province in provinces %}
+                                    <option class="form-control" value="{{ province }}">{{ province }}</option>
+                                {% endfor %}
+                            </select>
+
+
+                        <li id="prod_isptype">
+                        <span>
+                            <label>服务商:</label><span class="v_prod_isptype" style="color:red"> </span>
+                        </span>
+                            {#                            <input class="form-control" id="v_prod_isptype">#}
+                            <select class="input-group-lg form-control pt-a-select" id="v_prod_isptype"
+                                    required maxlength="11" style="width:57%;">
+                                <option class="form-control" value="">请选择服务商</option>
+                                {% for carrier in carriers %}
+                                    <option value="{{ carrier }}">{{ carrier }}</option>
+                                {% endfor %}
+                            </select>
+
+
+                        </li>
+                        <li id="traffic_value">
+                        <span>
+                            <label>流量:</label><span class="v_traffic_value" style="color:red"> </span>
+                        </span>
+                            {#                            <input class="form-control" id="v_prod_isptype">#}
+                            <select class="input-group-lg form-control pt-a-select" id="v_traffic_value"
+                                    required maxlength="11" style="width:57%;">
+                                <option class="form-control" value="">请选择流量</option>
+                                {% for flow in flows_select %}
+                                    <option value="{{ flow }}">{{ flow }}</option>
+                                {% endfor %}
+                            </select>
+
+
+                        </li>
+                        <li id="prod_content">
+                        <span>
+                            <label>面值:</label><span class="v_prod_content" style="color:red"> </span>
+                        </span>
+                            <input class="form-control" id="v_prod_content">
+                        </li>
+                        <li id="sale_price">
+                        <span>
+                            <label>售价:</label><span class="v_putao_price" style="color:red"> </span>
+                        </span>
+                            <input class="form-control" id="v_sale_price">
+                        </li>
+                        <li id="prod_price">
+                        <span>
+                            <label>进货价:</label><span class="v_prod_price" style="color:red"> </span>
+                        </span>
+                            <input class="form-control" id="v_prod_price">
+                        </li>
+                        <li id="message">
+                        <span>
+                            <label>提示语:</label><span class="v_message" style="color:red"> </span>
+                        </span>
+                            <input class="form-control" id="v_message">
+                        </li>
+                        <input class="form-control" type="hidden" id="v_is_able">
+                        <input class="form-control" type="hidden" id="v_id">
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="save_order" data-target="#mymodal_two">保存</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+
+    <br/>
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px">
+        <thead>
+        <tr>
+            <th id="col_num" colspan="11">
+                <span id="table_title">流量商品管理</span>
+                <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip"
+                      data-placement="right"></span>
+                <a id="export_csv" href="{% url 'flow_goods_management_csv' %}" class="t_right">
+                    <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                </a>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr id="colname">
+            <td></td>
+            <td>排序</td>
+            <td>状态</td>
+            <td>供应商</td>
+            <td>省份</td>
+            <td>运营商</td>
+            <td>面值</td>
+            <td>进货价</td>
+            <td>提示语</td>
+            <td>操作</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <br/>
+    <span style="display:None; text-align:right" id="btn_batch_confirm">
+    <button type="button" class="btn btn-info" id="order_finish">已处理</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button type="button" class="btn btn-info" id="order_not_finish">未处理</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    </span>
+
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>50</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block;margin-bottom: 200px;">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="requestData(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="requestData(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 50;
+        var num_pages = 1;
+        var g_date_control = $("#date_control");
+        var g_current_page = 1;
+        var g_data = [];
+        var g_period = 1;
+        var g_order_detail = []
+        var g_order_pos = -1
+        //判断上架和下架
+        var g_is_updown = '';
+
+        var select_list = [];
+        var s_list = [];
+        var app_id={{ app }};
+        //console.log({{ provinces  |safe }})
+        //特殊筛选项(1-超时接单,2上门确认,3服务回访)
+        var g_special_filter = -1;
+
+        $(document).ready(function () {
+            setLeftNav("nav_full_hosting");
+            loading.init(".loading_gif", "#data_table");
+            modifyCsvHref();
+
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>货架商品管理说明</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+            $('#flow_provinces').multiselect({
+                enableCaseInsensitiveFiltering: true,
+                buttonWidth: '280px',
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                includeSelectAllOption: true,
+                nonSelectedText: '默认全选',
+                onChange: function (option, checked, select) {
+                    //requestData(1);
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            $('#cp_name').multiselect({
+                enableCaseInsensitiveFiltering: true,
+                buttonWidth: '280px',
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                includeSelectAllOption: true,
+                nonSelectedText: '默认全选',
+                onChange: function (option, checked, select) {
+                    //requestData(1);
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            $('#flow_carriers').multiselect({
+                enableCaseInsensitiveFiltering: true,
+                buttonWidth: '280px',
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                includeSelectAllOption: true,
+                nonSelectedText: '默认全选',
+                onChange: function (option, checked, select) {
+                    //requestData(1);
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            $('#pf_product_table').multiselect({
+                buttonWidth: '280px',
+                disableIfEmpty: true,
+                maxHeight: 400,
+                filterPlaceholder: "搜索",
+                includeSelectAllOption: true,
+                enableFiltering: true,
+                nonSelectedText: '默认全选',
+                onChange: function (option, checked, select) {
+                    showTable()
+                    requestData(1);
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            requestData(1);
+            showTable()
+        });
+        function isUpdown(agv) {
+            if (!selectGoods()){
+                return
+            }
+
+            $("#myapp_list").modal('show')
+            showExchange(select_list)
+            if (agv == 0) {
+                g_is_updown = 0
+                document.getElementById("app_title").innerHTML = '下架商品'
+                document.getElementById("liji_tile").innerHTML = '立即下架'
+                document.getElementById("time_tile").innerHTML = '定时下架'
+                document.getElementById("pf_start_time").value = ''
+                document.getElementById("pf_end_time").value = ''
+            } else {
+                g_is_updown = 1
+                document.getElementById("app_title").innerHTML = '上架商品'
+                document.getElementById("liji_tile").innerHTML = '立即上架'
+                document.getElementById("time_tile").innerHTML = '定时上架'
+                document.getElementById("pf_start_time").value = ''
+                document.getElementById("pf_end_time").value = ''
+            }
+
+        }
+
+        function updateDividePage() {
+            var count = num_pages;
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for (var i = count; i >= 1; i--) {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='requestData({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+        function updateTable(page) {
+            var total_page = num_pages;
+            if (page <= 0 || page > total_page)
+                return;
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for (var i = 0; i < g_data.length; i++) {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                tr.append($("<td><input type='checkbox' class='id_sub_check' value='{0}' ></td>".format(g_data[i])));
+                tr.append($("<td>{0}</td>".format(i+1+(page-1)*g_per)));
+                tr.append($("<td>{0}</td>".format(g_data[i][2])));
+                tr.append($("<td>{0}</td>".format(g_data[i][3])));
+                tr.append($("<td>{0}</td>".format(g_data[i][4])));
+                tr.append($("<td>{0}</td>".format(g_data[i][5])));
+                tr.append($("<td>{0}</td>".format(g_data[i][11])));
+                tr.append($("<td>{0}</td>".format(g_data[i][6])));
+                tr.append($("<td>{0}</td>".format(g_data[i][7])));
+                tr.append($("<td>{0}</td>".format(g_data[i][8])));
+                tr.append($("<td>{0}</td>".format(g_data[i][9])));
+                tr.append($("<td><a style='cursor:pointer' data-toggle='modal' data-target='#mymodal' onclick='beforeEdit(\"{1}\");'>{0}</a></td>".format(g_data[i][10], g_data[i])));
+
+
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for (var i = 1; i <= total_page; i++) {
+                if (i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //刷新订单信息
+        function freshOrderDetail(detail_data, row_index) {
+
+            $("[tr_can_remove='yes']").remove();
+
+            for (var i = 0; i < g_data.length; i++) {
+                if (i != row_index) {
+                    var tr = $("<tr tr_can_remove='yes'></tr>");
+                    for (j in g_data[i]) {
+                        if (j == 0) {
+                            tr.append($("<td><input type='checkbox' class='id_sub_check' value='{0}'></td>".format(g_data[i][1])));
+                        }
+                        else if (j == 10) {
+                            tr.append($("<td><a style='cursor:pointer' data-toggle='modal' data-target='#mymodal' onclick='beforeEdit(\"{1}\");'>{0}</a></td>".format(g_data[i][j], g_data[i])));
+                        }
+                        else {
+                            tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                        }
+                    }
+                    $("#data_table tbody").append(tr);
+                }
+                else {
+                    var tr = $("<tr tr_can_remove='yes'></tr>");
+                    for (j in g_data[i]) {
+                        if (j == 0) {
+                            tr.append($("<td><input type='checkbox' class='id_sub_check' value='{0}'></td>".format(g_data[i][1])));
+                        }
+                        else if (j == 10) {
+                            tr.append($("<td><a style='cursor:pointer' data-toggle='modal' data-target='#mymodal' onclick='beforeEdit(\"{1}\");'>{0}</a></td>".format(g_data[i][j], g_data[i])));
+                        }
+                        else {
+                            tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                        }
+                    }
+                    $("#data_table tbody").append(tr);
+                    for (var sub_i = 0; sub_i < detail_data.length; sub_i++) {
+                        var sub_tr = $("<tr tr_can_remove='yes'></tr>");
+                        for (sub_j in detail_data[sub_i]) {
+                            sub_tr.append($("<td style='max-width:150px; table-layout:fixed; word-break:break-all; overflow:hidden;' >{0}</td>".format(detail_data[sub_i][sub_j])));
+                        }
+                        $("#data_table tbody").append(sub_tr);
+                    }
+                }
+            }
+        }
+
+        //更新显示行数
+        function updatePer(per) {
+            g_per = per;
+            requestData(1);
+        }
+
+        //超时接单
+        {#        $("#batch_edit_sale_price").click(function () {#}
+        {#            g_special_filter = 1;#}
+        {#            showTable()#}
+        {#            requestData(1);#}
+        {#        });#}
+
+        //上门确认
+        {#        $("#batch_shelve").click(function () {#}
+        {#            g_special_filter = 2;#}
+        {#            showTable()#}
+        {#            requestData(1);#}
+        {#        });#}
+        {##}
+        {#        //服务回访#}
+        {#        $("#batch_unshelve").click(function () {#}
+        {#            g_special_filter = 3;#}
+        {#            showTable()#}
+        {#            requestData(1);#}
+        {#        });#}
+
+        //已处理按钮
+        $("#order_finish").click(function () {
+            //更新订单保障状态(1:处理)
+            batchEdit("1");
+            requestData(1);
+        });
+
+        //未处理按钮
+        $("#order_not_finish").click(function () {
+            //更新订单保障状态(0:未处理)
+            batchEdit("0");
+            requestData(1);
+        });
+
+        //订单编辑保持按钮
+        $("#save_order").click(function () {
+            singlehEdit();
+        });
+
+        $("#batch_edit_sale_price").click(function () {
+            if (!selectGoods()){
+                return
+            }
+            $("#my_sale_price").modal('show')
+            document.getElementsByName('sale_price')[0].value = '';
+            document.getElementsByName('multiple')[0].value = '';
+        });
+
+        $("#batch_edit_notify").click(function () {
+            if (!selectGoods()){
+                return
+            }
+            $("#my_notify").modal('show')
+            document.getElementById('notify_input').value = '';
+        });
+
+        //获取勾选数据
+        function selectGoods() {
+            select_list = [];
+            for (var i = 0; i < $(".id_sub_check").length; i++) {
+                s_list = [];
+                if ($(".id_sub_check").eq(i).prop('checked')) {
+                    batch_info = $(".id_sub_check").eq(i).val().split(",")
+                    batch_info.shift()
+                    s_list.push(batch_info)
+                    select_list.push(s_list);
+                    //console.log($(".id_sub_check").eq(i).val().split(","));
+                }
+            }
+            console.log(select_list)
+
+            if (select_list.length == 0) {
+                alert('请勾选商品!')
+                return false
+            }
+            return true
+
+        }
+
+
+        function requestData(cur_page) {
+            //修改导出文件的href地址
+            modifyCsvHref();
+            if (cur_page <= 0 || cur_page > num_pages)
+                return;
+            postJSON("{% url 'flow_goods_management_ajax' %}",
+                    {
+                        per_page: g_per,
+                        cur_page: cur_page,
+                        key: $("#search").val(),
+                        cp_name: $("#cp_name").val(),
+                        flow_provinces: $("#flow_provinces").val(),
+                        flow_carriers: $("#flow_carriers").val(),
+                        g_special_filter: g_special_filter,
+                        pf_product_table: $("#pf_product_table").val(),
+                        app_id:app_id,
+                    },
+                    function (data) {
+                        //字符串转json
+                        g_data = eval(data)[0];
+                        //console.log(g_data)
+                        num_pages = eval(data)[1];
+                        updateDividePage();
+                        updateTable(cur_page);
+                        showCheckbox();
+                        g_order_pos = -1;
+                    }
+            );
+        }
+
+        function modifyCsvHref() {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url 'flow_goods_management_csv' %}?per_page={0}&cur_page={1}&key={2}&cp_name={3}".format(g_per, 1, $("#search").val(), $("#cp_name").val()));
+        }
+
+        //根据pf_product_table筛选项,调整列表行数，跟列表名
+        function showTable() {
+            var column_selected = $("#pf_product_table option:selected")
+            var column_all = document.getElementById("colname")
+            document.getElementById("col_num").colSpan = column_selected.length
+            $("#colname").children().remove();
+            for (i = 0; i < column_selected.length; i++) {
+                var node = document.createElement("td");
+                if (column_selected[i].value == " ") {
+                    //给ID增加勾选框
+                    var cknode = document.createElement("input");
+                    var textnode = document.createTextNode(column_selected[i].value);
+                    cknode.setAttribute("type", "checkbox");
+                    cknode.setAttribute("id", "selectall_checkbox");
+                    node.appendChild(cknode);
+                    node.appendChild(textnode);
+                    document.getElementById("colname").appendChild(node);
+
+                    //勾选框全选或者取消全选
+                    $("#selectall_checkbox").click(function () {
+                        var ch = document.getElementsByClassName('id_sub_check');
+                        var isCheck = document.getElementById("selectall_checkbox").checked
+                        for (var i = 0; i < ch.length; i++) {
+                            ch[i].checked = isCheck;
+                        }
+                    });
+
+                }
+                else {
+                    var textnode = document.createTextNode(column_selected[i].value);
+                    node.appendChild(textnode);
+                    document.getElementById("colname").appendChild(node);
+                }
+            }
+
+            if (g_special_filter == 1 || g_special_filter == 2 || g_special_filter == 3) {
+                document.getElementById("btn_batch_confirm").style.display = "block";
+            }
+            else {
+                document.getElementById("btn_batch_confirm").style.display = "None";
+            }
+        }
+
+        // 显示每行的checkbox
+        function showCheckbox() {
+            if (g_special_filter == 1 || g_special_filter == 2 || g_special_filter == 3) {
+                var ch = document.getElementsByClassName('id_sub_check');
+                for (var i = 0; i < ch.length; i++) {
+                    ch[i].style.display = "";
+                }
+            }
+        }
+
+        //编辑流量商品新增编辑界面
+        function beforeEdit(product_info) {
+            //product_info等于-1，为新增商品
+            if (product_info == -1) {
+
+                $("#v_prod_isptype").attr("disabled", false);
+                $("#v_prod_province_id").attr("disabled", false);
+                $("#v_traffic_value").attr("disabled", false);
+                $("#v_prod_content").attr("disabled", false);
+                $("#v_cp_name").attr("disabled", false);
+                document.getElementById("modal_title").innerHTML = "流量商品新增";
+                document.getElementById("v_cp_name").value = "";
+                document.getElementById("v_prod_isptype").value = "";
+                document.getElementById("v_prod_province_id").value = "";
+                document.getElementById("v_prod_content").value = "";
+                document.getElementById("v_traffic_value").value = "";
+                document.getElementById("v_sale_price").value = "";
+                document.getElementById("v_prod_price").value = "";
+                document.getElementById("v_message").value = "";
+                document.getElementById("v_is_able").value = 0;
+                document.getElementById("v_id").value = '';
+            }
+            else {
+                console.log(product_info)
+
+                $("#v_prod_isptype").attr("disabled", true);
+                $("#v_traffic_value").attr("disabled", true);
+                $("#v_prod_province_id").attr("disabled", true);
+                $("#v_prod_content").attr("disabled", true);
+                var product_info = product_info.split(",")
+                document.getElementById("modal_title").innerHTML = "流量商品编辑";
+                document.getElementById("v_cp_name").value = product_info[3];
+                document.getElementById("v_traffic_value").value = product_info[11];
+                document.getElementById("v_prod_isptype").value = product_info[5];
+                document.getElementById("v_prod_province_id").value = product_info[4];
+                document.getElementById("v_prod_content").value = product_info[6];
+                document.getElementById("v_sale_price").value = product_info[7];
+                document.getElementById("v_prod_price").value = product_info[8];
+                document.getElementById("v_message").value = product_info[9];
+                document.getElementById("v_is_able").value = 0;
+                document.getElementById("v_id").value = product_info[1];
+            }
+        }
+
+        //批量更新订单保障状态
+        function batchEdit(status) {
+            var ch = document.getElementsByClassName('id_sub_check');
+            var edit_order_list = "";
+            for (var i = 0; i < ch.length; i++) {
+                if (ch[i].checked) {
+                    edit_order_list += "'" + ch[i].value + "'";
+                    edit_order_list += ",";
+                }
+            }
+            edit_order_list = edit_order_list.substring(0, edit_order_list.length - 1)
+
+            //ajax请求批量更新数据
+            postJSON("{% url 'batch_edit_guarantee_order_info' %}",
+                    {
+                        edit_order_list: edit_order_list,
+                        g_special_filter: g_special_filter,
+                        check_status: status,
+                    },
+                    function (data) {
+                        msg = eval(data);
+                        <!--alert(msg);-->
+                    }
+            );
+        }
+
+        //单个更新订单保障状态
+        function singlehEdit() {
+
+            var pt_comment = "";
+
+
+            {#           if(g_special_filter == 1)#}
+            {#            {#}
+            {#                pt_comment = document.getElementById("v_product_name").value;#}
+            {#            }#}
+            {#            else if(g_special_filter == 2)#}
+            {#            {#}
+            {#                pt_comment = document.getElementById("v_sale_price").value;#}
+            {#            }#}
+            {#            else if(g_special_filter == 3)#}
+            {#            {#}
+            {#                pt_comment = document.getElementById("v_message").value;#}
+            {#            }#}
+            var cp_name = document.getElementById("v_cp_name").value;
+            var prod_province_id = document.getElementById("v_prod_province_id").value;
+            var prod_isptype = document.getElementById("v_prod_isptype").value;
+            var traffic_value = document.getElementById("v_traffic_value").value;
+            var prod_content = document.getElementById("v_prod_content").value;
+            var sale_price = document.getElementById("v_sale_price").value;
+            var message = document.getElementById("v_message").value;
+            var prod_price = document.getElementById("v_prod_price").value;
+            var is_able = document.getElementById("v_is_able").value;
+            var v_id = document.getElementById("v_id").value;
+
+            var re = /^\d+(\.\d+)?$/;
+            var v_sale_price_int = parseFloat(sale_price);
+            var v_prod_price_int = parseFloat(prod_price);
+            if (!re.test(sale_price) || v_sale_price_int <= 0) {
+                alert('（必填）售价要为正数');
+                return
+            }
+            if (!re.test(prod_price) || v_prod_price_int <= 0) {
+                alert('（必填）进价要为正数');
+                return
+            }
+
+
+            //ajax请求批量更新数据
+            postJSON("{% url 'flow_edit_guarantee_order_info' %}",
+                    {
+                        {#                    order_no: order_no,#}
+                        {#                    pt_comment: pt_comment,#}
+                        {#                    g_special_filter: g_special_filter,#}
+                        cp_name: cp_name,
+                        prod_province_id: prod_province_id,
+                        prod_isptype: prod_isptype,
+                        prod_content: prod_content,
+                        putao_price: sale_price,
+                        default_message: message,
+                        prod_price: prod_price,
+                        is_able: is_able,
+                        v_id: v_id,
+                        traffic_value: traffic_value,
+                        app_id:app_id,
+                    },
+                    function (data) {
+                        list_li = ["v_cp_name", "v_prod_province_id", "v_prod_isptype", "v_prod_content", "v_putao_price", "v_prod_price", 'v_message', 'v_traffic_value']
+                        for (var i = 0; i < 8; i++) {
+                            //console.log(list_li[i])
+                            document.getElementsByClassName(list_li[i])[0].innerHTML = ' ';
+                        }
+
+                        if (data == 'ok') {
+                            //console.log('ok');
+                            alert('ok');
+                            $("#mymodal").modal('hide')
+                            requestData(1);
+                        }
+                        else {
+                            msg = eval('(' + data + ')');
+                            console.log('msg', msg)
+                            for (k in msg) {
+                                //console.log('v_'+k);
+                                //console.log(document.getElementsByClassName('v_'+k)[0]);
+                                document.getElementsByClassName('v_' + k)[0].innerHTML = msg[k];
+                            }
+                        }
+
+                    }
+            );
+        }
+
+
+
+        function addUpDownGoods(select_list) {
+            $("[tr_ex_remove='yes']").remove();
+            var num_ex = 1;
+            for (var i = 0; i < select_list.length; i++) {
+                var tr = $("<tr tr_ex_remove='yes'></tr>");
+                //console.log(select_list[i])
+                tr.append($("<td>{0}</td>".format(num_ex)));
+                tr.append($("<td>{0}</td>".format(select_list[i][0][3])));
+                tr.append($("<td>{0}</td>".format(select_list[i][0][4])));
+                tr.append($("<td>{0}</td>".format(select_list[i][0][10])));
+                tr.append($("<td>{0}元</td>".format(select_list[i][0][5])));
+                tr.append($("<td>{0}</td>".format(select_list[i][0][2])));
+                tr.append($("<td>{0}元</td>".format(select_list[i][0][6])));
+                tr.append($("<td>{0}元</td>".format(select_list[i][0][7])));
+                $("#chongtu_s tbody").append(tr);
+                num_ex+=1
+            }
+        }
+
+    </script>
+{% endblock %}

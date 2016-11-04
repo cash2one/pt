@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}新建动作{% endblock %}
+
+{% block head %}
+    <style>
+        *{
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        .dashhr{
+            margin: 10px 0;
+            border-top: 1px dashed #ccc;;
+        }
+        .sendmsg-form label{
+            width:16%;
+            text-align: right;
+            margin-right: 1%;
+        }
+        .sendmsg-form .col-lg-12 label{
+            width:8%;
+            margin-right: .5%;
+        }
+        .sendmsg-form .form-control,.sendmsg-form select{
+            display: inline-block;
+            width:80%;
+        }
+        .sendmsg-form .col-lg-12 .form-control{
+            width:90%;
+        }
+        .sendmsg-form a.addpicbtn{
+            cursor:pointer;
+            font-size: 40px;
+            padding: 10px 22px;
+            border: 2px solid #999;
+            color: #999;
+        }
+        .citylist{
+            width: 90%;
+            display: inline-block;
+            vertical-align: top;
+        }
+        .width1in8{
+            width:12.28888%;
+            display: inline-block;
+        }
+        .correctbtn{
+            color: #337ab7;
+            margin-left: 470px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .correctbtn:hover{
+            color:blue;
+            cursor: pointer;
+        }
+        .row label.autolabel{
+            width:auto;
+            text-align: left;
+        }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="cms-subtitle">
+        <ol class="breadcrumb">
+            <li><a href="{% url 'actions' %}">动作</a></li>
+            <li class="active">新建动作</li>
+        </ol>
+    </div>
+
+    <div id="error-hints">
+
+    </div>
+    <form class="sendmsg-form" action="{% url 'new_action' %}" method="post" enctype="multipart/form-data">{% csrf_token %}
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label>动作类型:</label>
+                    <select class="form-control" name="type">
+                        <option value="2" selected>打开特定H5链接页面</option>
+                        <option value="1">打开特定服务页面</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>Dest Activity：</label>
+                    <input class="form-control" name="dest_activity" value=""/>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>Dest Url：</label>
+{#                    {{ actions_form.dest_url.value }}#}
+                    <input class="form-control" name="dest_url" value="" />
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>标题：</label>
+                    <input class="form-control" name="dest_title" value=""/>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>商家信息：</label>
+                    <input class="form-control" name="cp_info" value=""/>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>Action Params：</label>
+                    <input class="form-control" name="action_params" value=""/>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>备注：</label>
+                    <input class="form-control" name="memo" value=""/>
+                </div>
+            </div>
+            <div class="col-lg-12" style="padding-left: 6%">
+                <label style="width:160px;">是否为葡萄提供的H5页面？</label>
+                <span class="autolabel"><input type="radio" name="pt_h5" value="1" checked/>是</span>
+                <span class="autolabel"><input type="radio" name="pt_h5" value="0"/>否</span>
+            </div>
+        </div>
+
+
+{{ actions_form.errors }}
+        <div class="row text-center">
+            <a href="{% url 'actions' %}" class="btn btn-default col-lg-1 col-lg-offset-4">取消</a>
+            <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="确定"/>
+        </div>
+    </form>
+    <script type="text/javascript">
+    
+        setNavBg("actions");
+        
+    </script>
+
+    <script type="text/javascript">
+
+    checkForm({{ errors|safe }});
+
+
+     $("form input").focus(function(){
+         $(this).css("border","1px solid #ccc");
+     });
+
+
+
+
+    function setInPutValue(){
+        {% for key,value in fields.items %}
+            {% if key == 'pt_h5' %}
+                $("input[name='{{ key }}'][value='{{ value }}']").attr("checked",'checked');
+            {% else %}
+                $("[name='{{ key }}']").val({{ value | safe }});
+            {% endif %}
+{#            console.log("{{ key }}"+":"+"{{ value }}");#}
+        {% endfor %}
+    };
+    window.onload=setInPutValue;
+    </script>
+
+{% endblock %}
+
+

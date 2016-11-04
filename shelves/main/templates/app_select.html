@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}渠道选择{% endblock %}
+{% block module %}
+这是渠道选择界面
+<script type="text/javascript">
+    var up_data={{ up_data | safe}};
+    console.log(up_data);
+</script>
+    <form action="{{ url 'ph_f_up_shelves' }}" method="post" accept-charset="utf-8" enctype="multipart/form-data">
+    <input name="up_data" value="1" type="hidden" id="voucher_type">
+
+    </form>
+{% endblock %}
+

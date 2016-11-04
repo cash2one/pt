@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block module %}
+    <nav class="navbar navbar-default" style="min-height: 40px;background-color: rgba(139, 0, 0, 0.55)">
+        <div class="container-fluid" style="margin-top: 5px;">
+            <span>请您选择需要查看的应用：</span>
+            <select class="chosen-select" id="global_apps" style="height: 40px">
+{#                <option value="">全部应用</option>#}
+                <script type="application/javascript">
+                    var apps = {_tongji_begin_apps_end_};
+                    for (var i in apps)
+                    {
+                        if(!apps[i][0])
+                            document.write('<option value="{0}">{1}</option>'.format(apps[i][0], apps[i][1]));
+                    }
+                    for (var i in apps)
+                    {
+                        if(apps[i][0])
+                            document.write('<option value="{0}">{1}</option>'.format(apps[i][0], apps[i][1]));
+                    }
+                </script>
+            </select>
+        </div>
+    </nav>
+    <div class="container-fluid" style="margin-top: 40px;">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="well sidebar-nav">
+                    <ul class="nav nav-list">
+                        <li class="nav-header"><span class="glyphicon glyphicon-eye-open"></span>业务订单查询</li>
+                        {% if order_management_query_recharge %}
+                        <li id="nav_order_management_recharge"><a href="{% url order_management_recharge %}">充值业务订单查询</a></li>
+                        {% endif %}
+                        {% if order_management_query_movie %}
+                        <li id="nav_order_management_movie"><a href="{% url order_management_movie %}">电影业务订单查询</a></li>
+                        {% endif %}
+                        {% if order_management_query_daojia %}
+                            <li id="nav_order_management_daojia"><a href="{% url order_management_daojia_select %}?type=1">到家业务订单查询</a></li>
+                        <li id="nav_order_management_daojia"><a href="{% url order_management_daojia %}">到家业务订单详情</a></li>
+                        {% endif %}
+                        {% if order_management_query_vip %}
+                        <li id="nav_order_management_vip"><a href="{% url order_management_vip %}">VIP卡业务订单查询</a></li>
+                        {% endif %}
+
+                        <li class="nav-header"><span class="glyphicon glyphicon-eye-open"></span>优惠券查询</li>
+                        {% if order_coupons_query %}
+                        <li id="order_coupons_query"><a href="{% url order_coupons_query_info %}">订单优惠券查询</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-10">
+                {% block content %}{% endblock %}
+                <a id="scrollUp" href="#" title="返回到顶部"></a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

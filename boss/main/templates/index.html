@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}首页{% endblock %}
+{% block module %}
+    <div style="margin-left: 40px;margin-top:40px;padding: 40px;border: 1px solid green;width:400px;text-align: center;">
+        {% if has_user %}
+        <a type="button" class="btn btn-primary" href="{% url user_index %}">用户统计</a>
+        <br />
+        <br />
+        {% endif %}
+        {% if has_report %}
+        <a type="button" class="btn btn-success" href="{% url report_index %}?app={{ first_app }}">业务统计</a>
+        <br />
+        <br />
+        {% endif %}
+        {% if is_staff %}
+        <a type="button" class="btn btn-warning" href="{% url man_index %}">账号管理</a>
+        <br />
+        <br />
+        {% endif %}
+    </div>
+{% endblock %}

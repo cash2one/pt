@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}快捷下单{% endblock %}
+{% block head %}
+    <style>
+        .my_thead {
+            display: table-header-group;
+        }
+
+        #table tr td:nth-child(3) {
+            text-align: left;
+            padding-left: 20px;
+        }
+
+        #table td .mblock {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .tag_order {
+            display: inline-block;
+            padding: 4px 6px;
+            width: 80px;
+            border: 1px solid #eee;
+            font-size: 16px;
+            text-align: center;
+        }
+        /*下拉多选样式覆盖*/
+        .muilti-select {
+            padding: 0 !important;
+            max-width: 100% !important;
+        }
+        .ms-choice {
+            height: 100% !important;
+            line-height: 34px !important;
+            border: 0 !important;
+        }
+        /*end*/
+        /*覆盖pt-cms.css中的样式*/
+        .modal-body form input[type="text"] {
+            width: 100%;
+        }
+        a.text-warning {
+            color: #a94442 !important;
+        }
+        a.text-info {
+            color: #000 !important;
+        }
+        a.text-success {
+            color: #4cae4c !important;
+        }
+        a.text-default {
+            color: #66cccc !important;
+        }
+    </style>
+    <link rel="stylesheet" href="{% static 'css/multiple-select.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="service-table">
+    {% verbatim %}
+    <section class="top-sec">
+        <ol class="breadcrumb col-md-3">
+            <li>
+                <a href="/main/category/">分类</a>
+            </li>
+            <li>
+                <a href="/main/quick_order/">新建快捷预约</a>
+            </li>
+            <li class="active">
+                标签组管理
+            </li>
+        </ol>
+        <button class="btn btn-primary" @click="addGroup">＋&nbsp</b>添加标签组</button>
+    </section>
+    <section>
+        <!-- 标签组 -->
+        <table>
+            <caption></caption>
+            <thead class="my_thead">
+                <tr>
+                    <th>标签组ID</th>
+                    <th>标签组名称</th>
+                    <th>名称备注</th>
+                    <th>所含标签</th>
+                    <th>排序</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                <tr v-for="list in groupList">
+                    <td><div>{{ list.id }}</div></td>
+                    <td>
+                        <div>{{ list.name }}</div>
+                    </td>
+                    <td><div>{{ list.remark }}</div></td>
+                    <td><div>{{ list.tag_names }}</div></td>
+                    <td>
+                        <div>
+                            <input class="tag_order" maxlength="9" data-id="{{list.id}}" value="{{list.sort}}"/>
+                            <br>
+                            <a href="#" class="text-default" @click="updateOrder(list)">修改</a>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="btns">
+                            <a href="#" class="text-default" @click="editGroup(list)">管理</a>
+                            <a href="#" class="text-default" @click.prevent="updateGroup(list)">编辑</a>
+                            <a href="#" class="text-warning" @click.prevent="deleteGroup(list)">删除</a>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 标签组下拉弹窗 -->
+    <div class="modal fade" id="addGroup">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">添加标签组</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">选择标签组：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <select name="group" class="form-control muilti-select" multiple>
+                                    <template v-for="list in exsistGroups" v-if="exsistGroups.length">
+                                        <option value="{{list.id}}">{{list.name}}</option>
+                                    </template>
+                                    <template v-else>
+                                        <option value="0" disabled>没有可选择标签</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">&nbsp;</label>
+                            <div class="col-md-9 col-sm-12">
+                                <a href="#" class="text-success" @click.prevent="newGroup">新建标签组</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="groupAddEvent">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- [添加|编辑]标签组弹窗 -->
+    <div class="modal fade" id="newGroup">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">{{ !!groupId ? "编辑标签组" : "添加标签组"}}</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right"><i>*</i>标签组名称：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <input type="text" class="form-control" v-model="groupName" placeholder="此名称会直接显示在客户端">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 col-sm-12 text-right">名称备注：</label>
+                            <div class="col-md-9 col-sm-12">
+                                <input type="text" class="form-control" v-model="groupNote" placeholder="仅方便运营人员查找，不作用域客户端；格式会：名称备注_名称">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="groupNewEvent">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增辅助组件 -->
+    <div class="helper"></div>
+    {% endverbatim %}
+</section>
+    <script src="{% static 'js/cms/initTable.js' %}"></script>
+    <script src="{% static 'js/cms/helper.js' %}"></script>
+    <script src="{% static 'js/cms/pager.js' %}"></script>
+    <script src="{% static 'js/multiple-select.js' %}"></script>
+    <script type="text/javascript">
+        var myTable,
+            id = Number.parseInt(location.search.substr(4)),
+            isAjaxing = false, // 是否在请求
+            is_upload_init = false; // 是否初始化了上传按钮
+
+        var vm = new Vue({
+            el: '.service-table',
+            data: {
+                    whichIndex: 0,
+                    groupList: [], // 标签组列表
+                    editGroupList: [], // 标签组下标签列表
+                    editGroupId: 0, // 管理的标签组的id
+                    editGroupName: '', // 管理的标签组的名称
+                    groupId: 0, // 新建&编辑 标签组
+                    groupName: '',
+                    groupNote: '',
+
+                    exsistGroups: [], // 下拉标签列表
+                    selectedGroup: '' // 下拉选中的标签
+            },
+            methods: {
+                // 添加标签组
+                addGroup: function() {
+                    var _this = this;
+
+                    this.groupId = 0;
+                    this.groupName = '';
+                    this.groupNote = '';
+
+                    var DEFAULT = {
+                        // width: 400,
+                        // maxHeight: 200,
+                        filter: true,
+                        single: false,
+                        placeholder: '多选下拉框',
+                        selectAllText: '全选',
+                        allSelected: '已全选',
+                        countSelected: '共%个，已选择#个',
+                        noMatchesFound: '没有找到匹配项'
+                    };
+
+                    $.getJSON('/tag/group/list/?all=1').done(function(res) {
+                        _this.exsistGroups = res;
+                        _this.selectedGroup = res[0].id ? res[0].id : '';
+
+                        Vue.nextTick(function() {
+                            $('#addGroup').modal();
+                            $('select[name="group"]').multipleSelect($.extend({}, DEFAULT, {
+                                onClose: function() {
+                                    var selected = $('select[name="group"]').multipleSelect('getSelects');
+                                    console.log(selected);
+                                    _this.selectedGroup = selected;
+                                },
+                                onCheckAll: function() {
+                                    this.onClose();
+                                }
+                            }));
+                        });
+
+
+                    }).fail(function(e) {
+                        helper.alert({
+                            content: '获取下拉标签组列表失败，请稍后重试~'
+                        });
+                    });
+                },
+                groupAddEvent: function() {
+                    var _this = this;
+                    if (!_this.selectedGroup) {
+                        return;
+                    }
+                    $.post('/tag/booking/groups/', JSON.stringify({
+                        bid: id,
+                        gids: _this.selectedGroup
+                    })).done(function(res) {
+                        if (res.code == 0) {
+                            $('#addGroup').modal('hide');
+                            myTable.getData(getGroupList, {
+                                curPage: 1
+                            });
+                        } else {
+                            helper.alert({
+                                content: res.msg
+                            });
+                        }
+                    }).fail(function(e) {
+                        helper.alert({
+                            content: '添加标签组失败，请稍后重试~'
+                        });
+                    })
+                },
+                newGroup: function() {
+                    var _this = this;
+                    $('#addGroup').modal('hide');
+
+                    setTimeout(function() {
+                        $('#newGroup').modal();
+                    }, 300);
+                },
+                groupNewEvent: function() {
+                    var _this = this;
+                    if (!_this.groupName) {
+                        return;
+                    }
+
+                    if (!!_this.groupId) { // 编辑
+                        updateGroup({
+                            url: '/tag/group/?id=' + _this.groupId,
+                            type: 'PUT',
+                            data: {
+                                name: _this.groupName,
+                                remark: _this.groupNote
+                            },
+                            errorMsg: '更新标签组失败，请稍后重试~'
+                        });
+                    } else { // 新增
+                        updateGroup({
+                            url: '/tag/group/',
+                            type: 'POST',
+                            data: {
+                                bid: id,
+                                name: _this.groupName,
+                                remark: _this.groupNote
+                            },
+                            errorMsg: '添加标签组失败，请稍后重试~'
+                        });
+                    }
+
+                    function updateGroup(option) {
+                        isAjaxing = true;
+                        $.ajax({
+                            url: option.url,
+                            type: option.type,
+                            data: JSON.stringify(option.data),
+                            dataType: 'json',
+                            success: function(res) {
+                                isAjaxing = false;
+                                $('#newGroup').modal('hide');
+                                _this.groupId = '';
+                                _this.groupName = '';
+                                _this.groupNote = '';
+
+                                myTable.getData(getGroupList, {
+                                    curPage: 1
+                                });
+                            },
+                            error: function(e) {
+                                isAjaxing = false;
+                                helper.alert({
+                                    content: option.errorMsg
+                                });
+                            }
+                        });
+                    }
+                },
+                updateOrder: function(list) {
+                    var _this = this;
+                    $.ajax({
+                        url: '/group/sort/',
+                        type: 'PUT',
+                        data: JSON.stringify({
+                            bid: id,
+                            gid: list.id,
+                            sort: $('input[data-id="' + list.id + '"').val()
+                        }),
+                        dataType: 'json',
+                        success: function(res) {
+                            if (res.code == 0) {
+                                myTable.getData(getGroupList);
+                            } else {
+                                helper.alert({
+                                    content: res.msg,
+                                    yes: function() {
+                                        setTimeout(function() {
+                                            myTable.getData(getGroupList);
+                                        }, 400);
+                                    }
+                                });
+                            }
+                        },
+                        error: function(e) {
+                            helper.close();
+                            setTimeout(function() {
+                                helper.alert({
+                                    content: '修改标签排序失败，请稍后重试~'
+                                });
+                            }, 400);
+                        }
+                    });
+                },
+                editGroup: function(list) {
+                    localStorage.tagGroupId = list.id;
+                    localStorage.editGroupName = list.id;
+                    location.href = '/tags/';
+                },
+                updateGroup: function(list) {
+                    this.groupId = list.id;
+                    this.groupName = list.name;
+                    this.groupNote = list.remark;
+                    $('#newGroup').modal();
+                },
+                // 删除标签组
+                deleteGroup: function(list) {
+                    helper.confirm({
+                        content: '确定删除该标签组"' + list.name + '"吗？',
+                        yes: function() {
+                            $.ajax({
+                                url: '/tag/booking/groups/?bid=' + id + '&gid=' + list.id,
+                                type: 'DELETE',
+                                dataType: 'json',
+                                success: function(res) {
+                                    if (res.code == 0) {
+                                        myTable.getData(getGroupList, {
+                                            curPage: 1
+                                        });
+                                    } else {
+                                        helper.alert({
+                                            content: res.msg
+                                        });
+                                    }
+                                },
+                                error: function(e) {
+                                    helper.alert({
+                                        content: '删除标签组失败，请稍后重试~'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                },
+                // 标签组列表添加标签组
+                groupEvent: function() {
+                    var _this = this;
+                    if (isAjaxing) {
+                        return;
+                    }
+                    isAjaxing = true;
+                    if (!!this.groupId) { // 编辑
+                        $.ajax({
+                            url: '/tag/group/?id=' + _this.groupId,
+                            type: 'PUT',
+                            data: JSON.stringify({
+                                name: _this.groupName,
+                                remark: _this.groupNote
+                            }),
+                            dataType: 'json',
+                            success: function(res) {
+                                isAjaxing = false;
+                                $('#addGroup').modal('hide');
+                                myTable.getData(getGroupList, {
+                                    curPage: 1
+                                });
+                            },
+                            error: function(e) {
+                                isAjaxing = false;
+                                helper.alert({
+                                    content: '更新标签组失败，请稍后重试~'
+                                });
+                            }
+                        })
+                    } else { // 添加
+                        $.post('/tag/group/', JSON.stringify({
+                            name: _this.groupName,
+                            remark: _this.groupNote
+                        })).done(function(res) {
+                            isAjaxing = false;
+                            $('#addGroup').modal('hide');
+                            myTable.getData(getGroupList, {
+                                curPage: 1
+                            });
+                        }).fail(function(e) {
+                            helper.alert({
+                                content: '添加标签组失败，请稍后重试~'
+                            });
+                        });
+                    }
+                }
+            },
+            ready: function() {
+                /*初始化页面*/
+                setNavBg("category");
+                myTable = new tableInit({});
+                myTable.getData(getGroupList);
+            }
+        });
+
+
+        // 标签组列表
+        function getGroupList(options) {
+            helper.loading();
+            $.getJSON('/booking/tag/groups/?bid=' + id + '&page=' + options.curPage + '&limit=' + options.pageSize).done(function(data) {
+                myTable.processData(data, function(data) {
+                    vm.$set('groupList', data.groups);
+                    Vue.nextTick(function() {
+                        helper.close();
+                    });
+                });
+                if (data.totalpage >= 2) myTable.pageInit(data.totalpage);
+
+                // 处理分页的代码，TODO
+                var currentpage = options.curPage - 1;
+                $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                if (currentpage > 5) {
+                    $(options.pageSelector).eq(currentpage - 5).prevAll().hide();
+                }
+            }).fail(function(e) {
+                helper.alert({
+                    content: '获取标签组列表数据失败，请稍后重试~'
+                });
+            });
+        }
+    </script>
+
+{% endblock %}
+

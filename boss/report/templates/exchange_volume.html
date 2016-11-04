@@ -1,0 +1,466 @@
+{% extends "report-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <script type="text/javascript" src="/static/js/echarts.js" ></script>
+    <style type="text/css">
+{#     td#}
+{#        {#}
+{#            white-space: nowrap;/*不允许td换行*/#}
+{#        }#}
+    </style>
+{% endblock %}
+{% block title %}交易额分析{% endblock %}
+{% block content %}
+    版本选择：
+    <select id="ver">
+        <option value="">全部版本</option>
+        {% for ver in vers %}
+            <option value="{{ ver }}">{{ ver }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    渠道选择：
+    <select id="channel">
+        <option value="">全部渠道</option>
+        {% for channel in channels %}
+            <option value="{{ channel }}">{{ channel }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    订单种类选择：
+    <select id="order_types">
+        <option value="">总和</option>
+        {% for product in products %}
+            <option value="{{ product.0 }}">{{ product.1 }}</option>
+        {% endfor %}
+    </select>
+    <br />
+    <br />
+    <table border="1px" class="overview">
+        <thead>
+            <tr>
+                <th colspan="5">
+                    <span>重点指标</span>
+                    <span id="overview" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="panel1" width="20%">今日交易金额</td>
+                <td class="my_panel panel2" width="20%">今日成功订单金额</td>
+                <td class="my_panel panel3" width="20%">今日失败订单金额</td>
+                <td class="my_panel panel4" width="20%">今日用券核销额</td>
+                <td class="my_panel panel5" width="20%">今日退款成功金额</td>
+            </tr>
+            <tr style="font-size: 20px;font-weight: bold">
+                <td class="my_panel panel1">{{ summary.total_pay_price }}</td>
+                <td class="my_panel panel2">{{ summary.total_order_success_price }}</td>
+                <td class="my_panel panel3">{{ summary.total_order_failed_price }}</td>
+                <td class="my_panel panel4">{{ summary.total_coupon_cost }}</td>
+                <td class="my_panel panel5">{{ summary.total_refund_success_price }}</td>
+            </tr>
+            <tr>
+                <td class="my_panel panel1">昨日下单额:{{ last_summary.total_pay_price }}</td>
+                <td class="my_panel panel2">昨日成功订单额：{{ last_summary.total_order_success_price }}</td>
+                <td class="my_panel panel3">昨日失败订单笔额：{{ last_summary.total_order_failed_price }}</td>
+                <td class="my_panel panel4">昨日消耗券订单金额：{{ last_summary.total_coupon_cost }}</td>
+                <td class="my_panel panel5">昨日退款成功金额：{{ last_summary.total_refund_success_price }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <br />
+    <br />
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    <br />
+    <br />
+    <table border="1px" class="overview">
+        <tbody>
+            <tr class="chart">
+                <td colspan="5" id="main"></td>
+            </tr>
+        </tbody>
+    </table>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px">
+        <thead>
+            <tr>
+                <th colspan="8">
+                    <span id="table_title">交易分析报表</span>
+{#                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>#}
+                    <a id="export_csv" href="{% url exchange_volume_reports_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="colname">
+                <td>日期</td>
+                <td>交易金额</td>
+                <td>成功订单金额</td>
+                <td>失败订单金额</td>
+                <td>处理中订单金额</td>
+                <td>退款中订单金额</td>
+                <td>成功成功订单金额</td>
+                <td>用券核销额</td>
+            </tr>
+        </tbody>
+    </table>
+{#    </div>#}
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;//每页的显示数
+        var g_data = [];//趋势数据
+        var g_current_page = 1;//当前页
+        var g_summary_data = [] ;//实时统计表格数据
+        var g_date_control = $("#date_control");
+        $(document).ready(function() {
+            $("#colname").siblings().remove();
+            setLeftNav("nav_order_reports");
+            loading.init(".loading_gif", "#data_table");
+            {#            modifyCsvHref(getDateStr("{{ currentdate }}", -29).replace(/-/g, ""), "{{ currentdate }}".replace(/-/g, ""));#}
+            drawEChart();
+            $('#ver').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function (option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#channel').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function (option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#order_types').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function (option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+            g_date_control.daterangepicker(
+                {
+                    locale:
+                    {
+                        applyLabel: "确定",
+                        cancelLabel: "取消"
+                    },
+                    format: 'YYYY-MM-DD',
+                    separator: ' 到 ', //前后有空格
+                    startDate: getDateStr("{{ currentdate }}", -29),
+                    endDate: "{{ currentdate }}",
+                    maxDate: getDateStr("{{ currentdate }}", 1)// < maxDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+            ).val(getDateStr("{{ currentdate }}", -29) + " 到 {{ currentdate }}");
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function(ev, picker){
+                drawEChart();
+            });
+        });
+
+        function requestData()
+        {
+            //修改导出文件的href地址
+{#            modifyCsvHref(start_date, end_date);#}
+            postJSON("{% url exchange_volume_summaries %}",
+                {
+                    ot: $("#order_types").val(),
+                    app: getURLParam("app"),
+                    ver: $("#ver").val(),
+                    channel: $("#channel").val()
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_summary_data = eval(data);
+                    console.log(g_summary_data);
+                    updateSummaryContent();
+                    drawEChart();
+                }
+            );
+        }
+        //更新表格内交易信息
+        function updateSummaryContent(){
+         var summary = g_summary_data[0];
+         var last_summary = g_summary_data[1];
+         for(var i=1;i<6;i++){
+            $("td.panel"+i).eq(1).text(summary[i-1]);
+         }
+            $("td.panel1").eq(2).text("昨日交易单数:"+last_summary[0]);
+            $("td.panel2").eq(2).text("昨日交易总额:"+last_summary[0]);
+            $("td.panel3").eq(2).text("昨日交易用户数:"+last_summary[0]);
+            $("td.panel4").eq(2).text("交易占比:"+parseFloat(summary[6])*100+"%");
+            $("td.panel5").eq(2).text("券带动消费金额:"+summary[5]);
+        }
+        function drawEChart()
+        {
+            var g_date=[];
+            var g_selected = {};//记录不被展示的曲线
+            //截取出开始日期和结束日期
+            var start_date = g_date_control.val().substr(0,10);
+            var end_date = g_date_control.val().substr(13);
+            modifyCsvHref(start_date,end_date);
+            // 路径配置
+            require.config({
+                paths: {
+                    echarts: '/static/js/'
+                }
+            });
+            // 使用
+            require(
+                [
+                    'echarts',
+                    'echarts/chart/line'
+                ],
+                function (ec)
+                {
+                    // 基于准备好的dom，初始化echarts图表
+                    var myChart = ec.init(document.getElementById('main'));
+
+                    var option = {
+                        tooltip: {
+                            show: true//,
+{#                            formatter: function (params, ticket, callback) {#}
+{#                                return "【{3}】<br/>{0}~{1}点：{2}".format(#}
+{#                                        parseInt(params.dataIndex),#}
+{#                                        parseInt(params.dataIndex) + 1,#}
+{#                                        params[5],#}
+{#                                        params.seriesName);#}
+{#                            }#}
+                        },
+                        legend: {
+                            y: 'bottom',
+                            textStyle: {
+                                fontWeight: "bold"
+                                //color: "auto"
+                            },
+                            data: [],
+                            selected: g_selected
+                        },
+                        xAxis: [
+                            {
+                                type: 'category',
+                                data: ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"],
+                                splitLine: {
+                                    show: false
+                                }
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value'
+                            }
+                        ],
+                        series: []
+                    };
+
+                    //通过Ajax获取数据
+                    $.ajax({
+                        type: "post",
+                        //async: false, //同步执行
+                        url: "{% url get_exchange_volume_line_data %}",
+                        data: {
+                            start_date: start_date,
+                            end_date: end_date,
+                            ot: $("#order_types").val(),
+                            app: getURLParam("app"),
+                            ver: $("#ver").val(),
+                            channel: $("#channel").val()
+                        },
+                        dataType: "json", //返回数据形式为json
+                        beforeSend:function(XMLHttpRequest){
+                            //图表显示提示信息
+                            myChart.showLoading({
+                                text: "图表数据正在努力加载...",
+                                effect: "bar"
+                            });
+                        },
+                        success: function (result)
+                        {
+                            if (result)
+                            {
+                                //将返回的category和series对象赋值给options对象内的category和series
+                                // 因为xAxis是一个数组 这里需要是xAxis[i]的形式
+                                g_data = result[3];
+                                option.series = result[0];
+                                //坐标显示
+                                $.each(result[0], function (num, item){
+                                    $.each(item,function(k,v){
+                                       if(k=="name"){
+                                           g_date.push(v);
+                                       }
+                                    });
+                                });
+                                $.each(result[2], function(num,item){
+                                   g_selected[item] = false;
+                                });
+                                option.xAxis[0].data = result[1];//x轴
+                                option.legend.data = g_date;   //显示的下标
+                                option.legend.selected = g_selected;//默认不显示
+                                myChart.setOption(option);
+                                updateDividePage();
+                                updateTable(1);
+                            }
+                        },
+                        error: function (errorMsg) {
+                            console.log("不好意思，图表请求数据失败啦!");
+                        },
+                        complete: function (){
+                            myChart.hideLoading();
+                        }
+                    });
+
+                    //记录下选中项
+                    var ecConfig = require('echarts/config');
+                    myChart.on(ecConfig.EVENT.LEGEND_SELECTED, function (param)
+                        {
+                            g_selected = param.selected;
+                        }
+                    );
+                }
+            );
+        }
+        //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+        function updateTime(delay)
+        {
+            var start_date = getDateStr("{{ currentdate }}", delay);
+            var end_date = "{{ currentdate }}";
+
+            g_date_control.data('daterangepicker').setStartDate(start_date);
+            g_date_control.data('daterangepicker').setEndDate(end_date);
+            g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+            drawEChart();
+        }
+        $(".btn.btn-primary").click(function(){
+            updateTime(0);
+        });
+        $(".btn.btn-success").click(function(){
+            updateTime(-6);
+        });
+    //修改下载订单报表的href链接
+    function modifyCsvHref(start_date, end_date)
+        {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url exchange_volume_reports_csv %}?start_date={0}&end_date={1}".
+                format(start_date, end_date));
+        }
+        //更新每页的显示数
+        function updatePer(per)
+        {
+            g_per = per;
+            updateDividePage();
+            updateTable(1);
+        }
+        //更新表格第page页的数据
+        function updateTable(page)
+        {
+            var total_page = 1 + parseInt((g_data.length - 1) / g_per);
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("#colname").siblings().remove();
+            //添加元素
+            for(var i = (page - 1) * g_per; i < g_per * page && i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(var j in g_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+        //按照每页显示数和总数据 更新分页
+        function updateDividePage()
+        {
+            var count = 1 + parseInt((g_data.length - 1) / g_per);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+    </script>
+{% endblock %}

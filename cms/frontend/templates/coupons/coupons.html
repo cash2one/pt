@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}优惠券{% endblock %}
+
+{% block head %}
+<style>
+    .my_thead{
+        display: table-header-group;
+    }
+ /*   #table tr td:nth-child(2){
+        text-align: left;
+        padding-left: 20px;
+    }*/
+    #table .mimg{
+        width:100px;
+        height: 100px;
+        margin:10px 0;
+    }
+    #table td .mblock{
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    #table .noContent{
+        height: 200px;
+        font-size: 20px;;
+    }
+    #table .noContent:hover{
+        background: transparent;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="top-sec">
+     <span>
+     <input type="search" name="keywords" value="" placeholder="请输入关键词搜索" id="search" ><span class="search_pic" ><img src="{% static 'images/sousuo.png' %}"></span>
+            <span  class="clearInput"><a href="javascript:void(0)">×</a></span>
+            <a href="javascript:void(0)" class="search_val">
+                <span class="search-btn">搜索</span>
+            </a>
+     </span>
+
+    {% if perms.man.config %}
+        <a class="btn-new" href="{% url 'new_coupons' %}"><b style="font-size:.18rem">＋&nbsp</b>新增优惠券</a>
+    {% endif %}
+
+</section>
+<section class="service-table">
+    <table id="table">
+        <caption></caption>
+        <thead class="my_thead">
+        <tr>
+            <th>序号</th>
+            <th>名称</th>
+            <th>图片</th>
+            <th>ID</th>
+            <th>有效时间</th>
+            <th>城市</th>
+            <th>状态</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <div id="loading" style="display:none;">
+            <img src="{% static 'images/loading.gif' %}"/>
+        </div>
+        <tbody id="tbody">
+            <tr class="noContent">
+                <td colspan="100%">暂无相关内容</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="no_content" ><p>未找到相关内容，请重新搜索</p></div>
+    <div id="pagination" ></div>
+    <script src="{% static 'js/cms/initTable.js' %}"></script>
+<script type="text/javascript">
+        var myTable;
+        $(function(){
+            init();
+            myTable = new tableInit({});
+            myTable.getData();
+            /*绑定搜索部分功能*/
+            myTable.searchInit();
+        })
+
+        function init(){
+            /*初始化页面*/
+            setNavBg("coupons");
+        }
+        function requestData(options){
+            $.ajax("{% url 'search_coupons' %}",{
+                type:"get",
+                cache:false,
+                data:{
+                    key: $("#"+options.keyword).val(),
+                    cur_page: options.curPage,
+                    per_page: options.pageSize
+                },
+                beforeSend:function(XMLHttpRequest){
+                    $(".noContent").hide();
+                    $("#"+options.pageContainer).hide();
+                    $("#"+options.loadImgId).show();
+                },
+                success:function(result){
+                    // console.log(result);
+                    var data = eval(result)[0],num_pages = eval(result)[1];
+                    if(data.length == 0){
+                        $('#'+myTable.default.tbodyId).empty();
+                        $("#"+options.pageContainer).hide();
+                        $(".no_content").show();
+                        $(".my_thead").hide();
+                    }
+                    else{
+                        $(".my_thead").show();
+                        $(".no_content").hide();
+                        myTable.processData(data);
+                        if(num_pages>=2) myTable.pageInit(num_pages);
+                    }
+                },
+                error:function(result){
+                    console.log(result);
+                },
+                complete:function(result){
+                    $("#"+options.loadImgId).hide();
+                    var currentpage = options.curPage-1;
+                    $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                    if(currentpage>5){
+                        $(options.pageSelector).eq(currentpage-5).prevAll().hide();
+                    }
+                }
+            })
+        }
+        function delData(id){
+            $.ajax("{% url 'delete_coupons' %}", {
+                type: "post",
+                cache: false,
+                data: {
+                    id: id
+                },
+                beforeSend: function (XMLHttpRequest) {
+                    $("#loading").show();
+                },
+                success: function (result) {
+                    if (result == 0) {
+                        requestData(myTable.default);
+                    }
+                },
+                error: function (result) {
+                    console.log(result);
+                },
+                complete: function (result) {
+                    $("#loading").hide();
+                }
+            });
+        };
+        /*处理后台返回数据*/
+        function dataInit(data){
+            var tbodyId = myTable.default.tbodyId,htmlStr='',trId;
+            if(data.length == 0){
+                $(".noContent").show();
+                return ;
+            }
+            $.each(data,function(i,value){
+                trId = value[value.length-1];
+                htmlStr+='<tr data-id='+trId+'>';
+                var td_status=value[value.length-2];
+                value.splice(value.length-2,2);
+                $.each(value,function(j,ele){
+                    if(j == 2){
+                        htmlStr +='<td><img style="cursor:pointer" class="mimg" data-toggle="modal" data-target="#myModal_img" src="'+ele+'" /></td>';
+                    }
+                    else{
+                        htmlStr +='<td>'+ele+'</td>';
+                    }
+                });
+                 //根据传递参数，显示操作状态，0为可见，1为可编辑
+                if(td_status =='1'){
+                    htmlStr += '<td><span class="glyphicon glyphicon-edit" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span><span class="glyphicon glyphicon-trash" aria-hidden="true" style="cursor: pointer"></span></td></tr>';
+                }else if(td_status =='0'){
+                    //不显示编辑状态
+                    htmlStr += '<td><a class="glyphicon glyphicon-eye-open"></a></td></tr>';
+                }
+                //htmlStr += '<td><span class="glyphicon glyphicon-edit" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span><span class="glyphicon glyphicon-trash" aria-hidden="true" style="cursor: pointer"></span></td></tr>';
+            });
+            $('#'+tbodyId).empty().append($(htmlStr)).on("click",'.glyphicon-edit',function(e){
+                window.location.href = '{% url 'edit_coupons' %}?id='+$(this).parents('tr').data("id")
+
+            }).on("click",'.glyphicon-trash',function(e){
+                var tr = $(this).parents("tr"),
+                        id = tr.data("id"),
+                        mtext = tr.find("td").eq(1).text();
+                $("#myModal-del").find(".del_info").text(mtext)
+                        .end().find(".btn-primary").on("click",function(){
+                            delData(id);
+                        }).end().modal("show");
+                //return false;
+            })
+            /*为二级分类添加+号*/
+            $('#'+tbodyId) .find("tr.level2").each(function(){
+                $(this).find("td:nth-child(2)").prepend('<span class="glyphicon glyphicon-minus" style="margin:0 5px 0 20px;" aria-hidden="true"></span>');
+            });
+        }
+    </script>
+</section>
+{% endblock %} 

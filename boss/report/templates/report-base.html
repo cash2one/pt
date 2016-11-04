@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block module %}
+    <nav class="navbar navbar-default" style="min-height: 40px;background-color: rgba(139, 0, 0, 0.55)">
+        <div class="container-fluid" style="margin-top: 5px;">
+            <span>请您选择需要查看的应用：</span>
+            <select class="chosen-select" id="global_apps" style="height: 40px">
+                {#                <option value="">全部应用</option>#}
+                <script type="application/javascript">
+                    var apps = {_tongji_begin_apps_end_};
+                    for (var i in apps) {
+                        if (!apps[i][0])
+                            document.write('<option value="{0}">{1}</option>'.format(apps[i][0], apps[i][1]));
+                    }
+                    for (var i in apps) {
+                        if (apps[i][0])
+                            document.write('<option value="{0}">{1}</option>'.format(apps[i][0], apps[i][1]));
+                    }
+                </script>
+            </select>
+        </div>
+    </nav>
+    <div class="container-fluid" style="margin-top: 40px;">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="well sidebar-nav">
+                    <ul class="nav nav-list">
+                        <li class="nav-header"><span class="glyphicon glyphicon-pawn"></span>到家业务分析</li>
+                        {% if ba_transaction_analysis_daojia_product %}
+                            <li><a href="{% url exchange_daojia_order_summary %}?app={{ first_app }}">到家业务分析-汇总</a></li>
+                        {% endif %}
+                        {% if ba_transaction_analysis_daojia_product %}
+                            <li><a href="{% url exchange_daojia_order_cash %}?app={{ first_app }}">到家业务分析-现金分析</a></li>
+                        {% endif %}
+{#                        {% if ba_transaction_analysis_daojia_product %}#}
+{#                            <li><a href="{% url exchange_daojia_order %}?app={{ first_app }}">到家业务分析-订单分析</a></li>#}
+{#                        {% endif %}#}
+                        {% if ba_transaction_analysis_daojia_product %}
+                            <li><a href="{% url exchange_daojia_order_area %}?app={{ first_app }}">到家业务分析-地域分析</a></li>
+                        {% endif %}
+                        {% if ba_transaction_analysis_daojia_product %}
+                            <li><a href="{% url exchange_daojia_order_activity %}?app={{ first_app }}">到家业务分析-秒杀活动</a></li>
+                        {% endif %}
+                        {% if ba_transaction_analysis_daojia_product %}
+                            <li><a href="{% url exchange_daojia_order_service %}?app={{ first_app }}">到家业务分析-服务分析</a></li>
+                        {% endif %}
+                        {% if ba_transaction_analysis_daojia_product %}
+                            <li><a href="{% url exchange_daojia_order_marketing %}?app={{ first_app }}">到家业务分析-营销费用</a></li>
+                        {% endif %}
+                        {% if full_hosting %}
+                            <li id="nav_order_management_daojia"><a
+                                    href="{% url order_management_daojia %}">到家业务订单详情</a></li>
+                        {% endif %}
+                        {% if full_hosting %}
+                            <li id="nav_full_hosting"><a href="{% url full_hosting %}">到家业务订单详情-新用户分析</a></li>
+                        {% endif %}
+                        {% if ba_transaction_analysis_dj_service_quality %}
+                            <li><a href="{% url exchange_daojia %}?app={{ first_app }}">到家服务质量</a></li>
+                        {% endif %}
+
+                        {% if report_ditui_manage %}
+                            <li><a href="{% url ditui_info %}">地推人员管理</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-pawn"></span>概况分析</li>
+                        {% if ba_transaction_analysis_general %}
+                            <li><a href="{% url exchange_overview %}?app={{ first_app }}">交易概况</a></li>
+                        {% endif %}
+                        {% if ba_transaction_analysis_real_time %}
+                            <li><a href="{% url exchange %}?app={{ first_app }}">实时统计</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-pawn"></span>自营业务分析</li>
+                        {% if ba_transaction_analysis_self_product %}
+                            <li><a href="{% url exchange_self_order %}?app={{ first_app }}">自营业务分析</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-pawn"></span>VIP卡业务分析</li>
+                        {% if ba_transaction_analysis_self_product %}
+                            <li><a href="{% url exchange_vip_order %}?app={{ first_app }}">VIP业务分析</a></li>
+                        {% endif %}
+                        {% if order_management_query_vip %}
+                            <li id="nav_vip"><a href="{% url order_management_vip %}">VIP业务订单详情</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-pawn"></span>其他业务分析</li>
+                        {% if ba_transaction_analysis_activity %}
+                            <li><a href="{% url exchange_activity %}?app={{ first_app }}">活动分析</a></li>
+                        {% endif %}
+                        {% if ba_transaction_analysis_user %}
+                            <li><a href="{% url exchange_user %}?app={{ first_app }}">用户分析</a></li>
+                        {% endif %}
+
+
+
+                        <li class="nav-header"><span class="glyphicon glyphicon-list-alt"></span>业务数据报表</li>
+                        {% if order_reports %}
+                            <li id="nav_order_reports"><a href="{% url order_reports %}">订单日报表</a></li>
+                        {% endif %}
+                        {% if order_sum %}
+                            <li id="nav_order_sum"><a href="{% url order_sum %}">订单汇总报表</a></li>
+                        {% endif %}
+                        {% if ba_product_analysis_real_time_report %}
+                            <li id="nav_order_reports_realtime"><a href="{% url realtime_order_reports %}">订单实时报表</a>
+                            </li>
+                        {% endif %}
+                        {% if cp %}
+                            <li id="nav_cp"><a href="{% url cp %}">订单多CP报表</a></li>
+                        {% endif %}
+                        {% if failed_orders %}
+                            <!--<li id="nav_failed_orders"><a href="{% url failed_orders %}">失败订单报表</a></li>-->
+                        {% endif %}
+                        {% if failed_orders %}
+                            <li id="nav_abnormal_orders"><a href="{% url abnormal_order_report %}">异常订单报表</a></li>
+                        {% endif %}
+                        {% if trade %}
+                            <li id="nav_trade"><a href="{% url trade %}">营销费用报表</a></li>
+                        {% endif %}
+                        {% if ba_product_analysis_movie_report %}
+                            <li id="nav_movie_sum"><a href="{% url movie_sum %}">电影汇总报表</a></li>
+                        {% endif %}
+
+                        <li class="nav-header"><span class="glyphicon glyphicon-star"></span>服务质量追踪</li>
+                        {% if phone_fee %}
+                            <li id="nav_phone_fee"><a href="{% url phone_fee %}">充话费</a></li>
+                        {% endif %}
+                        {% if flow %}
+                            <li id="nav_flow"><a href="{% url flow %}">充流量</a></li>
+                        {% endif %}
+                        {% if qb %}
+                            <li id="nav_qb"><a href="{% url qb %}">游戏充值</a></li>
+                        {% endif %}
+                        {% if movie %}
+                            <li id="nav_movie"><a href="{% url movie %}">电影票</a></li>
+                        {% endif %}
+
+                        <li class="nav-header"><span class="glyphicon glyphicon-random"></span>用户交易报表</li>
+                        {% if service %}
+                            <li id="nav_service"><a href="{% url service %}">业务情况</a></li>
+                        {% endif %}
+                        {% if coupon %}
+                            <li id="nav_coupon"><a href="{% url coupon %}">用券情况</a></li>
+                        {% endif %}
+
+                        <li class="nav-header"><span class="glyphicon glyphicon-cloud"></span>商品统计</li>
+                        {% if goods %}
+                            <li id="nav_goods"><a href="{% url goods %}">商品统计</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-cloud"></span>邀请有礼业务分析</li>
+                        {% if invite_business_analy %}
+                            <li ><a href="{% url invite_overview %}">邀新有礼-优惠券 汇总</a></li>
+                            <li ><a href="{% url invite_vip_overview %}">邀新有礼-VIP充送 汇总</a></li>
+                            <li ><a href="/report/invite/0">邀请人</a></li>
+                            <li id="b_invite"><a href="/report/invite/1">被邀请人</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-cloud"></span>广告推广业务分析</li>
+                        {% if finance_operation_vip_operation_summary %}
+                        <li><a href="{% url exchange_vip_activity %}">广告推广-VIP充送分析</a></li>
+                        {% endif %}
+                        <li class="nav-header"><span class="glyphicon glyphicon-cloud"></span>葡萄卡分析</li>
+                        {% if finance_operation_vip_operation_summary %}
+                        <li><a href="{% url exchange_entity_card_summary %}">实体卡分析</a></li>
+                        {% endif %}
+
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-10">
+                {% block content %}{% endblock %}
+                <a id="scrollUp" href="#" title="返回到顶部"></a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

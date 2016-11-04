@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}生成券码{% endblock %}
+
+{% block head %}
+<style>
+    * {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .dashhr {
+        margin: 10px 0;
+        border-top: 1px dashed #ccc;;
+    }
+
+    .sendmsg-form label {
+        width: 16%;
+        text-align: right;
+        margin-right: 1%;
+    }
+
+    .sendmsg-form .form-control, .sendmsg-form select {
+        display: inline-block;
+        width: 80%;
+    }
+
+    .sendmsg-form .col-lg-12 .form-control {
+        width: 90%;
+        vertical-align: middle;
+    }
+
+    .sendmsg-form a.addpicbtn {
+        cursor: pointer;
+        font-size: 40px;
+        padding: 10px 22px;
+        border: 2px solid #999;
+        color: #999;
+        cursor: pointer;
+    }
+
+    .citylist {
+        width: 90%;
+        display: inline-block;
+        vertical-align: top;
+    }
+
+    .correctbtn {
+        color: #337ab7;
+        margin-left: 470px;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .correctbtn:hover {
+        color: blue;
+        cursor: pointer;
+    }
+
+    #validataDiv {
+        padding-left: 10%;
+    }
+
+    #validataDiv .form-group label {
+        width: 4%;
+        text-align: left;
+    }
+    .note{
+        margin-left: 20px;
+    }
+</style>
+<link rel="stylesheet" href="{% static 'css/selectImg.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/multiple-select.css' %}"/>
+{% endblock %}
+
+{% block content %}
+<ul class="titlebar">
+    <li class="active"><a href="{% url 'open_activity_channels' %}" >优惠券管理</a></li>
+    <li><a href="{% url 'open_coupon_create' %}">优惠券发放</a></li>
+</ul>
+
+<h4 class="back">
+    <a href="{% url 'open_activity_channels' %}"> <i class="glyphicon glyphicon-chevron-left"></i>返回优惠券管理</a>
+</h4>
+
+
+<div id="error-hints">
+
+</div>
+
+<h6 class="warning"><span class="glyphicon glyphicon-exclamation-sign"></span>提交后立即向用户发放，且不可修改和撤回，请认真填写</h6>
+<form class="sendmsg-form">
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i>选择优惠券:</label>
+                <select name="cps" value="" id="cps" multiple="multiple"  ></select>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i>兑券截止时间:</label>
+                <input  type="datetime-local" class="form-control" min="1999-12-31T23:59" max="9999-12-31T23:59" name="end_time" id="end_time" required />
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i> 优惠券数量:</label>
+                <input type="number" class="form-control" name="amount" id="amount" required placeholder="优惠券生成数量"/>
+            </div>
+        </div>
+
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i>优惠券类型:</label>
+                <input type="radio" name="is_muti" checked/>统一码 <span class="note">一个优惠码可被兑换多次</span><br/>
+                <input type="radio" name="is_muti" style="    margin-left: 8.5%;"/>多码 <span class="note">一个兑换码可被兑换一次</span>
+            </div>
+        </div>
+
+
+    </div>
+
+
+
+    <div class="row text-center">
+        <a class="btn btn-default col-lg-1 col-lg-offset-4" href="{% url 'open_activity_channels' %}">取消</a>
+        <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="提交"/>
+    </div>
+
+
+</form>
+<div class="helper"></div>
+
+<script src="{% static 'js/cms/helper.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/multiple-select.js' %}"></script>
+<script type="text/javascript">
+    var curCId,editFlag= false,databaseObject ={};
+    window.onload = function(){
+        setNavBg("activity_config");
+        getCurGoods();
+        function getCurGoods(){
+            $.get('/coupons/',function(data){
+                console.log(data)
+                $.each(data,function(i,ele){
+                    $("[name=cps]").append("<option value='"+ele.cid+"'>"+"["+ele.cid+"]-"+ele.name+"</option>");
+                });
+                $("[name=cps]").multipleSelect({
+                    filter: true,
+                    width: '90%'
+                });
+            })
+        }
+    }
+    $("form").submit(function (e) {
+        e.preventDefault();
+        $.post('/codes/',JSON.stringify(getJsonParamter($("form").serializeArray())),function(result){
+            if(result.code == 0){
+                window.location.href = '{% url "open_activity_channels" %}'
+            } else if (result.code == 1){
+                helper.alert({
+                    content: result.msg});
+            }
+        });
+        function getJsonParamter(array){
+            var o ={};
+            $.each(array, function() {
+                if (o[this.name]) {
+                    if (!o[this.name].push) {
+                        o[this.name] = [o[this.name]];
+                    }
+                    o[this.name].push(this.value || '');
+                } else {
+                    o[this.name] = this.value || '';
+                }
+            });
+            o["cps"] = o["cps"].toString();
+            o["end_time"] = o["end_time"].replace('T', ' ');
+            o['is_muti'] = $('[name=is_muti]:checked').index('[name=is_muti]')
+            return o;
+        }
+    });
+    checkForm({{ errors|safe }});
+    Date.prototype.Format = function(fmt)
+    {
+        var o = {
+            "M+" : this.getMonth()+1,                 //月份
+            "d+" : this.getDate(),                    //日
+            "h+" : this.getHours(),                   //小时
+            "m+" : this.getMinutes(),                 //分
+            "s+" : this.getSeconds(),                 //秒
+            "q+" : Math.floor((this.getMonth()+3)/3), //季度
+            "S"  : this.getMilliseconds()             //毫秒
+        };
+        if(/(y+)/.test(fmt))
+            fmt=fmt.replace(RegExp.$1, (this.getFullYear()+"").substr(4 - RegExp.$1.length));
+        for(var k in o)
+            if(new RegExp("("+ k +")").test(fmt))
+                fmt = fmt.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length)));
+        return fmt;
+    };
+    $("form input").focus(function () {
+        $(this).css("border", "1px solid #ccc");
+    });
+</script>
+{% endblock %}
+

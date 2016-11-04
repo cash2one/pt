@@ -1,0 +1,304 @@
+{% extends "finance_base.html" %}
+{% block myhead %}
+<link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+<script type="text/javascript" src="/static/js/multiselect.js" ></script>
+<!-- <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script> -->
+<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<style type="text/css">
+                {#     td#}
+                            {#        {#}
+                                        {#            white-space: nowrap;/*不允许td换行*/#}
+                            {#        }#}
+</style>
+{% endblock %}
+{% block title %}日/月运营数据报表{% endblock %}
+{% block content %}
+<style>
+    .mydata{
+        font-size: 0;
+    }
+    .mydata .item{
+        width:7.6923%;
+        display: inline-block;
+        margin:10px 0;
+        font-size: 14px;
+        vertical-align: top;
+        text-align: center;
+    }
+    .mydata h4{
+        border-bottom:1px solid #ccc;
+        padding-bottom:10px;
+        text-align: center;
+        margin-bottom: 0;
+    }
+    .mydata .item{
+        background-color:rgba(0,0,0,.1);
+        min-height: 124px;
+    }
+    .mydata .item-level1{
+    }
+    .mydata .item-level2,.mydata .item-level3{
+        display: none;
+        background-color:#ccc;
+        border-bottom:1px solid #111
+    }
+    .mydata .item-level3{
+        background-color:#333;
+    }
+    .mydata .unit{
+        position:relative;
+        padding:10px 0;
+    }
+    .mydata h4,.mydata h5{
+        overflow: hidden;
+        text-overflow:ellipsis;
+        white-space: nowrap;
+        width:100%
+    }
+    .mydata .unit > h5{
+        position: absolute;
+        left: 20px;
+        top: 5px;
+    }
+    .mydata .item-level h5{
+        color:#fff
+    }
+    .mydata .unit  ul,.mydata .unit li{
+        margin: 0;
+        text-align: right;
+        margin-right: 7px;
+    }
+    .mydata .unit  ul{
+        margin-top: 24px;
+    }
+    .mydata .unit .sum{
+        color:darkorange;
+    }
+    .mydata .unit .deal_num{
+        color:#666;
+    }
+    .item-level3 .unit > h5{
+        color:#fff
+    }
+    .pt-finance-table #table3 thead {
+        background: #8DB0CE;
+        cursor: pointer;
+        }
+    .pt-finance-table #table3 thead:hover {
+        background: #8DB0CE;
+    }
+    .pt-finance-table #table3 tbody tr:nth-child(2n){
+        display: none;
+    }
+    .pt-finance-table #table3 tbody tr:nth-child(2n+1){
+        background: #f1f5f9;
+        cursor: pointer;
+    }
+    .pt-finance-table #table3 tbody tr:nth-child(2n+1):hover{
+        background: #EEE;
+    }
+    .pt-finance-table tbody tr:nth-child(1) {
+    background-color: #eee;
+    font-size: 12px;
+    font-weight: 600;
+    }
+.pt-finance-table tbody tr:nth-child(2) {
+    background-color: #eee;
+    font-size: 12px;
+    font-weight: 600;
+    }
+    .level-one td{background:#b1c9dd;font-weight: 600;font-size: 14px;}
+    .level-two td{background:#e6eef4;font-weight: 600;font-size: 13px;color:#4682B4;}
+    .level-three td{background:#F8F8FF;}
+</style>
+<div class="container-fluid">
+    <!--<ul class="nav nav-pills">
+                                <li role="presentation" class="active"><a href="#">日汇总</a></li>
+                                <li role="presentation" class=""><a href="#">月汇总</a></li>
+                </ul>
+                <a class="btn btn-success">日汇总</a>
+                <a class="btn btn-default">月汇总</a>
+                <a href="#"><span class="glyphicon glyphicon-triangle-left"></span></a>
+                <a href="#" class="disabled"><span class="glyphicon glyphicon-triangle-right"></span></a>
+    <span>2015年10月</span>-->
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                            <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <a class="btn btn-primary pull-right" id="downloadExcel" href="#">下载CSV账单</a>
+</div>
+<div class="pt-finance-table pt-finance-table2" style="z-index:990;">
+    <div class="loading_gif"></div>
+    <table id="table3" class="table3">
+        <caption>运营数据汇总报表</caption>
+        <thead class="my_thead">
+            <tr class="tr-first">
+                <th>项目名称</th>
+                <th>业务名称</th>
+                <th>运营商名称</th>
+                <th>应收款</th>
+                <th>实收款</th>
+                <th>应付款</th>
+                <th>实付款</th>
+                <th>应退款</th>
+                <th>实退款</th>
+                <th>批价策略</th>
+                <th>优惠券</th>
+                <th>其他</th>
+                <th>交易手续费</th>
+                <th>异常订单金额</th>
+                <th>应损益</th>
+                <th>实损益</th>
+                <th>对账状态</th>
+            </tr>
+        </thead>
+        <tbody id="tbody3">
+        </tbody>
+    </table>
+</div>
+<script type="text/javascript">
+    var g_date_control = $("#date_control");
+    $(function(){
+        setTopNav(1,0);
+        g_date_control.daterangepicker(
+                {
+                    locale:
+                    {
+                        applyLabel: "确定",
+                        cancelLabel: "取消"
+                    },
+                    format: 'YYYY-MM-DD',
+                    separator: ' 到 ', //前后有空格
+                    startDate: getDateStr("{{ currentdate }}", -29),
+                    endDate: "{{ currentdate }}",
+                    maxDate: getDateStr("{{ currentdate }}", 1)// < maxDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+        ).val(getDateStr("{{ currentdate }}", -29) + " 到 {{ currentdate }}");
+        //点击apply触发事件
+        g_date_control.on('apply.daterangepicker', function(ev, picker){
+            requestData();
+        });
+        requestData();
+        
+    })
+    function requestData()
+    {
+        //截取出开始日期和结束日期
+        var start_date = g_date_control.val().substr(0,10);
+        var end_date = g_date_control.val().substr(13);
+        //修改导出文件的href
+        $("#downloadExcel").attr("href",'/finance/daily_operate_csv?start_date={0}&end_date={1}&app={2}'.format(start_date, end_date, $("#global_apps").val()));
+        // $(".mydata .item").remove();
+        // $(".mydata").hide();
+        // // loading.show();
+        postJSON("{% url daily_operate_ajax %}",
+                {
+                    start_date: start_date,
+                    end_date: end_date,
+                    app:$("#global_apps").val(),
+                },
+                function(data)
+                {
+                    //字符串转json
+                var mydata = eval(data);
+                CreateTable3(mydata);
+                }
+        );
+    }
+function CreateTable3(data) {
+    if (data.length > 0) {
+        $(".my_thead").show();
+    }
+    if (data.length == 0) {
+        $(".no_content").show();
+        $(".my_thead").hide();
+    }
+    var tbody = $("<tbody id='tbody3'>");
+        var cellCount = 17;
+        var rowCount = data.length;
+        console.log(data[0][18]);
+        // console.log(rowCount);
+        // var klen = data[0][i][j].length;
+        $("#table3 tbody").remove();
+        tbody.appendTo($("#table3"));
+        for (var i = 0; i < rowCount; i++) {
+        var tr1 = $("<tr></tr>");
+            tr1.appendTo(tbody);
+            if(data[i][18] == "1"){
+                $(tr1).addClass('level-one');
+            }
+            else if(data[i][18] == "2"){
+                $(tr1).removeClass('level-one').addClass('level-two');
+            }
+            else if(data[i][18] == "3"){
+                 $(tr1).removeClass('level-one');
+                 $(tr1).removeClass('level-two');
+                 $(tr1).addClass('level-three');
+            }
+        for (var j = 0; j < 17; j++) {
+                if (j == 16) {
+                var td = $("<td> <a href='http://"+data[i][17]+"'target='_blank'>" + data[i][j]+ "</a></td>");
+                td.appendTo(tr1);
+            }
+            else{
+            var td = $("<td>" + data[i][j]+ "</td>");
+            td.appendTo(tr1);
+            }
+            }
+        }
+    
+    $("#table3").append("</tbody>");
+}
+    $()
+//     $("table tbody tr:nth-child(2n+1)").click(function(event) {
+//     $(this).next().show();
+// });
+$(document).ajaxStart(function() {
+            $(".loading_gif").show();
+        });
+        $(document).ajaxComplete(function() {
+            $(".loading_gif").hide();
+        });
+    //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+    function updateTime(delay)
+    {
+        var start_date = getDateStr("{{ currentdate }}", delay);
+        var end_date = "{{ currentdate }}";
+        g_date_control.data('daterangepicker').setStartDate(start_date);
+        g_date_control.data('daterangepicker').setEndDate(end_date);
+        g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+        requestData();
+    }
+// $("table tbody tr:nth-child(2n+1)").css('background', 'tomato');
+$("table").on('click', 'tbody tr:nth-child(2n+1)', function(event) {
+        $(this).next().toggle();
+    });
+  // $("table").on('click', 'tbody tr.level-two', function(event) {
+  //       $(this).siblings(".level-three").toggle();
+  //   });
+  //  $("table").on('click', 'tbody tr.level-one', function(event) {
+  //       $(this).nextUntil(".level-two").toggle();
+  //   });
+</script>
+{% endblock %}

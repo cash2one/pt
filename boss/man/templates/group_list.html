@@ -1,0 +1,103 @@
+{% extends "man-base.html" %}
+{% block title %}所有分组{% endblock %}
+{% block content %}
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail">
+        <thead>
+            <tr>
+                <th colspan="2">
+                    <span>分组列表</span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="width:50%">分组名称</td>
+                <td style="width:50%">操作</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="modal fade" id="delItem" tabindex="-1" role="dialog" aria-labelledby="delItemLabel" data-backdrop="static">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="delItemLabel">
+                        <span class="glyphicon glyphicon-trash" style="margin-right: 0"></span>
+                            删除分组
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    您确定要删除&nbsp;<span style="font-weight: bold" id="delEventId"></span>&nbsp;分组吗？
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="del_group()">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="application/javascript">
+    //本文件一些全局变量
+    var g_data = [];
+    var g_groupid = 0;
+    $(document).ready(function()
+    {
+        setLeftNav("nav_group_list");
+        loading.init(".loading_gif", "#data_table");
+        requestData();
+    });
+
+    function requestData()
+    {
+        postJSON("{% url group_list_ajax %}",
+            {
+            },
+            function(data)
+            {
+                //字符串转json
+                g_data = eval(data);
+                updateTable();
+            }
+        );
+    }
+
+    function del_group(g)
+    {
+        postJSON("{% url del_group %}",
+            {
+                g: g_groupid
+            },
+            function(data)
+            {
+                //字符串转json
+                g_data = eval(data);
+                updateTable();
+            }
+        );
+    }
+
+    function before_del(groupid, groupname)
+    {
+        g_groupid = groupid;
+        $("#delEventId").html(groupname);
+    }
+
+    function updateTable()
+    {
+        //在添加之前，先把现有元素移除掉
+        $("[tr_can_remove='yes']").remove();
+        //添加元素
+        for(var i = 0; i < g_data.length; i++)
+        {
+            var tr = $("<tr tr_can_remove='yes'></tr>");
+            tr.append($("<td>{0}</td>".format(g_data[i][0])));
+            tr.append($("<td>{0}{1}{2}</td>".format(
+                    "<a style='cursor:pointer' href='{% url view_group %}?g={0}&n={1}'><span class='glyphicon glyphicon-list'></span>查看权限</a>".format(g_data[i][1], g_data[i][0]),
+                    "<a style='cursor:pointer;margin-left:30px;' href='{% url edit_group %}?g={0}'><span class='glyphicon glyphicon-edit'></span>编辑分组</a>".format(g_data[i][1]),
+                    "<a style='cursor:pointer;margin-left:30px;' data-toggle='modal' data-target='#delItem' onclick='before_del({0}, \"{1}\")'><span class='glyphicon glyphicon-trash'></span>删除分组</a>".format(g_data[i][1], g_data[i][0])
+            )));
+            $("#data_table tbody").append(tr);
+        }
+    }
+    </script>
+{% endblock %}

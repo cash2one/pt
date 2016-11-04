@@ -1,0 +1,253 @@
+{% extends "report-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <style type="text/css">
+    </style>
+{% endblock %}
+{% block title %}失败订单{% endblock %}
+{% block content %}
+    版本选择：
+    <select id="ver">
+        <option value="">全部版本</option>
+        {% for ver in vers %}
+            <option value="{{ ver }}">{{ ver }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    渠道选择：
+    <select id="channel">
+        <option value="">全部渠道</option>
+        {% for channel in channels %}
+            <option value="{{ channel }}">{{ channel }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    失败订单种类选择：
+    <select id="order_types">
+        <option value="">所有订单</option>
+        {% for product in products %}
+            <option value="{{ product.0 }}">{{ product.1 }}</option>
+        {% endfor %}
+    </select>
+    <br />
+    <br />
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    <br />
+    <br />
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail">
+        <thead>
+            <tr>
+                <th colspan="8">
+                    <span id="table_title">所有失败订单汇总</span>
+                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                    <a id="export_csv" href="{% url failed_orders_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="colname">
+                <td>订单号</td>
+                <td>订单种类</td>
+                <td>订单详情</td>
+                <td>支付金额</td>
+                <td>创建时间</td>
+                <td>订单状态</td>
+                <td>退款状态</td>
+                <td>操作</td>
+            </tr>
+        </tbody>
+    </table>
+    <br />
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_data = [];
+        var g_date_control = $("#date_control");
+        initStartDate = getURLParam("start_date") || (getDateStr("{{ currentdate }}", -6)),
+        initEndDate = getURLParam("end_date") || "{{ currentdate }}";
+
+
+        $(document).ready(function()
+        {
+            setLeftNav("nav_failed_orders");
+            loading.init(".loading_gif", "#data_table");
+            modifyCsvHref();
+            $('#ver').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#channel').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#order_types').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>订单号：</span>订单唯一识别号</p>',
+                    '<p><span>订单种类：</span>订单的业务类型</p>',
+                    '<p><span>订单详情：</span>订单的内容</p>',
+                    '<p><span>支付金额：</span>该订单用户支付的金额</p>',
+                    '<p><span>创建时间：</span>订单的创建时间</p>',
+                    '<p><span>订单状态：</span>订单的状态</p>',
+                    '<p><span>退款状态：</span>订单的退款状态</p>',
+                    '<p><span>操作：</span>点击退款链接，转接至退款操作界面</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+            g_date_control.daterangepicker(
+                {
+                    locale:
+                    {
+                        applyLabel: "确定",
+                        cancelLabel: "取消"
+                    },
+                    format: 'YYYY-MM-DD',
+                    separator: ' 到 ', //前后有空格
+                    startDate: initStartDate,
+                    endDate: initEndDate,
+                    maxDate: getDateStr(initEndDate, 1)// < maxDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+            ).val(initStartDate + " 到 "+ initEndDate);
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function(ev, picker){
+                requestData(1);
+            });
+
+            requestData();
+        });
+
+        //参数i是页数
+        function updateTable()
+        {
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for(var i = 0; i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for (j in g_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                if(g_data[i][0] == "--")
+                    tr.append("<td>--</td>");
+                else
+                    tr.append("<td><a target='_blank' href='http://pay.putao.so/pay/refund/order?order_no={0}'>点击退款</a></td>".format(g_data[i][0]));
+                $("#data_table tbody").append(tr);
+            }
+        }
+
+         //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+        function updateTime(delay)
+        {
+            var start_date = getDateStr("{{ currentdate }}", delay);
+            var end_date = "{{ currentdate }}";
+
+            g_date_control.data('daterangepicker').setStartDate(start_date);
+            g_date_control.data('daterangepicker').setEndDate(end_date);
+            g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+            requestData(1);
+        }
+
+
+        function requestData()
+        {
+            var start_date = g_date_control.val().substr(0,10);
+            var end_date = g_date_control.val().substr(13);
+
+            modifyCsvHref();
+            postJSON("{% url failed_orders_ajax %}",
+                {
+                    app: getURLParam("app"),
+                    ver: $("#ver").val(),
+                    start_date: start_date,
+                    end_date: end_date,
+                    channel: $("#channel").val(),
+                    ot: $("#order_types").val()
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data);
+                    changeTableTitle();
+                    updateTable();
+                }
+            );
+        }
+
+        function changeTableTitle()
+        {
+            var order_type = $("#order_types").val();
+            var table_tile = $("#table_title");
+
+            if(!order_type)
+                table_tile.html("所有失败订单汇总");
+            else
+                table_tile.html("失败订单分表-{0}".format($("#order_types").find("option:selected").text()));
+        }
+
+        function modifyCsvHref()
+        {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url failed_orders_csv %}?ot={0}&app={1}&ver={2}&channel={3}".
+                format($("#order_types").val(), getURLParam("app"), $("#ver").val(), $("#channel").val()));
+        }
+    </script>
+{% endblock %}

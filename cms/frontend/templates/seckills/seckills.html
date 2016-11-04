@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}秒杀{% endblock %}
+{% block content %}
+    <section class="top-sec">
+        <ol class="breadcrumb" id="breadcrumb">
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+            <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+            <li class="active">秒杀</li>
+        </ol>
+        {% if perms.man.config %}
+             <a class="adbtn-new" href="{% url 'new_seckill' %}?channel={{ channel }}"><b
+                    style="font-size:.18rem">＋&nbsp</b>新增秒杀活动</a>
+        {% endif %}
+    </section>
+    <section class="service-table ">
+        <table id="table">
+            <caption></caption>
+            <thead class="my_thead">
+            <tr>
+                <th>图片</th>
+                <th>标题</th>
+                <th>描述</th>
+                <th>秒杀价</th>
+                <th>原价</th>
+                <th>运营标签</th>
+                <th>有效时间</th>
+                <th>城市</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <div id="loading" style="display:none;">
+                <img src="{% static 'images/loading.gif' %}"/>
+            </div>
+            <tbody id="tbody" class="tbody">
+
+            </tbody>
+        </table>
+        <div class="modal fade" id="myModal_activity_add" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    
+                    <div class="modal-body">
+                        <input name="open_type" value="0" id="open_type" type="hidden"/>
+                        <input name="channel_id" value="{{ channel }}" id="channel_id" type="hidden"/>
+                        <input name="status" value="0" id="status" type="hidden"/>
+
+                        <div style="position: relative;display: inline-block;width: 100%;">
+                            <div class="input-group-lg form-control item-dropmenu" id="itemselect">
+                                <a data-value=""></a>
+                                {% for coupon_activity in coupon_activities %}
+                                    <a data-value="{{ coupon_activity.0 }}">{{ coupon_activity.1 }}</a>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" id="activity_id" name="activity_id" class="form-control real_id"
+                                   style="width:400px;"/>
+                            <input type="text" id="service_uid" name="service_uid" class="form-control item_id"
+                                   style="width:100%;" required maxlength="11" placeholder="请选择下拉列表中服务或输入搜索"/>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="common_ser_confirm"
+                                onclick='addEventConfirm("activity_id","{% url 'coupon_new_activity' %}")'>确定
+                        </button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+        </div>
+        <div class="no_content"><p>暂无秒杀活动，请创建新秒杀活动</p></div>
+        <div id="pagination"></div>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                setNavBg({{t}});//导航高亮设置函数
+                requestData();
+            });
+            function CreateTable(data) //表格创建函数
+            {
+                if (data.length > 0) {
+                    $(".my_thead").show();
+                }
+                if (data.length == 0) {
+                    $(".no_content").show();
+                    $(".my_thead").hide();
+                }
+                var tbody = $("<tbody>"); //创建tbody
+                // var cellCount = 6;
+                var rowCount = data.length;
+
+
+                $("#table tbody").remove();
+                tbody.appendTo($("#table")); //将tbody插入到#table中
+                for (var i = 0; i < rowCount; i++) {
+                    var tr = $("<tr></tr>"); //建立表格列
+                    tr.appendTo(table); //将列插入到table中
+                    var tdimg =  $("<td><img width='100px' height='100px' src='" + data[i].image_bcg + "'/></td>");
+                    tdimg.appendTo(tr);
+                    var tdtitle = $("<td>" + data[i].title + "</td>");
+                    tdtitle.appendTo(tr);
+                    var tddesc = $("<td>" + data[i].desc + "</td>");
+                    tddesc.appendTo(tr);
+                    var tdprice = $("<td>" + data[i].price_desc + "</td>");
+                    tdprice.appendTo(tr);
+                    var tdprice_sub = $("<td>" + data[i].price_sub_desc + "</td>");
+                    tdprice_sub.appendTo(tr);
+                    var tdimagemark = $("<td>" + data[i].image_mark + "</td>");
+                    tdimagemark.appendTo(tr);
+                    var tdtime = $("<td>" + data[i].time + "</td>");
+                    tdtime.appendTo(tr);
+                    var tdcity = $("<td>" + data[i].city + "</td>");
+                    tdcity.appendTo(tr);
+                    var tdop = $("<td>" + "<a href='{% url 'edit_seckill' %}?id=" + data[i].id + "&channel={{ channel }}' class='edit glyphicon glyphicon-edit'></a><a  class='del glyphicon glyphicon-trash' data-toggle='modal' data-target='#myModal-del' onclick='confirms(" + data[i].id + ")'>" + "</td>");
+                    tdop.appendTo(tr);
+                }
+                $("table").append("</tbody>");
+    
+            }
+
+
+          
+            function requestData() {
+                
+                $.ajax("{% url 'search_seckills' %}", {
+                    type: "get",
+                    cache: false,
+                    data: {
+                        channel: {{ channel}}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        CreateTable(eval(result));
+                        hideExhangeIcon();
+                        checkAuthority();
+                        // console.log(result);
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            }
+            function confirms(id) {
+                var del_info = $(event.target).parent().siblings("td:nth-last-child(8)").text();
+                $("span.del_info").text(del_info);
+                $(".btn-primary").off("click").one("click", function (event) {
+                    delData(id);
+                });
+            }
+            function delData(id) {
+                $.ajax("{% url 'del_seckill' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id: id,
+                        channel: {{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        if (result == 0) {
+                            requestData();
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").show();
+                    }
+                });
+            }
+            //商品，服务和分类的通用函数
+            function addEventConfirm(id, url) {
+                var some_id = $('#' + id).val();
+                var channel_id = $("#channel_id").val();
+                var params = {channel_id: channel_id};
+                var datas = $.param(params) + "&" + id + "=" + some_id;
+                $.ajax({
+                    type: "post",
+                    url: url,
+                    data: datas,
+                    dataType: "json",
+                    success: function (data) {
+                        // console.log("数据：" +data);
+                        if (data == 1) {
+                            $(".class_repeat").show();
+                        }
+                        else {
+                            $('#myModal_' + id).modal('toggle');
+                            window.location.reload();
+                        }
+
+                    },
+                    error: function (data) {
+                        console.log("errors is" + data);
+
+                    }
+                })
+            }
+        </script>
+    </section>
+
+{% endblock %}

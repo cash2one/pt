@@ -1,0 +1,285 @@
+{% extends "man-base.html" %}
+{% block title %}模块分组管理{% endblock %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css"/>
+    <script type="text/javascript" src="/static/js/multiselect.js"></script>
+    <style type="text/css">
+    </style>
+{% endblock %}
+{% block content %}
+    {% if errors %}
+        <div class="alert alert-danger alert-dismissible fade in" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                    aria-hidden="true">×</span></button>
+            <p>{{ errors }}</p>
+        </div>
+    {% endif %}
+    <fieldset>
+        <legend>模块分组管理
+            <a id="" onclick="ShowModule()"
+               style="position: absolute;right: 50px;font-weight: normal;color: black;cursor: pointer">
+                <span class="glyphicon glyphicon glyphicon-plus"></span>新建
+            </a>
+        </legend>
+        <table id="data_table" class=" table-striped table-bordered table-hover data_detail">
+            <thead>
+            </thead>
+            <tbody>
+            <tr>
+                <td style="width:15%">ID</td>
+                <td style="width:15%">英文名称</td>
+                <td style="width:20%">显示名称</td>
+                <td style="width:20%">模块名称</td>
+                <td style="width:10%">操作</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="modal" id="mymodal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                                class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="modal_title">编辑</h4>
+                        <h4 id="error-hints" style="display: inline;color: red;" ></h4>
+                    </div>
+                    <div class="modal-body">
+                        <ul>
+                            <li>
+                                <label><i>*</i>英文名称:</label>
+                                <input type="text" class="form-control" name="name" id="name" required
+                                       placeholder="名称"/>
+                            </li>
+                            <li>
+                                <label><i>*</i>名称:</label>
+                                <input type="text" class="form-control" name="codename" id="codename" required
+                                       placeholder="名称"/>
+                            </li>
+                            <li>
+                                <select id="module_id" name="module_id">
+                                    <option value="0">无分类</option>
+                                    {% for i in module_select %}
+                                        <option value="{{ i.0 }}">{{ i.1 }}</option>
+                                    {% endfor %}
+                                </select>
+                            </li>
+                        </ul>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                            <button type="button" class="btn btn-primary" id="save_order" onclick="Edit()">保存</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div>
+        </div><!-- /.modal -->
+    </fieldset>
+    <script type="application/javascript">
+        var edit_id = '';
+        var is_edit = 0;
+        var g_data = '';
+        $(document).ready(function () {
+                    setLeftNav("nav_add_user");
+                    $('#module_id').multiselect({
+                        maxHeight: 400,
+                        disableIfEmpty: true,
+                        filterPlaceholder: "搜索",
+                        enableFiltering: true,
+                        //selectAllText: '全部选择',
+                        {#                        includeSelectAllOption: true,#}
+                        onDropdownHide: function (event) {
+                            $(".multiselect-clear-filter").click();
+                        }
+
+                    });
+                    requestData();
+                }
+        )
+
+        function ShowModule() {
+            $('#module_id').multiselect('select', '0')
+            $('#module_id').multiselect('refresh');
+            $("#error-hints").html('');
+            $('#name').val('');
+            $('#codename').val('');
+            $("#mymodal").modal('show');
+            is_edit = 0
+        }
+        function Edit() {
+            if ($('#name').val().length==0) {
+                var terror = '请填写英文名称';
+                $("#error-hints").html(terror);
+                $("#error-hints").css('display', 'block');
+                return false;
+            }
+            if ($('#codename').val().length==0) {
+                var terror = '请填写名称';
+                $("#error-hints").html(terror);
+                $("#error-hints").css('display', 'block');
+                return false;
+            }
+            if ($('#module_id').val() == '0') {
+                var terror = '请选择分类';
+                $("#error-hints").html(terror);
+                $("#error-hints").css('display', 'block');
+                return false;
+            }
+            if (is_edit == 0) {
+                $.ajax({
+                    url: '/man/modules_group_select/',
+                    type: "POST",
+                    cache: false,
+                    data: {
+                        module_id: $('#module_id').val(),
+                        name: $('#name').val(),
+                        codename: $('#codename').val(),
+                        pk: edit_id
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                    },
+                    success: function (data) {
+                        if (eval(data)['code'] == '0') {
+                            requestData()
+                        }
+                        else {
+                            console.log(eval(data)['msg'])
+                        }
+                    },
+                    complete: function (result) {
+                        $("#mymodal").modal('hide');
+                        $('#module_id').multiselect('deselect', $('#module_id').val())
+                        $('#module_id').multiselect('refresh');
+                    }
+                })
+            }
+            else {
+                $.ajax({
+                    url: '/man/modules_group_detail/' + edit_id,
+                    type: "PUT",
+                    cache: false,
+                    data: JSON.stringify({
+                        module_id: $('#module_id').val(),
+                        name: $('#name').val(),
+                        codename: $('#codename').val(),
+                        pk: edit_id
+                    }),
+                    beforeSend: function (XMLHttpRequest) {
+                        loading.show();
+                    },
+                    success: function (data) {
+                        console.log('retur', data);
+                        if (eval(data)['code'] == '0') {
+                            requestData()
+                        }
+                        else {
+                            console.log(eval(data)['msg'])
+                        }
+                    },
+                    complete: function (result) {
+                        loading.hide();
+                        $("#mymodal").modal('hide')
+                        requestData()
+                    }
+                });
+            }
+        }
+        function GetOne(id) {
+            $("#error-hints").html('');
+            is_edit = 1;
+            edit_id = id;
+            $.ajax({
+                url: '/man/modules_group_detail/' + id,
+                type: "GET",
+                cache: false,
+                data: {
+                    pk: edit_id
+                },
+                beforeSend: function (XMLHttpRequest) {
+                    $('#module_id').multiselect('deselect', $('#module_id').val())
+                    loading.show();
+                },
+                success: function (data) {
+                    //console.log('retur', data);
+                    var data = eval(data);
+                    var d = data['data']
+                    if (data['code'] == '0') {
+                        for (var key in d) {
+                            if (key == 'module_id') $('#module_id').multiselect('select', d[key]);
+                            $("#" + key + "").val(d[key]);
+                        }
+                    }
+                    else {
+                        console.log(eval(data)['msg'])
+                    }
+                },
+                complete: function (result) {
+                    loading.hide();
+                    $("#mymodal").modal('show');
+                }
+            });
+
+        }
+
+
+        function Delete( id) {
+            if (confirm('您确定删除这条记录？')) {
+                $.ajax({
+                    url: '/man/modules_group_detail/' + id,
+                    type: "DELETE",
+                    cache: false,
+                    beforeSend: function (XMLHttpRequest) {
+                        loading.show();
+                    },
+                    success: function (data) {
+                        console.log('retur', data);
+                        if (eval(data)['code'] == '0') {
+                            requestData()
+                        }
+                        else {
+                            console.log(eval(data)['msg'])
+                        }
+                    },
+                    complete: function (result) {
+                        loading.hide();
+                        requestData()
+                    }
+                });
+            }
+        }
+
+        function updateTable() {
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for (var i = 0; i < g_data.length; i++) {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                tr.append($("<td>{0}</td>".format(g_data[i][0])));
+                tr.append($("<td>{0}</td>".format(g_data[i][4])));
+                tr.append($("<td>{0}</td>".format(g_data[i][1])));
+                tr.append($("<td>{0}</td>".format(g_data[i][2])));
+                tr.append('<td><span class="glyphicon glyphicon-edit" aria-hidden="true" style="margin-right:10px;cursor: pointer" onclick="GetOne(' + g_data[i][0] + ')"></span><span class="glyphicon glyphicon-remove" aria-hidden="true" style="cursor: pointer" onclick="Delete(' + g_data[i][0] + ')"></span></td>');
+
+                $("#data_table tbody").append(tr);
+
+            }
+        }
+        function requestData() {
+            $.ajax({
+                url: '/man/modules_group_select/',
+                type: "GET",
+                cache: false,
+                data: {},
+                beforeSend: function (XMLHttpRequest) {
+                },
+                success: function (data) {
+                    //字符串转json
+                    g_data = eval(data);
+                    //console.log(g_data)
+                    updateTable();
+                },
+                complete: function (result) {
+
+                }
+            })
+        }
+    </script>
+{% endblock %}

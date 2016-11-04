@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}渠道关联或复制{% endblock %}
+{% block content %}
+<style type="text/css">
+    .pt-container {
+    padding-right: 15px;
+    margin-top: 20px;
+    width: 666px;
+}
+    .copy-sec{
+    position: absolute;
+    margin-left: 20px;
+}
+    .pt-modal-footer{
+    margin-left:240px;
+    margin-top: 20px;
+    width: 200px;
+}
+.copy-checkbox label {
+    width: 110px;
+    font-weight: 100;
+    margin: 5px 20px;
+    font-size: 16px;
+}
+.check-all {
+    display: block;
+    padding: 1px 10px;
+    border-radius: 5px;
+    outline: none;
+    background-color: #fff;
+}
+dt{display: none;}
+.pt-m-form-control {
+    text-indent: 0em;
+                margin-left: -1px;/*修正     */
+    width: 100%;
+}
+.pt-copy-module{
+    width:635px;
+    margin-left: 20px;
+}
+.copy-select {
+    display: inline-block;
+    margin-top: 6px;
+    margin-left: 1px;
+    font-size: 16px;
+    position: relative;
+}
+select[multiple], select[size] {
+    height: 300px;
+}
+.selected{
+    color: red;
+    font-size: 17px;
+}
+/*#multi-select:hover{
+    display: block;
+}*/
+</style>
+<section class="top-sec " style="text-align:left;height:.8rem;">
+    <h3>渠道关联或复制</h3>
+    <p style=" background:#FA8072;font-size:16px;pading-left:5px;text-indent:2em;color:#fff;">注意：此操作会先删除目标渠道中选择模块的全部数据后再进行操作。</p>
+</section>
+<div id="loading" style="left:30%;top:0;">
+    <img src="{% static 'images/loading.gif' %}"/>
+</div>
+<section class="copy-sec">
+    <div class="pt-container">
+        <div class="copy-select">
+            <div class="form-group">
+                <label for="name" style="font-weight: 600;margin-left:35px;">选择功能</label>
+                <select class="input-group-lg  form-control copy-form-control" name="channel_op_type" id="channel_op_type"  maxlength="11" style="margin-left: .1rem;">
+                    <option  value=""></option>
+                    <option  value="copy">复制</option>
+                    <option  value="associate">关联</option>
+                </select>
+            </div>
+        </div>
+        <form class="form-horizontal" role="form">
+            <div class="form-group">
+                <label for="bs3Select" class="col-lg-2 control-label" style="font-size:16px;">源渠道</label>
+                <div class="col-lg-10">
+                    <select class="form-control pt-form-control pt-m-form-control pt-single-select" id="source_channel_id" >
+                        <option>请选择渠道</option>
+                        {% for type in type_ver_channels %}
+                        <option disabled>应用：{{ type.name }}</option>
+                        {% for ver in type.vers %}
+                        <option disabled>&nbsp;&nbsp;└&nbsp;&nbsp;版本：{{ ver.name }}</option>
+                        {% for channel in ver.channels %}
+                        <option value="{{ channel.0 }}" style="cursor:pointer;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└&nbsp;&nbsp;渠道：{{ channel.1 }} ({{ ver.name }})</option>
+                        {% endfor %}
+                        {% endfor %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="pt-container">
+        <form class="form-horizontal" role="form">
+            <div class="form-group">
+                <label for="bs3Select1" class="col-lg-2 control-label" style="font-size:16px;">目标渠道</label>
+                <div class="col-lg-10">
+                    <input type="search" name="" value="请选择渠道" placeholder="" class="form-control pt-form-control pt-m-form-control" id="multi-select" style="position:relative;background:#fff;" readonly="readonly" />
+                    <select class="form-control pt-form-control pt-m-form-control" multiple id="target_channel_id" style="display:none ;position:absolute;width:95%;">
+                        {% for type in type_ver_channels %}
+                        <option disabled>应用：{{ type.name }}</option>
+                        {% for ver in type.vers %}
+                        <option disabled>&nbsp;&nbsp;└&nbsp;&nbsp;版本：{{ ver.name }}</option>
+                        {% for channel in ver.channels %}
+                        <option value="{{ channel.0 }}" data-value="{{ ver.name }}" style="cursor:pointer;" onclick="select_channel()">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└&nbsp;&nbsp;渠道：{{ channel.1 }}({{ ver.name }})</option>
+                        {% endfor %}
+                        {% endfor %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="pt-copy-module">
+        <!-- <h4 style="margin-left:20px;font-weight:500;">模块</h4> -->
+        <div class="copy-checkbox" style="padding:10px;">
+            <label for="pt_checkbox1" style="display:block">
+                <input type="button" name="check-all" value="全选/反选"  class="check-all">
+            </label>
+            <label for="pt_checkbox2">
+                <input type="checkbox" name="ads" value="{{ CONFIG_ITEMS.AD }}" id="pt_checkbox2" class="index-checkbox">广告
+            </label>
+            <label for="pt_checkbox3">
+                <input type="checkbox" name="common_services" value="{{ CONFIG_ITEMS.COMMON_SERVICES }}" id="pt_checkbox3" class="index-checkbox">常用服务
+            </label>
+            <label for="pt_checkbox4">
+                <input type="checkbox" name="category_pages_services" value="{{ CONFIG_ITEMS.CATEGORY_PAGE_SERVICES }}" id="pt_checkbox4" class="index-checkbox">分类页
+            </label>
+            <label for="pt_checkbox5">
+                <input type="checkbox" name="homepage_specialtopic" value="{{ CONFIG_ITEMS.HOMEPAGE }}" id="pt_checkbox5" class="index-checkbox">首页专题
+            </label>
+            <br/>
+            <label for="pt_checkbox6">
+                <input type="checkbox" name="foundpage_specialtopic" value="{{ CONFIG_ITEMS.FOUNDPAGE }}" id="pt_checkbox6" class="index-checkbox">发现页专题
+            </label>
+            <label for="pt_checkbox7">
+                <input type="checkbox" name="streams" value="{{ CONFIG_ITEMS.STREAMS }}" id="pt_checkbox7" class="index-checkbox">内容流
+            </label>
+            <label for="pt_checkbox8">
+                <input type="checkbox" name="config_operation" value="{{ CONFIG_ITEMS.CONFIG_OPERATION }}" id="pt_checkbox8" class="index-checkbox">运营配置
+            </label>
+            <label for="pt_checkbox9">
+                <input type="checkbox" name="likes" value="{{ CONFIG_ITEMS.LIKES }}" id="pt_checkbox9" class="index-checkbox">猜你喜欢
+            </label>
+            <br/>
+            <label for="pt_checkbox10">
+                <input type="checkbox" name="activity" value="{{ CONFIG_ITEMS.ACTIVITY }}" id="pt_checkbox10" class="index-checkbox">活动
+            </label>
+            <label for="pt_checkbox11">
+                <input type="checkbox" name="choiceness_category" value="{{ CONFIG_ITEMS.CHOICENESS_CATEGORY }}" id="pt_checkbox11" class="index-checkbox">精品分类
+            </label>
+            <label for="pt_checkbox12">
+                <input type="checkbox" name="coupons" value="{{ CONFIG_ITEMS.COUPONS }}" id="pt_checkbox12" class="index-checkbox">优惠券
+            </label>
+            <label for="pt_checkbox13">
+                <input type="checkbox" name="second_category" value="{{ CONFIG_ITEMS.SECOND_CATEGORY }}" id="pt_checkbox13" class="index-checkbox">二级分类
+            </label>
+            <label for="pt_checkbox14">
+                <input type="checkbox" name="second_category" value="{{ CONFIG_ITEMS.SCREEN_AD }}" id="pt_checkbox14" class="index-checkbox">开屏广告
+            </label>
+            <label for="pt_checkbox15">
+                <input type="checkbox" name="second_category" value="{{ CONFIG_ITEMS.NATIVE_ACTIVITY }}" id="pt_checkbox15" class="index-checkbox">Native活动
+            </label>
+            <label for="pt_checkbox16">
+                <input type="checkbox" value="{{ CONFIG_ITEMS.CP }}" id="pt_checkbox16" class="index-checkbox">品牌
+            </label>
+            <label for="pt_checkbox17">
+                <input type="checkbox" value="{{ CONFIG_ITEMS.COUPON_ACTIVITY }}" id="pt_checkbox17" class="index-checkbox">业务活动
+            </label>
+            <label for="pt_checkbox18">
+                <input type="checkbox" value="{{ CONFIG_ITEMS.SHARE_COUPON }}" id="pt_checkbox18" class="index-checkbox">分享券
+            </label>
+            <label for="pt_checkbox19">
+                <input type="checkbox" value="{{ CONFIG_ITEMS.SECKILLS }}" id="pt_checkbox19" class="index-checkbox">秒杀活动
+            </label>
+        </div>
+    </div>
+    <div class="pt-modal-footer">
+        <button type="button" class="btn btn-default">取消</button>
+        <button type="submit" class="btn btn-primary confirm-btn" onclick="copy_associate()">确定</button>
+        <!--     <button type="button" class="btn">test</button> -->
+        <!--   <button type="button" class="mybtn" onclick="copy_associate()">test</button> -->
+    </div>
+    <!-- 操作提示 -->
+    <div class="modal fade" id="myModal-tips" tabindex="-1" role="dialog"
+        aria-labelledby="myModalLabel" aria-hidden="true" >
+        <div class="modal-dialog" style="width: 480px;">
+            <div class="modal-content" style="width:5rem;margin:0 auto;">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                    data-dismiss="modal" aria-hidden="true">
+                    &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                    <div class="hint_icon"><img src="{% static 'images/tishi.png' %}"></div>操作提示
+                    </h4>
+                </div>
+                <div class="modal-body" style="text-align:center;">
+                    <span class="pt-tips" style="font-size:16px;">操作成功，请继续操作</span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                    data-dismiss="modal">取消
+                    </button>
+                    <button type="button" class="btn btn-primary btn-default" data-dismiss="modal">
+                    确定
+                    </button>
+                </div>
+            </div><!-- /.modal-content
+            </div><!-- /.modal -->
+        </div>
+    </div>
+    <!-- 重复提示 -->
+    <div class="modal fade pt-modal-tips" id="pt-myModal-tips" tabindex="-1" role="dialog"
+        aria-labelledby="myModalLabel" aria-hidden="true" >
+        <div class="modal-dialog" style="width: 480px;">
+            <div class="modal-content" style="width:5rem;margin:0 auto;">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                    data-dismiss="modal" aria-hidden="true">
+                    &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                    <div class="hint_icon"><img src="{% static 'images/tishi.png' %}"></div>操作提示
+                    </h4>
+                </div>
+                <div class="modal-body" style="text-align:center;">
+                    <span class="pt-tips" style="font-size:16px;">所选源渠道与目标渠道重复，请重新操作</span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                    data-dismiss="modal">取消
+                    </button>
+                    <button type="button" class="btn btn-primary btn-default" data-dismiss="modal">
+                    确定
+                    </button>
+                </div>
+            </div><!-- /.modal-content
+            </div><!-- /.modal -->
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(".check-all").click(function(event) {//复选框全选反选
+                var check_index = $(".index-checkbox");
+                for (var i = 1; i <= check_index.length; i += 1) {
+                    if (check_index[i - 1].checked) {
+                        check_index[i - 1].checked = false;
+                    } else {
+                        check_index[i - 1].checked = true;
+                    }
+                }
+            });
+                var singleVal = "";
+                $('.pt-single-select').click(function(event) {
+                    singleVal = $(this).val();
+                    });
+                
+            var select_list = []; //目标渠道名称列表
+            var target_channel_list = []; //目标渠道id列表
+            function select_channel() {
+                if (!$(event.target).hasClass('selected')) {
+                    $(event.target).addClass('selected');
+                } else {
+                    $(event.target).removeClass('selected');
+                }
+                
+                var channel_name = $(event.target).text();
+                var channel_id = $(event.target).val();
+                var channel_name = channel_name;
+                var channel_name = $.trim(channel_name); //去掉渠道名前的空格
+                // var channel_name=channel_name.substring(1,channel_name.Length);//去掉渠道名前的
+                if($(event.target).val() == singleVal){
+                    $(event.target).removeClass('selected');
+                    $(".modal").addClass('in');
+                    $("#pt-modal-tips").text("所选源渠道与目标渠道重复，请重新操作");
+                    // $(".pt-modal-tips").show();
+                    $("#pt-myModal-tips").show();
+                }
+                else{
+                mypush(select_list, channel_name);
+                mypush(target_channel_list, channel_id);
+                $("#multi-select").prop('value', select_list);
+            }
+            }
+            function stopPropagation(e) { //取消事件冒泡
+                if (e.stopPropagation)
+                    e.stopPropagation();
+                else
+                    e.cancelBubble = true;
+            }
+            
+            $(document).bind('click', function() { //点击除#multi-select,#target_channel_id之外的区域隐藏多选下拉列表
+                $('#target_channel_id').css('display', 'none');
+            });
+            $('#multi-select,#target_channel_id').bind('click', function(e) { //为#multi-select,#target_channel_id取消事件冒泡
+                stopPropagation(e);
+            });
+            $("#multi-select").click(function(event) {
+                $("#target_channel_id").toggle();
+            });
+            $(document).ready(function() {
+                setNavBg("copy_associate");
+            });
+            function copy_associate() {
+                var config_items = [];
+                $("input[class='index-checkbox']:checked").each(function() {
+                    config_item = $(this).val();
+                    mypush(config_items, config_item);
+                });
+                var source_channel_id = $("#source_channel_id").val();
+                var channel_op_type = $("#channel_op_type").val();
+                // var data = source_channel_id+ channel_op_type +target_channel_list+config_items;
+                $.ajax("{% url 'channel_op' %}", {
+                    type: "post",
+                    dataType: "json",
+                    data: {
+                        source_channel_id: source_channel_id,
+                        channel_op_type: channel_op_type,
+                        config_items: JSON.stringify(config_items),
+                        target_channel_list: JSON.stringify(target_channel_list)
+                    },
+                    success: function(data) {
+                        if (data == 0) {
+                            $(".modal").addClass('in');
+                            $(".pt-tips").text("操作成功，请继续操作")
+                            $("#myModal-tips").show(); //当关联或复制成功时，弹出成功提示框
+                        }
+                    },
+                    error: function(data) {
+                        console.log("errors is" + data);
+                    }
+                })
+            }
+            $("#pt-myModal-tips").click(function(event) {
+                $(this).hide(); //关闭提示框
+            });
+            $("#myModal-tips").click(function(event) {
+                $(this).hide(); //关闭提示框
+                window.reload();
+            });
+            $(document).ajaxStart(function() {
+                    $("#loading").css("display", "block");
+                });
+                $(document).ajaxComplete(function() {
+                    $("#loading").css("display", "none");
+                });
+    </script>
+</section>
+{% endblock %}

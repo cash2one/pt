@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}开放服务{% endblock %}
+
+{% block head %}
+<style>
+   
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="top-sec">
+    <!--  <span>
+     <input type="search" name="keywords" value="" placeholder="请输入关键词搜索" id="search" ><span class="search_pic" ><img src="/static/images/sousuo.png"></span>
+            <span  class="clearInput"><a href="javascript:void(0)">×</a></span>
+            <a href="javascript:void(0)" class="search_val">
+                <span class="search-btn">搜索</span>
+            </a>
+     </span> -->
+        <a class="btn-new" href="{% url 'open_services_new' %}?channel={{ channel }}"><b style="font-size:.18rem">＋&nbsp</b>新增开放服务</a>
+</section>
+<section class="service-table">
+    <table id="table">
+        <caption></caption>
+        <thead class="my_thead">
+        <tr>
+            <th>ActionID</th>
+            <th>显示名称</th>
+            <th>显示图标</th>
+            <th>城市</th>
+            <th>分发条件</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <div id="loading" style="display:none;">
+            <img src='/static/images/loading.gif' />
+        </div>
+        <tbody id="tbody">
+            <tr class="noContent">
+                <td colspan="100%">暂无相关内容</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="no_content" ><p>暂无相关内容,请新建开放服务</p></div>
+    <div id="pagination" ></div>
+     <script type="text/javascript">
+               
+                $(document).ready(function(){
+                    setNavBg("open_service");
+                    requestData();
+                });
+             function CreateTable(data) {
+
+                 if (data.length > 0) {
+                     $(".my_thead").show();
+                 }
+                 if (data.length == 0) {
+                     $(".no_content").show();
+                     $(".my_thead").hide();
+                 }
+
+                 var tbody = $("<tbody>");
+                 var cellCount = 6;
+                 var rowCount = data.length;
+                 $("#table tbody").remove();
+                 tbody.appendTo($("#table"));
+                 for (var i = 0; i < rowCount; i++) {
+                     var tr = $("<tr></tr>");
+                     tr.appendTo(table);
+                     for (var j = 1; j < cellCount; j++) {
+                        if (j == 3) {
+                            if (data[i][j] != "")
+                             {
+                                var td = $("<td style='overflow:visible'> <img src=" + getImgURL(data[i][j]) + " class='small' data-toggle='modal' data-target='#myModal_img'></td>");
+                             }
+                            td.appendTo(tr);
+                        }
+                         else{ var td = $("<td>" + data[i][j] + "</td>");
+
+                         td.appendTo(tr);
+                         }
+                     }
+                     var td = $("<td><a href='{% url 'open_services_edit' %}?channel={{ channel }}&id="+data[i][0]+"' class='edit glyphicon glyphicon-edit'></a><a href='' class='del glyphicon glyphicon-trash' data-toggle='modal' data-target='#myModal-del'  onclick='confirms(" + data[i][0] + ")'></a></td>");
+                     td.appendTo(tr);
+                 }
+
+             $("table").append("</tbody>");
+
+                }
+                function requestData()
+                {
+                    $.ajax("{% url 'search_open_services' %}",{
+                            type:"get",
+                            cache:false,
+                            data:{
+                                channel: {{ channel }}
+                            },
+                            beforeSend:function(XMLHttpRequest){
+                                $("#loading").show();
+                            },
+                            success:function(result){
+                                var data = eval(result);
+                                CreateTable(data);
+                                checkAuthority();
+                                if (data.length > 0) {
+                                $(".my_thead").show();
+                                $(".noContent").hide();
+                            }
+                            },
+                            error:function(result){
+                                console.log(result);
+                            },
+                            complete:function(result){
+                                // console.log(result);
+                                $("#loading").hide();
+                            }
+                    })
+                }
+             function confirms(id) {
+                 var del_info = $(event.target).parent().siblings("td:nth-child(2)").text();
+                 $("span.del_info").text(del_info);
+                 $(".btn-primary").off("click").one("click", function(event) {
+                     delData(id);
+                 });
+             }
+            function delData(id) {
+                $.ajax("{% url 'open_services_delete' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id: id
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        if (result == 0) {
+                            requestData();
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").show();
+                    }
+                });
+            }
+</script>
+</section>
+{% endblock %}

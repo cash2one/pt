@@ -1,0 +1,672 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}闪屏广告{% endblock %}
+
+{% block head %}
+<style>
+    /*table必须样式*/
+    label i {
+        color: #ff0000;
+        font-size: 16px;
+        font-style: normal;
+        vertical-align: top;
+        padding: 0;
+    }
+    .modal-dialog {
+        margin-top: 1rem !important;
+    }
+    .my_thead{
+        display: table-header-group;
+    }
+    .img-info {
+        position: relative;
+        display: inline-block;
+        margin-right: 15px;
+    }
+    .img-info img {
+        width: 48px;
+        height: 48px;
+    }
+    .img-info .close {
+        color: red;
+        margin-top: -5px;
+        margin-left: 1px;
+    }
+    .img-info .close:hover {
+        color: red;
+        opacity: 1;
+    }
+    .img-pick {
+        padding: 16px;
+    }
+    /*end*/
+    .breadcrumb {
+        display: inline-block;
+    }
+    .color-info {
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
+        margin-right: 10px;
+        display: inline-block;
+        border: 1px solid #ccc;
+        vertical-align: bottom;
+    }
+    table td img {
+        width: 70px;
+        height: 70px;
+        padding: 5px;
+    }
+    /*文字换行*/
+    * {
+        word-wrap: break-word;
+        word-break: break-all;
+    }
+    /*城市选择样式调整*/
+    #city-selection {
+        float: left;
+        max-height: 250px;
+        overflow: auto;
+    }
+    #city-selection:before,
+    #city-selection:before {
+        content: '';
+        display: table;
+        clear: both;
+    }
+    #city-selection .list-group-item {
+        width: 64px !important;
+        padding: 2px !important;
+        overflow: hidden !important;
+        height: 32px !important;
+        line-height: 28px !important;
+    }
+    .citydetailist.row {
+        width: 100% !important;
+        padding-left: 10px !important;
+        margin-left: 0 !important;
+    }
+    .width1in8 {
+        margin-right: 5px !important;
+    }
+    .city-wrap {
+        width: auto !important;
+        height: auto !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+    }
+    .citylist {
+        margin: 0 !important;
+    }
+    .city-spec {
+        width: auto !important;
+        margin: 0 !important;
+    }
+    .width1in8  {
+        width: auto !important;
+    }
+    .list-inline {
+        margin: 0 !important;
+    }
+    /*覆盖pt-cms.css中的样式*/
+    a:focus,
+    a:active,
+    a:hover,
+    a {
+        text-decoration: none;
+    }
+    .modal-body form input[type="text"] {
+        width: 100%;
+    }
+    a.text-warning {
+        color: #a94442 !important;
+    }
+    a.text-info {
+        color: #000 !important;
+    }
+    a.text-success {
+        color: #4cae4c !important;
+    }
+    a.text-default {
+        color: #66cccc !important;
+    }
+</style>
+<link rel="stylesheet" href="{% static 'css/multiple-select.css' %}">
+<!-- <link rel="stylesheet" href="{% static 'css/citypicker.css' %}"> -->
+<link rel="stylesheet" href="{% static 'css/imgpicker.css' %}">
+<link rel="stylesheet" href="{% static 'js/datetimepicker/DateTimePicker.min.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="service-table">
+
+    <ol class="breadcrumb" id="breadcrumb">
+        <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+        <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+        <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+        <li class="active">闪屏广告</li>
+    </ol>
+    {% verbatim %}
+    <button class="btn btn-primary pull-right" @click="editList(0, null)">新增广告</button>
+
+    <!-- 标签管理列表 -->
+    <table>
+        <thead class="my_thead">
+            <tr>
+                <th>广告名称</th>
+                <th>广告图</th>
+                <th>有效期</th>
+                <th>有效城市</th>
+                <th>停留时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tbody">
+            <tr v-for="list in lists">
+                <td><div v-text="list.name"></div></td>
+                <td>
+                    <img :src="list.logo" alt="广告图">
+                </td>
+                <td>
+                    <span v-text="list.start_time + ' ~ ' + list.end_time"></span>
+                </td>
+                <td>
+                    <span v-text="list.city_names"></span>
+                </td>
+                <td>
+                    <span v-text="list.display_time"></span>
+                </td>
+                <td>
+                    <div class="btns">
+                        <a href="#" class="text-default" @click.prevent="editList(1, list)">编辑</a>
+                        <a href="#" class="text-warning" @click.prevent="deleteList(list, $index)">删除</a>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- 分页插件 -->
+    <div id="pagination" ></div>
+
+     <!-- 添加商品弹窗 -->
+    <div class="modal fade" id="editedList">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" v-text="whichStatus == 0 ? '新建广告' : '编辑广告'"></h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                            <div class="col-sm-12 col-md-12">
+                                <div class="form-group">
+                                    <label class="col-md-3 col-sm-3 text-right"><i>*</i>广告图：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <div class="img-info" v-show="editedList.logo">
+                                            <img :src="editedList.logo" alt="广告图">
+                                            <span class="close" @click="removeIcon">&times;</span>
+                                        </div>
+                                        <button class="btn btn-bg img-pick" id="fileupload-logo" @click.prevent.stop="upload">
+                                            <i class="glyphicon glyphicon-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-12 col-md-12">
+                                <div class="form-group">
+                                    <label class="col-md-3 col-sm-3 text-right"><i>*</i>广告名称：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <input type="text" required="required" class="form-control" placeholder="广告名称"  v-model="editedList.name">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-12 col-md-12">
+                                <div class="form-group">
+                                    <label class="col-md-3 col-sm-3 text-right"><i>*</i>广告展示时间(单位:秒)：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <select v-model="editedList.display_time" class="form-control">
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+                                            <option value="5">5</option>
+                                            <option value="6">6</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-12 col-md-12">
+                                <div class="form-group">
+                                    <label class="col-md-3 col-sm-3 text-right">动作ID：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <select class="form-control" v-model="editedList.action_id">
+                                            <template v-if="actions.length" v-for="list in actions">
+                                                <option value="{{list[0]}}">{{list[1]}}</option>
+                                            </template>
+                                            <template v-else>
+                                                <option value="" disabled>没有可选择的动作</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-12 col-md-12">
+                                <div class="form-group">
+                                    <label class="col-md-3 col-sm-3 text-right"><i>*</i>支持城市范围：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <select class="input-group-lg form-control" name="cityselect_id" value="" id="cityselect_id">
+                                           <option class="form-control" value="0">不限（全国）</option>
+                                           <option class="form-control" value="1">选择其他城市</option>
+                                        </select>
+                                        <input name="city" value="" type="hidden" id="citystr"/>
+
+                                        <div id="city-selection" hidden>
+                                            <div class="col-lg-12">
+                                                <div class="form-group city-wrap">
+                                                        <label></label>
+                                                        <div class="city-spec"></div>
+                                                        <div class="citylist">
+                                                            <div class="list-group"></div>
+                                                       </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-12 col-md-12">
+                                <div class="form-group">
+                                    <label class="col-md-3 col-sm-3 text-right"><i>*</i>起始时间：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <input type="text" data-field="datetime" class="form-control" v-model="editedList.start_time">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-12 col-md-12">
+                                <div class="form-group">
+                                    <label class="col-md-3 col-sm-3 text-right"><i>*</i>结束时间：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <input type="text" data-field="datetime" class="form-control" v-model="editedList.end_time">
+                                    </div>
+                                </div>
+                            </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click.stop.prevent="editListOk">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片上传&选择组件 -->
+    <div class="imgpicker"></div>
+
+    <!-- 新增辅助组件 -->
+    <div class="helper"></div>
+
+    <!-- datetimepicker -->
+    <div id="dtBox"></div>
+    {% endverbatim %}
+</section>
+    <script src="{% static 'js/cms/helper.js' %}"></script>
+    <script src="{% static 'js/cms/pager.js' %}"></script>
+    <script src="{% static 'js/plupload/plupload.full.min.js' %}"></script>
+    <script src="{% static 'js/cms/imgpicker.js' %}"></script>
+    <script src="{% static 'js/cms/addCityList.js' %}"></script>
+    <script src="{% static 'js/datetimepicker/DateTimePicker.min.js' %}"></script>
+    <script type="text/javascript">
+        var channel = {{ channel }};
+        var g_cities = {{ cities|safe }};
+
+        var myTable,
+            pageNo = 1,
+            is_action_init = false;
+
+        var vm = new Vue({
+            el: '.service-table',
+            data: {
+                whichStatus: 0,
+                lists: [],
+                actions: [],
+                editedList: {
+                    ads_id: '',
+                    channel_id: '',
+                    logo: '',
+                    name: '',
+                    display_time: 2,
+                    action_id: '',
+                    city_names: [],
+                    start_time: '',
+                    end_time: ''
+                }
+            },
+            methods: {
+                editList: function(n, list) {
+                    var _this = this;
+                    _this.whichStatus = n;
+                    if (n === 0) { // 新建
+                        $('[name="cityselect_id"]').val(0);
+                        resetCities();
+                        $('#city-selection').hide();
+                        _this.editedList = {
+                            ads_id: '',
+                            channel_id: channel,
+                            logo: '',
+                            name: '',
+                            display_time: 2,
+                            action_id: '',
+                            city_names: [],
+                            start_time: '',
+                            end_time: ''
+                        }
+                    } else { // 编辑
+                        _this.editedList = $.extend({}, list);
+                    }
+
+                    if (!is_action_init) {
+                        $.getJSON('/actions/list/').done(function(res) {
+                            is_action_init = true;
+                            res.splice(0, 1);
+                            res.splice(-1, 1);
+                            res.unshift(["", '空']);
+                            _this.actions = res;
+                            _this.editedList.action_id = res[0][0];
+                            Vue.nextTick(function() {
+                                showModal(n);
+                            });
+                        }).fail(function(e) {
+                            helper.alert({
+                                content: '获取所有actions列表失败，请稍后重试~'
+                            });
+                        });
+                    } else {
+                        Vue.nextTick(function() {
+                            showModal(n);
+                        });
+                    }
+
+                    function resetCities() {
+                        $('#city-selection')
+                            .find('input[type="checkbox"]').prop('checked', false).end()
+                            .find('.list-group-item').attr('style', '').end()
+                            .find('.citydetailist').hide();
+                    }
+
+                    function showModal(n) {
+                        $('#editedList').modal();
+                        if (n === 1) {
+                            if (_this.editedList.city_names.indexOf('全国') > -1) {
+                                resetCities();
+                                $('#city-selection').hide();
+                                $('[name="cityselect_id"]').val(0);
+                            } else {
+                                $('[name="cityselect_id"]').val(1);
+                                resetCities();
+                                $('#city-selection').show();
+                                var _cities = _this.editedList.city_names.split('、');
+                                $.each(_cities, function(index, val) {
+                                    $('#city-selection input[type="checkbox"]').filter(function() {
+                                        return $(this).val() === val;
+                                    }).click();
+                                });
+                            }
+                        }
+                    }
+                },
+                editListOk: function() {
+                    var _this = this;
+                    ///**
+                    var citystr="";
+                    var city_idex=$("#cityselect_id").find("option:selected").val();
+                    //判断选择的是不限（全国），还是其它城市
+                    if(city_idex==0){
+                        citystr+='全国';
+                    }else if(city_idex==1){
+                        var ckd=$(".citydetailist input[type='checkbox']");
+                        var ckd_city=$(".list-group-item input[type='checkbox']");
+                        var ckd_city_len=ckd_city.length;
+                        var ckd_len=ckd.length;
+                        for(var j=0;j< ckd_city_len; j++){
+                            if(ckd_city[j].checked && ($(ckd_city[j]).val()=="全国")) {
+                                citystr+='全国,';
+                            }
+                            if(ckd_city[j].checked && ( $(ckd_city[j]).val()=="上海" || $(ckd_city[j]).val()=="重庆" || $(ckd_city[j]).val()=="天津" || $(ckd_city[j]).val()=="北京")) {
+                                citystr+=$(ckd_city[j]).val()+',';
+                            }
+                        }
+                        for(var i=0;i<ckd_len;i++){
+                            if(ckd[i].checked){
+                                citystr+=$(ckd[i]).val()+',';
+                            }
+                        }
+                        citystr=citystr.substring(0,citystr.length-1);
+                    }
+
+                    $("#citystr").val(citystr);
+                    console.log("所选城市为"+citystr);
+                    //*/
+
+                    var is_valid = isValid();
+                    if (!is_valid.flag) {
+                        helper.alert({
+                            content: is_valid.msg
+                        });
+                        return;
+                    } else {
+                        var option = {};
+                        if (_this.whichStatus === 0) {
+                            option = {
+                                url: '/cover/ads/?channel=' + channel,
+                                type: 'POST',
+                                data: JSON.stringify({
+                                    logo: _this.editedList.logo,
+                                    name: _this.editedList.name,
+                                    display_time: _this.editedList.display_time,
+                                    action_id: _this.editedList.action_id,
+                                    city_names: citystr.split(','),
+                                    start_time: _this.editedList.start_time,
+                                    end_time: _this.editedList.end_time
+                                })
+                            };
+                        } else {
+                            option = {
+                                url: '/cover/ads/?channel=' + channel + '&aid=' + _this.editedList.ads_id,
+                                type: 'PUT',
+                                data: JSON.stringify({
+                                    logo: _this.editedList.logo,
+                                    name: _this.editedList.name,
+                                    display_time: _this.editedList.display_time,
+                                    action_id: _this.editedList.action_id,
+                                    city_names: citystr.split(','),
+                                    start_time: _this.editedList.start_time,
+                                    end_time: _this.editedList.end_time
+                                })
+                            };
+                        }
+                    }
+
+                    postAds(_this.whichStatus, option, function(res) {
+                        if (res.code == 0) {
+                            $('#editedList').modal('hide');
+                            getList({
+                                channel: channel,
+                                curPage: pageNo
+                            });
+                        } else {
+                            helper.alert({
+                                content: res.msg
+                            });
+                        }
+                    });
+
+                    function isValid() {
+                        var flag = true,
+                            msg = '';
+                        if (!_this.editedList.logo) {
+                            flag = false;
+                            msg = '请上传广告图';
+                        } else if (!$.trim(_this.editedList.name)) {
+                            flag = false;
+                            msg = '请填写广告名称';
+                        } else if (!citystr.length) {
+                            flag = false;
+                            msg = '请选择支持城市';
+                        } else if (!_this.editedList.start_time) {
+                            flag = false;
+                            msg = '请填写起始时间';
+                        } else if (!_this.editedList.end_time) {
+                            flag = false;
+                            msg = '请填写结束时间';
+                        } else if (new Date(_this.editedList.end_time).getTime() - new Date(_this.editedList.start_time).getTime() <= 0) {
+                            flag = false;
+                            msg = '结束时间应该大于起始时间';
+                        }
+                        return {
+                            flag: flag,
+                            msg: msg
+                        };
+                    }
+
+                    function postAds(n, option, callback) {
+                        $.ajax({
+                            url: option.url,
+                            data: option.data,
+                            type: option.type,
+                            dataType: 'json'
+                        }).done(function(res) {
+                            callback(res);
+                        }).fail(function(e) {
+                            var msg = (n == 0 ? '新建广告失败，请稍后重试~' : '修改广告失败，请稍后重试~');
+                            helper.alert({
+                                content: msg
+                            });
+                        });
+                    }
+                },
+                deleteList: function(list, index) {
+                    var _this = this;
+                    helper.confirm({
+                        content: '确定要删除『' + list.name + '』吗？',
+                        yes: function() {
+                            helper.loading();
+                            $.ajax({
+                                url: '/cover/ads/?channel=' + channel + '&aid=' + list.ads_id,
+                                type: 'DELETE',
+                                dataType: 'json',
+                                success: function(res) {
+                                    helper.close();
+                                    if (res.code === 0) {
+                                        _this.lists.splice(index, 1);
+                                    } else {
+                                        setTimeout(function() {
+                                            helper.alert({
+                                                content: res.msg
+                                            });
+                                        }, 400);
+                                    }
+                                },
+                                error: function(e) {
+                                    helper.close();
+                                    helper.alert({
+                                        content: '删除广告失败，请稍后重试~'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                },
+                upload: function() {
+                    var _this = this;
+                    $('#imgpicker').modal();
+                    imgpicker.init({
+                        filters: {
+                            // max_file_size: '50k'
+                        },
+                        callback: function(url) {
+                            _this.editedList.logo = url;
+                            $('#imgpicker').modal('hide');
+                        }
+                    });
+                },
+                removeIcon: function() {
+                    this.editedList.logo = '';
+                }
+            },
+            ready: function() {
+                /*初始化页面*/
+                var bg = parseFloat(getURLParam('t'));
+                myTable = new tableInit({});
+
+                setNavBg(bg);
+
+                myTable.getData(getList, {
+                    curPage: 1
+                });
+
+                // 日期选择器
+                $("#dtBox").DateTimePicker({
+                    dateSeparator: '/',
+                    dateTimeFormat: 'yyyy/MM/dd HH:mm',
+                    dateFormat: 'yyyy/MM/dd',
+                    isPopup: true,
+                    language: 'zh-CN',
+                    titleContentDate: '设置日期',
+                    titleContentTime: '设置时间',
+                    titleContentDateTime: '设置日期&时间',
+                    shortDayNames: '星期日_星期一_星期二_星期三_星期四_星期五_星期六'.split('_'),
+                    fullDayNames: '星期日_星期一_星期二_星期三_星期四_星期五_星期六'.split('_'),
+                    shortMonthNames: '01_02_03_04_05_06_07_08_09_10_11_12'.split('_'),
+                    fullMonthNames: '01_02_03_04_05_06_07_08_09_10_11_12'.split('_'),
+                    setButtonContent: '设置',
+                    clearButtonContent: '清除',
+                    addEventHandlers: function()
+                    {
+                        var dtPickerObj = this;
+                        $(window).resize(function() {
+                            dtPickerObj.setIsPopup(true);
+                        });
+                    }
+                });
+
+                // 城市选择
+                selectCity();
+            }
+        });
+
+        // 标签组列表
+        function getList(options) {
+            helper.loading();
+            var url = '/cover/ads/list/?channel=' + channel + '&page=' + options.curPage + '&limit=20';
+            $.getJSON(url).done(function(data) {
+                myTable.processData(data, function(data) {
+                    vm.$set('lists', data.ads);
+                    Vue.nextTick(function() {
+                        helper.close();
+                    });
+                });
+                if (data.totalpage >= 2) {
+                    myTable.pageInit(data.totalpage);
+                    $('#pagination').show();
+                } else {
+                    $('#pagination').hide();
+                }
+                // 处理分页的代码，TODO
+                var currentpage = options.curPage - 1;
+                $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                if (currentpage > 5) {
+                    $(options.pageSelector).eq(currentpage - 5).prevAll().hide();
+                }
+            }).fail(function(e) {
+                helper.close();
+                setTimeout(function() {
+                    helper.alert({
+                        content: '获取闪屏广告列表数据失败，请稍后重试~'
+                    });
+                }, 400);
+            });
+        }
+    </script>
+{% endblock %}

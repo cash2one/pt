@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}常用服务{% endblock %}
+{% block content %}
+    <section class="top-sec">
+        <ol class="breadcrumb" id="breadcrumb">
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+            <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+            <li class="active">常用服务</li>
+        </ol>
+
+        {% if perms.man.config %}
+            <a class="adbtn-new" data-toggle="modal" data-target="#myModal_service_id"><b
+                    style="font-size:.18rem">＋&nbsp</b>添加功能服务</a>
+            <a class="adbtn-new" data-toggle="modal" data-target="#myModal_category_id"><b
+                    style="font-size:.18rem">＋&nbsp</b>添加常用分类</a>
+            <a class="adbtn-new" data-toggle="modal" data-target="#myModal_goods_id"><b
+                    style="font-size:.18rem">＋&nbsp</b>添加功能商品</a>
+{#            <a class="adbtn-new" data-toggle="modal" data-target="#myModal_function"><b#}
+{#                    style="font-size:.18rem">＋&nbsp</b>添加到家分类</a>#}
+        {% endif %}
+    </section>
+
+    <section class="service-table ">
+        <table id="table">
+            <caption></caption>
+            <thead class="my_thead">
+            <tr>
+                <th>到家/功能</th>
+                <th>排序</th>
+                <th>大图标</th>
+                <th>名称</th>
+                <th>打点信息</th>
+                <th>动作</th>
+                <th>有效时间</th>
+                <th>城市</th>
+                <th>类别</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <div id="loading" style="display:none;">
+                <img src="{% static 'images/loading.gif' %}"/>
+            </div>
+            <tbody id="tbody" class="tbody">
+
+            </tbody>
+        </table>
+        <div class="no_content"><p>暂无常用服务，请新建常用服务</p></div>
+        <div id="pagination"></div>
+        <div class="modal fade" id="myModal_service_id" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">+ 添加功能服务</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input name="open_type" value="0" id="open_type" type="hidden"/>
+                        <input name="channel_id" value="{{ channel }}" id="channel_id" type="hidden"/>
+                        <input name="status" value="0" id="status" type="hidden"/>
+
+                        <div style="position: relative;display: inline-block;width: 100%;">
+                            <div class="input-group-lg form-control item-dropmenu" id="itemselect">
+                                <a data-value=""></a>
+                                {% for service in services %}
+                                    <a data-value="{{ service.0 }}">{{ service.1 }}{% if service.2 %}({{ service.2 }}){% endif %}</a>
+                                {% endfor %}
+                                {#                        <option class="form-control">测试0</option>#}
+                                {#                        <option class="form-control">测试1</option>#}
+                                {#                        <option class="form-control">测试2</option>#}
+                            </div>
+                            <input type="hidden" id="service_id" name="service_id" class="form-control real_id"
+                                   style="width:400px;"/>
+                            <input type="text" id="service_uid" name="service_uid" class="form-control item_id"
+                                   style="width:100%;" required maxlength="11" placeholder="请选择下拉列表中服务或输入搜索"/>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="common_ser_confirm"
+                                onclick='addEventConfirm("service_id","{% url 'new_common_service' %}")'>确定
+                        </button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+        </div>
+        <!-- /.modal -->
+        <!-- 新建商品 -->
+        <div class="modal fade" id="myModal_goods_id" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">+ 添加功能商品</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input name="open_type" value="0" id="open_type" type="hidden"/>
+                        {# <input name="channel_id" value="{{ channel }}" id="channel_id" type="hidden"/>#}
+                        <input name="status" value="0" id="status" type="hidden"/>
+
+                        <div style="position: relative;display: inline-block;width: 100%;">
+                            <div class="input-group-lg form-control item-dropmenu" id="itemselect">
+                                <a data-value=""></a>
+                                {% for good in goods %}
+                                    <a data-value="{{ good.0 }}">{{ good.1 }}{% if good.2 %}({{ good.2 }}){% endif %}</a>
+                                {% endfor %}
+                                {#                        <option class="form-control">测试0</option>#}
+                                {#                        <option class="form-control">测试1</option>#}
+                                {#                        <option class="form-control">测试2</option>#}
+                            </div>
+                            <input type="hidden" id="goods_id" name="goods_id" class="form-control real_id"
+                                   style="width:400px;"/>
+                            <input type="text" id="goods_uid" name="goods_uid" class="form-control item_id"
+                                   style="width:100%;" required maxlength="11" placeholder="请选择下拉列表中的商品或输入搜索"/>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary"
+                                onclick='addEventConfirm("goods_id","{% url 'new_common_goods' %}")'>确定
+                        </button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+        </div>
+        <!-- /.modal -->
+        <!-- 新建分类 -->
+        <div class="modal fade" id="myModal_category_id" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">+ 添加常用分类</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input name="open_type" value="0" id="open_type" type="hidden"/>
+                        {#<input name="channel_id" value="{{ channel }}" id="channel_id" type="hidden"/>#}
+                        <input name="status" value="0" id="status" type="hidden"/>
+
+                        <div style="position: relative;display: inline-block;width: 100%;">
+                            <div class="input-group-lg form-control item-dropmenu" id="itemselect">
+                                <a data-value=""></a>
+                                {% for category in categories %}
+                                    {% if category.3 %}
+                                        <a data-value="{{ category.0 }}">&nbsp;&nbsp;└&nbsp;&nbsp;{{ category.1 }}{% if category.2 %}（{{ category.2 }}）{% endif %}</a>
+                                    {% else %}
+                                        <a data-value="{{ category.0 }}">{{ category.1 }}({{ category.4 }}){% if category.2 %}（{{ category.2 }}）{% endif %}</a>
+                                    {% endif %}
+                                {% endfor %}
+                                {#                        <option class="form-control">测试0</option>#}
+                                {#                        <option class="form-control">测试1</option>#}
+                                {#                        <option class="form-control">测试2</option>#}
+                            </div>
+                            <input type="hidden" id="category_id" name="category_id" class="form-control real_id"
+                                   style="width:400px;"/>
+                            <input type="text" id="category_uid" name="category_uid" class="form-control item_id"
+                                   style="width:100%;" required maxlength="11" placeholder="请选择下拉列表中的分类或输入搜索"/>
+                        </div>
+                    </div>
+                    <div class="class_repeat" style="text-align:center; color:red;font-size:.16rem;display:none">
+                        <p>您已添加该分类，请勿重复添加</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary"
+                                onclick='addEventConfirm("category_id","{% url 'new_common_category' %}")'>确定
+                        </button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+        </div>
+        <!-- /.modal -->
+        <script type="text/javascript">
+            $(document).ready(function () {
+                setNavBg({{t}});//导航高亮设置函数
+                requestData();
+            });
+            function CreateTable(data) //表格创建函数
+            {
+                if (data.length > 0) {
+                    $(".my_thead").show();
+                }
+                if (data.length == 0) {
+                    $(".no_content").show();
+                    $(".my_thead").hide();
+                }
+                var tbody = $("<tbody>");//创建tbody
+                var cellCount = 10;
+                var rowCount = data.length;
+                $("#table tbody").remove();
+                tbody.appendTo($("#table"));//将tbody插入到#table中
+                for (var i = 0; i < rowCount; i++) {
+                    var s_count = data[i].length;
+                    //console.log(s_count);
+                    var td_status = data[i][s_count - 2];
+                    var edit_status = td_status.split("/")[0];
+                    var delete_status = td_status.split("/")[1];
+
+                    var tr = $("<tr class='" + data[i][cellCount + 1] + "'></tr>"); //建立表格列
+                    tr.appendTo(table); //将列插入到table中
+
+                    for (var j = 0; j < cellCount; j++) {
+                         var td = $("<td>" + data[i][j] + "</td>");//动态添加td的数据
+                         
+                    //     if (j == 1 && (i == 0 || (data[i][0]!=data[i-1][0]))) {
+                    //     // console.log(data[i].members.length);
+                    //     var td = $("<td style='overflow:visible'><div class='dropdown'><a onclick='getID(this)' class='btn dropdown-toggle glyphicon glyphicon-plus' data-id='" + data[i][cellCount + 1] + "' id='dropdownMenu1' data-toggle='dropdown' " +
+                    //         "href=''></a><ul class='dropdown-menu' role='menu' aria-labelledby='dropdownMenu1'><li role='presentation'><a role='menuitem' tabindex='-1' href='#' data-toggle='modal' data-target='#myModal_goods_id'>商品</a></li><li role='presentation'><a role='menuitem' tabindex='-1' href='#' data-toggle='modal' data-target='#myModal_service_id'>服务</a></li><li role='presentation'><a role='menuitem' tabindex='-1' href='#' data-toggle='modal' data-target='#myModal_category_id' class='category' onclick='requestCategory(" + data[i][cellCount + 1] + ")'>分类</a></li></ul></div></td>");
+                    // } 
+                        if (j == 0 && (i >= 1 &&(data[i][0] == data[i-1][0]))) {
+                         var td = $("<td></td>");
+                        // console.log(data[i].members.length);
+                    } 
+
+                       else if (j == 2)  //当第三个td时加上img，展示图片。
+                        {
+                            if (data[i][j] != "") {
+                                var td = $("<td> <img src=" + getImgURL(data[i][j]) + " class='small' data-toggle='modal' data-target='#myModal_img'></td>");
+                            }
+                        }
+                        td.appendTo(tr); //将td插入到tr中
+                    }
+                    if (edit_status == 1 && delete_status == 1) {
+                        var td = $("<td class='operate edit-td' data-status='" + edit_status + "'><a  class='edit glyphicon glyphicon-edit'></a><a href='' class='del glyphicon glyphicon-trash' data-toggle='modal' data-target='#myModal-del' onclick=''></a> <a style='cursor:pointer' class='glyphicon glyphicon-arrow-up' onclick='sortUp()'></a><a style='cursor:pointer' class='glyphicon glyphicon-arrow-down' onclick='sortDown()'></a></td> ");   //最后一列表格的按钮创建
+                    } else if (edit_status == 1 && delete_status == 0) {
+                        var td = $("<td class='operate edit-td' data-status='" + edit_status + "'><a  class='edit glyphicon glyphicon-edit'></a><a style='cursor:pointer' class='glyphicon glyphicon-arrow-up' onclick='sortUp()'></a><a style='cursor:pointer' class='glyphicon glyphicon-arrow-down' onclick='sortDown()'></a></td> ");   //最后一列表格的按钮创建
+                    } else if (edit_status == 0 && delete_status == 1) {
+                        var td = $("<td class='operate edit-td' data-status='" + edit_status + "'><a href='' class='del glyphicon glyphicon-trash' data-toggle='modal' data-target='#myModal-del' onclick=''></a></td> ");   //最后一列表格的按钮创建
+                    } else if (edit_status == 0 && delete_status == 0) {
+                        var td = $("<td class='edit-td' data-status='" + edit_status + "'><a class='glyphicon glyphicon-eye-open'></a></td>");
+                    }
+
+
+                    //var td = $("<td><a  class='edit glyphicon glyphicon-edit'></a><a href='' class='del glyphicon glyphicon-trash' data-toggle='modal' data-target='#myModal-del' onclick=''></a> <a style='cursor:pointer' class='glyphicon glyphicon-arrow-up' onclick='sortUp()'></a><a style='cursor:pointer' class='glyphicon glyphicon-arrow-down' onclick='sortDown()'></a></td> ");   //最后一列表格的按钮创建
+
+                    td.appendTo(tr);  //将td插入到tr
+                    $("table tbody tr:first").find(".glyphicon-arrow-up").remove();
+                }
+
+
+                $("td:nth-child(4)").css('width', '180px');
+                $("td:nth-child(5)").css('width', '180px');
+
+
+                $(".edit").mouseover(function (event) { //识别当前类别，然后根据类别添加Url
+                    var id = $(event.target).parents("tr")[0].className;
+                    var type = $(this).parents("tr").children().eq(8).text();
+                    if (type == "服务") {
+                        $(this).attr('href', "{% url 'edit_common_service' %}?id=" + id + "&channel={{ channel }}");
+                    }
+                    else if (type == "商品") {
+                        $(this).attr('href', "{% url 'edit_common_goods' %}?id=" + id + "&channel={{ channel }}");
+                    }
+                    else if (type == "到家一级分类" || type == "功能一级分类") {
+                        $(this).attr('href', "{% url 'edit_common_category_first' %}?id=" + id + "&channel={{ channel }}");
+                    }
+                    else if (type == "到家二级分类" || type == "功能二级分类") {
+                        $(this).attr('href', "{% url 'edit_common_category_second' %}?id=" + id + "&channel={{ channel }}");
+                    }
+                });
+                $(".del").mouseover(function (event) { //识别当前类别，然后根据类别添加Url
+                    var id = $(event.target).parents("tr")[0].className;
+                    var type = $(event.target).parents("tr").children().eq(8).text();
+
+                    if (type == "服务") {
+                        $(this).attr('onclick', 'confirms_service(' + id + ')');
+                    }
+                    else if (type == "商品") {
+                        $(this).attr('onclick', 'confirms_goods(' + id + ')');
+                    }
+                    else if (type == "到家一级分类" || type == "到家二级分类" || type == "功能一级分类" || type == "功能二级分类") {
+                        $(this).attr('onclick', 'confirms_category(' + id + ')');
+                    }
+                });
+                $("table").append("</tbody>");
+                $("table tbody tr:last-child").find(".glyphicon-arrow-down").remove();
+            }
+            function getID(obj) {
+                group_id = $(obj).data("id");
+                // console.log("获取到的id"+group_id);
+            }
+            function sortUp() {
+                var id1 = $(event.target).parents("tr").prev()[0].className;
+                var id2 = $(event.target).parents("tr")[0].className;
+                var type1 = $(event.target).parents("tr").prev().children().eq(8).text();
+                var type2 = $(event.target).parents("tr").children().eq(8).text();
+                sort(id1, id2, type1, type2);
+            }
+            function sortDown() {
+                var id1 = $(event.target).parents("tr")[0].className; //查找当前元素所在列的Id
+                var id2 = $(event.target).parents("tr").next()[0].className;//查找当前元素所在列的下一列的Id
+                var type1 = $(event.target).parents("tr").children().eq(8).text();//查找当前元素所在列的类别
+                var type2 = $(event.target).parents("tr").next().children().eq(8).text();//查找当前元素所在列的类别
+                sort(id1, id2, type1, type2);
+            }
+            function sort(id1, id2, type1, type2) {
+                // console.log(id1, id2)
+                $.ajax("{% url 'exchange_common_service' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id1: id1,
+                        id2: id2,
+                        type1: type1,
+                        type2: type2,
+                        channel:{{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        if (result == 0)
+                            window.location.reload();
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            }
+            function requestData() {
+                $.ajax("{% url 'search_common_services' %}", {
+                    type: "get",
+                    cache: false,
+                    data: {
+                        channel: {{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        CreateTable(eval(result));
+                        //console.log(result);
+                        hideExhangeIcon();
+                        checkAuthority();
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            }
+
+            function confirms_service(id) {
+
+                var del_info = $(event.target).parent().siblings("td:nth-last-child(8)").text();
+                $("span.del_info").text(del_info);
+                $(".btn-primary").off("click").one("click", function (event) {
+                    delService(id);
+                });
+            }
+            function confirms_goods(id) {
+                var del_info = $(event.target).parent().siblings("td:nth-last-child(8)").text();
+
+                $("span.del_info").text(del_info);
+                $(".btn-primary").off("click").one("click", function (event) {
+                    delGoods(id);
+                });
+            }
+            function confirms_category(id) {
+                var del_info = $(event.target).parent().siblings("td:nth-last-child(8)").text();
+
+                $("span.del_info").text(del_info);
+                $(".btn-primary").off("click").one("click", function (event) {
+                    delCategory(id);
+                });
+            }
+            function delCategory(id) {
+                $.ajax("{% url 'delete_common_category' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id: id,
+                        channel: {{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        // console.log(result);
+                        if (result == 0) {
+                            requestData();
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").show();
+                    }
+                });
+            }
+            function delService(id) {
+                $.ajax("{% url 'delete_common_service' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id: id,
+                        channel: {{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        if (result == 0) {
+                            requestData();
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").show();
+                    }
+                });
+            }
+            function delGoods(id) {
+                $.ajax("{% url 'delete_common_goods' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id: id,
+                        channel: {{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        if (result == 0) {
+                            requestData();
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").show();
+                    }
+                });
+            }
+            $("body").click(function (event) {
+                $(".class_repeat").hide();
+            });
+            //商品，服务和分类的通用函数
+            function addEventConfirm(id, url) {
+                var some_id = $('#' + id).val();
+                var channel_id = $("#channel_id").val();
+                var params = {channel_id: channel_id};
+                var datas = $.param(params) + "&" + id + "=" + some_id;
+                $.ajax({
+                    type: "post",
+                    url: url,
+                    data: datas,
+                    dataType: "json",
+                    success: function (data) {
+                        // console.log("数据：" +data);
+                        if (data == 1) {
+                            $(".class_repeat").show();
+                        }
+                        else {
+                            $('#myModal_' + id).modal('toggle');
+                            window.location.reload();
+                        }
+
+                    },
+                    error: function (data) {
+                        console.log("errors is" + data);
+
+                    }
+                })
+            }
+
+        </script>
+    </section>
+
+{% endblock %}

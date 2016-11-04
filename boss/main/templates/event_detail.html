@@ -1,0 +1,494 @@
+{% extends "main-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+{% endblock %}
+{% block title %}事件详情{% endblock %}
+{% block content %}
+    <p>
+        选择查看事件详情：
+        <select class="chosen-select" id="event" style="height: 40px;">
+            <option value=""></option>
+            {% for event in events %}
+                <option value="{{ event }}" {% if eventid == event %} selected="selected"{% endif %}>{{ event }}</option>
+            {% endfor %}
+        </select>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        版本选择：
+        <select id="ver">
+            <option value="">全部版本</option>
+            {% for ver in versions %}
+                <option value="{{ ver }}">{{ ver }}</option>
+            {% endfor %}
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+        渠道选择：
+        <select id="channel">
+            <option value="">全部渠道</option>
+            {% for channel in channels %}
+                <option value="{{ channel }}">{{ channel }}</option>
+            {% endfor %}
+        </select>
+    </p>
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(0)">今日</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    <br />
+    <br />
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail">
+        <thead>
+            <tr>
+                <th colspan="5">
+                    <span style="margin-left: 20px">事件统计明细</span>
+                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                    <a id="export_csv" href="{% url event_detail_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="cols">
+                <td style="width:20%">日期</td>
+                <td style="width:20%">消息数量</td>
+                <td style="width:20%">消息数/启动次数</td>
+                <td style="width:20%">独立用户</td>
+                <td style="width:20%">消息时长</td>
+            </tr>
+        </tbody>
+    </table>
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination abcm" style="height:0;font-size: 12px;" id="pagination1">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <br />
+    <br />
+    <br />
+    参数选择：
+    <select class="chosen-select" id="param" style="height: 40px;"></select>
+    <br />
+    <br />
+    <table id="data_table2" class=" table-striped table-bordered table-hover data_detail">
+        <thead>
+            <tr>
+                <th colspan="3">
+                    <span>参数明细</span>
+                    <span id="table_detail2" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                        <a id="event_param_csv" href="{% url event_param_csv %}" class="t_right">
+                            <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                        </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="cols2">
+                <td style="width:33%">参数值</td>
+                <td style="width:33%">消息数量</td>
+                <td style="width:33%">占比</td>
+            </tr>
+        </tbody>
+    </table>
+    <span>显示行数：</span>
+    <select onchange="updatePer2(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;" id="pagination2">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable2(g_current_page2 - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable2(g_current_page2 + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;
+        var g_current_page = 1;
+        var g_date_control = $("#date_control");
+        var g_data = {{ data|safe }};
+
+        var g_per2 = 30;
+        var g_current_page2 = 1;
+        var g_data2 = {{ data2|safe }};
+        var g_data3 = [];
+
+        $(document).ready(function()
+        {
+            setLeftNav("nav_custom_event");
+            loading.init(".loading_gif", "#data_table");
+            $('#ver').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                /*
+                onDropdownHidden: function(event)//multiselect  onDropdownHidden
+                {
+
+                }
+                */
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#channel').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                /*
+                onDropdownHidden: function(event)//multiselect  onDropdownHidden
+                {
+                    requestData();
+                }
+                */
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            modifyCsvHref(getDateStr("{{ currentdate }}", -29).replace(/-/g, ""), "{{ currentdate }}".replace(/-/g, ""));
+            g_date_control.daterangepicker(
+                {
+                    locale:
+                    {
+                        applyLabel: "确定",
+                        cancelLabel: "取消"
+                    },
+                    format: 'YYYY-MM-DD',
+                    separator: ' 到 ', //前后有空格
+                    startDate: getDateStr("{{ currentdate }}", -29),
+                    endDate: "{{ currentdate }}",
+                    maxDate: getDateStr("{{ currentdate }}", 1)// < maxDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+            ).val(getDateStr("{{ currentdate }}", -29) + " 到 {{ currentdate }}");
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function(ev, picker){
+                requestData();
+            });
+
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>消息数量：</span>事件被触发的次数</p>',
+                    '<p><span>消息数/启动次数：</span>平均每次启动被触发的次数</p>',
+                    '<p><span>独立用户数：</span>每日触发事件的独立用户数</p>',
+                    '<p><span>消息时长：</span>事件持续的时间长度</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+            $('#param').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                onChange: function(option, checked, select) {
+                    updateParamTable();
+                    updateDividePage2();
+                    updateTable2(1);
+                }
+            });
+
+            //初始化分页框
+            updateDividePage();
+            //初始化table第一页
+            updateTable(1);
+            //初始化事件选择框
+            initEventSelect();
+
+            //初始化参数
+            initParamSelect();
+            updateParamTable();
+            //初始化分页框
+            updateDividePage2();
+            //初始化table第一页
+            updateTable2(1);
+
+
+            $("#table_detail2").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p>您可以为事件设置参数，丰富自定义统计的内容，每个事件至多同时传10个参数，每个参数至多有1000个取值。',
+                    '</div>'
+                ]).join("")
+            });
+        });
+
+        function updateDividePage()
+        {
+            var count = 1 + parseInt((g_data.length - 1) / g_per);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove1='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page_{0}' li_can_remove1='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter("#pagination1 li:first");
+            }
+        }
+
+        //参数i是页数
+        function updateTable(page)
+        {
+            var total_page = 1 + parseInt((g_data.length - 1) / g_per);
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for(var i = (page - 1) * g_per; i < g_per * page && i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(j in g_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //更新显示行数
+        function updatePer(per)
+        {
+            g_per = per;
+            updateDividePage();
+            updateTable(1);
+        }
+
+        function requestData()
+        {
+            //截取出开始日期和结束日期
+            var start_date = g_date_control.val().substr(0,10).replace(/-/g, "");
+            var end_date = g_date_control.val().substr(13).replace(/-/g, "");
+            //修改导出文件的href地址
+            modifyCsvHref(start_date, end_date);
+            postJSON("{% url event_detail_ajax %}",
+                {
+                    app: getURLParam("app"),
+                    eventid: getURLParam("eventid"),
+                    start_date: start_date,
+                    end_date: end_date,
+                    ver: $("#ver").val(),
+                    channel: $("#channel").val()
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data)[0];
+                    updateDividePage();
+                    updateTable(1);
+
+                    g_data2 = eval(data)[1];
+                    initParamSelect();
+                    updateParamTable();
+                    updateDividePage2();
+                    updateTable2(1);
+                }
+            );
+        }
+
+        //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+        function updateTime(delay)
+        {
+            var start_date = getDateStr("{{ currentdate }}", delay);
+            var end_date = "{{ currentdate }}";
+
+            g_date_control.data('daterangepicker').setStartDate(start_date);
+            g_date_control.data('daterangepicker').setEndDate(end_date);
+            g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+            requestData();
+        }
+
+        function modifyCsvHref(start_date, end_date)
+        {
+            var params = "?app={0}&start_date={1}&end_date={2}&eventid={3}&ver={4}&channel={5}".
+                    format(getURLParam("app"), start_date, end_date, getURLParam("eventid"), $("#ver").val(), $("#channel").val());
+
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url event_detail_csv %}" + params);
+            $("#event_param_csv").attr("href", "{% url event_param_csv %}" + params);
+        }
+
+        function initEventSelect()
+        {
+            var event = $("#event");
+            event.chosen({
+                no_results_text: "Oops, nothing found!",//搜索不到的提示语
+                search_contains: true,//可以让chosen搜索选项的中间字符
+                width: "250px"
+            }).change(function(){
+                //document.location.href 返回完整的 URL。 如：http://www.cftea.com/foo.asp?p=1
+                //location.search是从当前URL的?号开始的字符串
+                location.href = "{% url event_detail %}?app={0}&eventid={1}".format(getURLParam("app"), event.val());
+            });
+        }
+
+
+        //===============================================第二个表格============
+        function updateDividePage2()
+        {
+            var count = 1 + parseInt((g_data3.length - 1) / g_per2);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page2_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable2({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter("#pagination2 li:first");
+            }
+        }
+
+        //参数i是页数
+        function updateTable2(page)
+        {
+            var key = $("#param").val();
+            var total_page = 1 + parseInt((g_data3.length - 1) / g_per2);
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page2 = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove2='yes']").remove();
+            //添加元素
+            for(var i = (page - 1) * g_per2; i < g_per2 * page && i < g_data3.length; i++)
+            {
+                if(g_data3[i][0] != key)
+                    continue;
+                var tr = $("<tr tr_can_remove2='yes'></tr>");
+                for(j in g_data3[i])
+                {
+                    if(j > 0)
+                    tr.append($("<td>{0}</td>".format(g_data3[i][j])));
+                }
+                $("#data_table2 tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page2_" + i).addClass("active");
+                else
+                    $("#page2_" + i).removeClass("active");
+            }
+        }
+
+        //更新显示行数
+        function updatePer2(per)
+        {
+            g_per2 = per;
+            updateDividePage2();
+            updateTable2(1);
+        }
+        var arrParm = [];
+        function initParamSelect()
+        {
+            var param = $("#param");
+
+            //先清空之前的
+            for(var i in arrParm)
+            {
+                $('option[value="{0}"]'.format(arrParm[i]), param).remove();
+            }
+            //param.multiselect('rebuild');
+            arrParm = [];
+            for(var i in g_data2)
+            {
+                if(-1 == getIndex(arrParm, g_data2[i][0]))
+                {
+                    arrParm.push(g_data2[i][0]);
+                    param.append($("<option value='{0}'>{0}</option>".format(g_data2[i][0])));
+                }
+            }
+            param.multiselect('rebuild');
+        }
+
+        function updateParamTable()
+        {
+            var param = $("#param").val();
+            g_data3 = [];
+            for(var i in g_data2)
+            {
+                if(g_data2[i][0] == param)
+                {
+                    g_data3.push(g_data2[i]);
+                }
+            }
+        }
+    </script>
+{% endblock %}

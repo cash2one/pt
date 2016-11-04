@@ -1,0 +1,23 @@
+
+
+
+
+
+INSERT INTO `pt_op_total`.`auth_permission`
+(`name`,
+`content_type_id`,
+`codename`)
+VALUES
+("order_reports",
+199,
+"订单总报表"),
+("cp",
+199,
+"订单多CP报表"),
+("failed_orders",
+199,
+"失败订单报表"),
+("trade",
+199,
+"营销费用报表")
+;

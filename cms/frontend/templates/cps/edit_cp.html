@@ -1,0 +1,477 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}编辑品牌{% endblock %}
+
+{% block head %}
+    <style>
+        *{
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        .dashhr{
+            margin: 10px 0;
+            border-top: 1px dashed #ccc;;
+        }
+        .sendmsg-form label{
+            width:16%;
+            text-align: right;
+            margin-right: 1%;
+        }
+        .sendmsg-form .col-lg-12 label{
+            width:8%;
+            margin-right: .5%;
+            vertical-align: middle;
+        }
+        .sendmsg-form .form-control,.sendmsg-form select{
+            display: inline-block;
+            width:80%;
+        }
+        .sendmsg-form .col-lg-12 .form-control{
+            width:90%;
+            vertical-align: middle;
+        }
+        .sendmsg-form a.addpicbtn{
+            cursor:pointer;
+            font-size: 40px;
+            padding: 10px 22px;
+            border: 2px solid #999;
+            color: #999;
+            cursor: pointer;
+        }
+        .citylist{
+            width: 90%;
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        .correctbtn{
+            color: #337ab7;
+            margin-left: 470px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .correctbtn:hover{
+            color:blue;
+            cursor: pointer;
+        }
+        #validataDiv{
+            padding-left:10%;
+        }
+        #validataDiv .form-group label{
+            width:4%;
+            text-align: left;
+        }
+
+    </style>
+<link rel="stylesheet" href="{% static 'css/selectImg.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/webuploader.css' %}"/>
+{% endblock %}
+
+{% block content %}
+    <div class="cms-subtitle">
+         <ol class="breadcrumb" >
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+            <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+            <li><a href="{% url 'config_cp_list' %}?t={{ t }}&v={{ v }}&c={{ c }}">品牌列表</a></li>
+            <li class="active">编辑品牌</li>
+        </ol>
+    </div>
+
+     <div id="error-hints">
+
+    </div>
+
+
+    <form class="sendmsg-form" action="{% url 'config_edit_cp' %}?channel={{ channel }}&id={{ id }}" method="post" enctype="multipart/form-data">{% csrf_token %}
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>图片:</label>
+                    <a class="addpicbtn" >+</a>
+                    <input name="icon" value="" id="cp_icon" type="hidden"/>
+                </div>
+            </div>
+
+            <input name="parent_id" value="1" id="parent_id" type="hidden"/>
+            <input name="meta" value="{{ cp_id }}" id="parent_id" type="hidden"/>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>宣传图:</label>
+                    <a class="addpicbtn" >+</a>
+                    <input name="adver_icon" value="" id="adver_icon" type="hidden"/>
+                </div>
+            </div>
+       </div>
+        <p class="dashhr"></p>
+         <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>品牌ID:</label>
+                    <input type="text" class="form-control" value="{{ cp_id }}" maxlength="4" readonly/>
+                </div>
+            </div>
+         </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>品牌名:</label>
+                    <input type="text" class="form-control" name="name" id="cp_name" required/>
+                </div>
+            </div>
+            <div class="col-lg-6" hidden>
+                <div class="form-group">
+                    <label><i>*</i>品牌颜色:</label>
+                    <input type="color" class="form-control" name="name_style" id="name_style" required/>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                 <div class="form-group">
+                    <label><i>*</i>描述:</label>
+                    <input type="text" class="form-control" name="desc" id="desc" required/>
+                </div>
+            </div>
+            <div class="col-lg-6" hidden>
+                 <div class="form-group">
+                    <label><i>*</i>描述颜色:</label>
+                    <input type="color" class="form-control" name="desc_style" id="desc_style" required/>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>品牌页排序：</label>
+                    <input type="number" class="form-control" name="location2" id="location2" placeholder="请输入小于128的整数" max="127" required/>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>动作：</label>
+                  <div style="position: relative;display: inline-block;width: 80%;">
+
+{#                            <div class="input-group-lg form-control" style="width:100%;height: 300px;padding: 6px 0;overflow-y: auto;position: absolute;z-index: 999;top: 33px;display: none" id="actionselect" name="action_id">#}
+{#                                <a data-value=""></a>#}
+{#                                {% for action in actions %}#}
+{#                                <a data-value="{{ action.0 }}" onclick="selectAction(this)">{{ action.1 }}</a>#}
+{#                                {% endfor %}#}
+{#                            </div>#}
+
+                        <input type="hidden" id="action_id" name="action_id" class="form-control" style="width:400px;"/>
+                        <input type="text" id="action_uid" name="action_uid" class="form-control" style="width:100%;" required maxlength="11" placeholder="请选择下拉列表中的动作或输入搜索" readonly/>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="dashhr"></p>
+
+        <div class="row">
+           <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>品牌分类:</label>
+                   <select class="input-group-lg form-control" name="cp_category" id="cp_category" required>
+                       <option class="form-control" value=""></option>
+                       {% for cp_cate in cp_cates %}
+                           <option class="form-control" value="{{ cp_cate.id }}">{{ cp_cate.name }}</option>
+                       {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label>服务时间:</label>
+                    <input type="text" class="form-control" name="service_time" id="service_time"/>
+                </div>
+            </div>
+        </div>
+         <div class="row">
+           <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>旗舰店描述:</label>
+                   <input type="text" class="form-control" value="品牌旗舰店" name="shop_type" id="shop_type" required>
+                </div>
+            </div>
+           <div class="col-lg-6">
+                <div class="form-group">
+                    <label>企业名称:</label>
+                    <input type="text" class="form-control" name="company_name" id="company_name" required>
+                </div>
+            </div>
+          </div>
+          <div class="row">
+          <div class="col-lg-6">
+                <div class="form-group">
+                    <label style="text-indent:-.5em;"><i>*</i>是否认证企业:</label>
+                   <select class="input-group-lg form-control" name="certified_company" id="certified_company" required maxlength="4">
+                       <option class="form-control" value="0">0</option>
+                       <option class="form-control" value="1">1</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label>搜索关键字：</label>
+                    <input class="form-control" name="search_keyword" id="search_keyword"/>
+                </div>
+            </div>
+        </div>
+        <p class="dashhr"></p>
+         <div class="row">
+           <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>首页排序:</label>
+                   <input type="number" class="form-control" name="location1" id="location1" maxlength="4" required>
+                </div>
+            </div>
+           <div class="col-lg-6">
+                <div class="form-group">
+                    <label>运营标签:</label>
+                    <input type="text" class="form-control" name="mark" id="mark"  >
+                </div>
+            </div>
+          </div>
+             <div class="row">
+           <div class="col-lg-6">
+                <div class="form-group">
+                    <label>运营文案:</label>
+                    <input type="text" class="form-control" name="text" id="text" maxlength="7">
+                </div>
+            </div>
+           <div class="col-lg-6">
+                <div class="form-group">
+                    <label>运营描述:</label>
+                    <input type="text" class="form-control" name="op_desc" id="op_desc" >
+                </div>
+            </div>
+          </div>
+            <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label>好评率:</label>
+                    <input type="number" step="0.01" class="form-control" name="feedback" id="feedback" placeholder="请输入好评率,精度小数点后两位,例如90.01%,只输入90.01!!!!"
+                           max="100" min="0"/>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row text-center">
+            <a class="btn btn-default col-lg-1 col-lg-offset-4" href="{% url 'config_cp_list' %}?t={{ t }}&v={{ v }}&c={{ c }}">取消</a>
+            <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="确定"/>
+        </div>
+
+
+             <div id="dialogUpload" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" style="display: none;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <div class="header">
+                            <input id="searchImg" class="input-sm" type="text" placeholder="请输入关键词搜索"/>
+                            <button class="btn btn-info" id="searchBtn">搜索</button>
+                            <p class="toolbar pull-right">
+                                <button id="usepic" class="btn btn-warning">确认使用</button>
+                                <button type="button" class="btn btn-primary" id="addLocalImg">本地上传</button>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="nav nav-tabs pull-right" role="tablist" id="pic-nav">
+                            <li  class="active"><a href="#">广告图片</a></li>
+                            <li><a href="#">大图标</a></li>
+                            <li><a href="#">小图标</a></li>
+                            <li><a href="#">优惠券</a></li>
+                            <li><a href="#">其他</a></li>
+                        </ul>
+                        <div class="tab-content" style="clear:both">
+                            <div  class="tab-pane active" id="adspic">
+                                <div id="loading" style="display:none;    position: inherit;    margin: 1.5rem 420px;">
+                                    <img src="{% static 'images/loading.gif' %}"/>
+                                </div>
+                                <div class="imglist">
+
+                                </div>
+                                <div id="pagination"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div>
+
+
+        <div id="UploadModal" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" style="display: none;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        上传图片到图库<!--<h4 class="modal-title" id="myLargeModalLabel"></h4>-->
+                        <p class="pull-right">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                            <button class="btn btn-info pull-right" id="useTheImg" style="display: none;">使用该图片</button>
+                        </p>
+
+                        <!--<input type="button" class="btn btn-primary" value="浏览本地文件"/>-->
+                    </div>
+                    <div class="modal-body">
+                        <div id="uploader-demo">
+                            <!--用来存放item-->
+                            <div id="fileList" class="uploader-list"></div>
+                            <div id="filePicker" style="text-align: right"> 选择图片</div>
+                        </div>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div>
+    </form>
+
+    <script type="text/javascript">
+        setNavBg({{t}});
+
+        $("form").submit(function(){
+
+
+            var actions={{ actions|safe }};
+            console.log(actions);
+            var action_val=$("#action_uid").val();
+            var count_times=0;
+            $.each(actions,function(key,item){
+                if((item[0])==action_val){
+                    count_times++;
+                }
+            })
+            if(count_times<=0){
+                var errorstr='<ul><li>动作 ： 请选择下拉框内的可选动作。</li></ul>';
+                $("#error-hints").html(errorstr).show();
+                $("#action_uid").css("border","1px solid #D9534F");
+                return false;
+            }else {
+                return true;
+            }
+
+
+        });
+
+        checkForm({{ errors|safe }});
+        checkForm({{ cpdiserrors|safe }});
+
+        $("form input").focus(function(){
+           $(this).css("border","1px solid #ccc");
+        });
+
+        function setInPutValue(){
+{#        console.log("{{ goods_form.initial }}");#}
+        {% for key,value in fields.items %}
+            $("[name='{{ key }}']").val({{ value|safe }});
+        {% endfor %}
+
+        {% for key,value in cpdisfields.items %}
+            $("[name='{{ key }}']").val({{ value|safe }});
+        {% endfor %}
+
+        var action_str=$("#action_id").val();
+        $("#action_uid").val(action_str);
+         if($("#action_id").val()==-1){
+            $(".correctcontent").show();
+        }
+
+        $(".addpicbtn").next("input[type=hidden]").each(function(){
+            if(this.value != ''){
+                var addbtn = $(this).prev(".addpicbtn");
+                $('<div  class="newImg"><img src="'+getImgURL(this.value)+'"/><span class="glyphicon glyphicon-remove"></span>           </div>').insertAfter(addbtn);
+                addbtn.hide();
+            }
+        });
+    }
+
+
+
+
+        window.onload=setInPutValue;
+    </script>
+<script type="text/javascript" src="{% static 'js/cms/selectImg.js' %}"></script>
+    <script>
+    (function(){
+        $(".correctcontent").hide();
+         $("#action_uid").focus(function(){
+             $("#actionselect").show();
+         });
+
+        $("#action_uid").on("input propertychange",function(){
+            var action_str=$(this).val();
+            var action_arr=$("#actionselect a");
+            var act_len=action_arr.length;
+            for(var i=0;i<act_len;i++){
+                var htmlstr=$(action_arr[i]).html();
+                if(htmlstr.indexOf(action_str)>=0){
+                    $(action_arr[i]).show();
+                }else {
+                    $(action_arr[i]).hide();
+                }
+            }
+
+        });
+
+        $(".correctbtn").click(function(){
+            $(".correctcontent").show();
+            $(this).hide();
+        });
+
+     })();
+
+
+    function requestData(cur_page){
+        $(".pagelist li").eq(cur_page).css('background', '#34cb95');
+        g_cur_page = cur_page;
+        $.ajax("{% url 'get_images' %}",{
+            type:"get",
+            cache:false,
+            data:{
+                key: searchkeywords,
+                cur_page: cur_page,
+                per_page: g_per_page,
+                image_category:cur_category
+            },
+            dataType:'json',
+            beforeSend:function(XMLHttpRequest){
+                $("#loading").show();
+
+            },
+            success:function(result){
+                //   console.log(result);
+                var data = result[0];
+                var num_pages = result[1];
+                CreateImgList(data);
+                pagination(num_pages);
+            },
+            error:function(result){
+                console.log(result);
+            },
+            complete:function(result){
+                $("#loading").hide();
+                 $(".pagelist li").eq(cur_page).css('background', '#34cb95');
+                  if(cur_page>5){
+                  $(".pagelist li").eq(cur_page-5).prevAll().hide();
+                }
+            }
+
+        })
+    }
+
+    </script>
+<script type="text/javascript" src="{% static 'js/cms/webuploader.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/cms/uploadimg.js' %}"></script>
+
+{% endblock %}
+

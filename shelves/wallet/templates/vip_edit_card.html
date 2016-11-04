@@ -1,0 +1,307 @@
+<div class="modal" id="mymodal_vip" xmlns:disable="http://www.w3.org/1999/xhtml">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modal_vip_title">钱包编辑页</h4>
+            </div>
+            <div class="modal-body">
+                <ul>
+                    <li id="vip_card_title">
+                        <span>
+                            <label><span style="color:red">*</span>VIP名称:</label>
+                        </span>
+                        <input class="form-control" id="v_vip_card_title" value="{{ vip_info.0.2 }}"
+                               >
+                    </li>
+                    <li id="vip_secondary_category">
+                        <span>
+                            <label><span style="color:red">*</span>选择二级品类:</label>
+                        </span>
+                        <div>
+                            <select id="v_vip_secondary_category" multiple="multiple">
+                                {% for secondary_category in secondary_categorys %}
+                                    <option  value="{{ secondary_category.0 }}">{{ secondary_category.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </li>
+                    <li id="vip_thrid_category">
+                        <span>
+                            <label><span style="color:red">*</span>选择三级品类:</label>
+                        </span>
+                        <div>
+                            <select id="v_vip_third_category" multiple="multiple">
+                                {% for third_category in third_categorys %}
+                                    <option value="{{ third_category.0 }}" sec_value="{{ third_category.1 }}">{{ third_category.2 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </li>
+                    <li id="vip_userProtocolUrl">
+                        <span>
+                            <label><span style="color:red">*</span>葡萄会员协议:</label>
+                        </span>
+                        <input class="form-control" id="v_vip_userProtocolUrl" value="{{ vip_info.0.1 }}">
+                    </li>
+                    <li id="vip_descsSimple">
+                        <span>
+                            <label><span style="color:red">*</span>钱包描述:</label>
+                        </span>
+                        <input class="form-control" id="v_vip_descsSimple" value="{{ vip_info.0.3 }}">
+                    </li>
+                    <li id="vip_user_statement">
+                        <span>
+                            <label>详细说明:</label>
+                        </span>
+                        <textarea class="form-control" id="v_vip_userStatement" style="width: 500px;height:300px;resize: none;">{{ vip_info.0.5 }}</textarea>
+                    </li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="confirm_data">保存
+                </button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- Modal -->
+<div class="modal fade" id="myorderModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">本次保存的分类如下:</h4>
+            </div>
+            <div class="modal-body" id="confirm_body">
+                <h5>勾选了以下分类:</h5>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="save_order_vip">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        //二级分类
+        $('#v_vip_secondary_category').multiselect({
+            disableIfEmpty: true,
+            maxHeight: 200,
+            buttonWidth: '300px',
+            filterPlaceholder: "搜索",
+            enableFiltering: true,
+            includeSelectAllOption: true,
+            nonSelectedText: '请选择二级分类',
+            onChange: function (option, checked, select) {
+                updateThirdCategory();
+                requestData(1);
+            },
+            onDropdownHide: function (event) {
+                $(".multiselect-clear-filter").click();
+            }
+        });
+
+        //三级分类
+        $('#v_vip_third_category').multiselect({
+            disableIfEmpty: true,
+            maxHeight: 200,
+            buttonWidth: '300px',
+            filterPlaceholder: "搜索",
+            enableFiltering: true,
+            includeSelectAllOption: true,
+            nonSelectedText: '请选择三级分类',
+            onChange: function (option, checked, select) {
+                updateSecondCategory();
+                requestData(1);
+            },
+            onDropdownHide: function (event) {
+                $(".multiselect-clear-filter").click();
+            }
+        });
+
+
+        //初始化显示当前二级分类
+        {% for all_trd_category in third_categorys %}
+            {% for cur_trd_category in vip_info.0.0 %}
+                if ({{ all_trd_category.0 }} == {{ cur_trd_category }})
+                    $('option[value={{ all_trd_category.1 }}]', $('#v_vip_secondary_category')).prop('selected', true);
+            {% endfor %}
+        {% endfor %}
+        $('#v_vip_secondary_category').multiselect('refresh');
+
+        //初始化显示当前三级分类
+        {% for third_category in vip_info.0.0 %}
+            $('option[value={{ third_category }}]', $('#v_vip_third_category')).prop('selected', true);
+        {% endfor %}
+        $('#v_vip_third_category').multiselect('refresh');
+    });
+
+    //选择二级分类，更新三级分类
+    function updateThirdCategory() {
+        var sec_cate_selected = $("#v_vip_secondary_category option:selected")
+        var trf_cate = $("#v_vip_third_category option")
+        //清除选择
+        for(var j = 0; j < trf_cate.length; j++){
+            $('option[value="{0}"]'.format(trf_cate[j].value), $('#v_vip_third_category')).prop('selected', false);
+        }
+        //选中选项
+        for (var i = 0; i < sec_cate_selected.length; i++) {
+            for(var j = 0; j < trf_cate.length; j++){
+                if (sec_cate_selected[i].value == trf_cate[j].getAttribute("sec_value"))
+                {
+                    $('option[value="{0}"]'.format(trf_cate[j].value), $('#v_vip_third_category')).prop('selected', true);
+                }
+            }
+        }
+        $('#v_vip_third_category').multiselect('refresh');
+    }
+
+    //选择三级分类，更新二级分类
+    function updateSecondCategory() {
+        var trf_cate_selected = $("#v_vip_third_category option:selected")
+        var sec_cate = $("#v_vip_secondary_category option")
+        //清除选择
+{#        for(var j = 0; j < sec_cate.length; j++){#}
+{#            $('option[value="{0}"]'.format(sec_cate[j].value), $('#v_vip_secondary_category')).prop('selected', false);#}
+{#        }#}
+        $('#v_vip_secondary_category').multiselect('deselectAll', false);
+        $('#v_vip_secondary_category').multiselect('updateButtonText');
+        //选中选项
+        for (var i = 0; i < trf_cate_selected.length; i++) {
+            for(var j = 0; j < sec_cate.length; j++){
+                if (sec_cate[j].value == trf_cate_selected[i].getAttribute("sec_value"))
+                {
+                    $('option[value="{0}"]'.format(sec_cate[j].value), $('#v_vip_secondary_category')).prop('selected', true);
+                }
+            }
+        }
+        $('#v_vip_secondary_category').multiselect('updateButtonText');
+        $('#v_vip_secondary_category').multiselect('refresh');
+    }
+
+    //订单编辑保持按钮
+    $("#save_order_vip").click(function () {
+
+        edit();
+        window.location.reload();
+
+
+    });
+
+    //检验数据合法型
+    function checkNumber() {
+
+        if($("#v_vip_secondary_category option:selected").length==0){
+            alert('（必选）二级分类')
+                return false
+        }
+        if($("#v_vip_third_category option:selected").length==0){
+            alert('（必选）三级分类')
+                return false
+        }
+        if ($("#v_vip_card_title").val().length == 0) {
+                alert('（必填）卡片名称')
+                return false
+        }
+        if ($("#v_vip_card_title").val().length > 9) {
+                alert('卡片名称不能超过9个字符')
+                return false
+        }
+        if ($("#v_vip_descsSimple").val().length > 23) {
+                alert('卡片描述不能超过23个字符')
+                return false
+        }
+        if ($("#v_vip_userStatement").val().length > 1000) {
+                alert('详细说明不能超过1000个字符')
+                return false
+        }
+        if ($("#v_vip_userProtocolUrl").val().length == 0) {
+                alert('（必填）葡萄协议')
+                return false
+        }
+        if ($("#v_vip_descsSimple").val().length == 0) {
+                alert('（必填）简单描述')
+                return false
+        }
+        return true
+    };
+
+    //确定修改的分类
+    $("#confirm_data").click(function () {
+        isvalid = checkNumber()
+        if(isvalid)
+        {
+            $("[p_can_remove='yes']").remove();
+            var sec_cate_selected = $("#v_vip_secondary_category option:selected")
+            var trd_cate_selected = $("#v_vip_third_category option:selected")
+            var trd_cate_all = $("#v_vip_third_category option")
+            var p=$("<p p_can_remove='yes'></p>");
+
+            for (var i = 0; i < sec_cate_selected.length; i++) {
+                var trd_txt = ""
+                var sec_selected_count = 0
+                var sec_all_count = 0
+
+                for (var j = 0; j < trd_cate_selected.length; j++) {
+                    if(sec_cate_selected[i].value == trd_cate_selected[j].getAttribute("sec_value")){
+                         trd_txt += trd_cate_selected[j].text + ": ";
+                         sec_selected_count++;
+                    }
+                }
+                for (var n = 0; n < trd_cate_all.length; n++) {
+                    if(sec_cate_selected[i].value == trd_cate_all[n].getAttribute("sec_value")){
+                         sec_all_count++;
+                    }
+                }
+                if(sec_selected_count == sec_all_count)
+                {
+                    trd_txt='全部三级分类'
+                }
+                p.append($("<p><b>{0}: </b>{1}</p>".format(sec_cate_selected[i].text, trd_txt)))
+            }
+
+            $("#confirm_body").append(p);
+            $('#myorderModal').modal('toggle')
+        }
+    })
+
+
+    //批量更新订单保障状态
+    function edit() {
+
+        title = document.getElementById("v_vip_card_title").value;
+        userProtocolUrl = document.getElementById("v_vip_userProtocolUrl").value;
+        descsSimple = document.getElementById("v_vip_descsSimple").value;
+        descs = document.getElementById("v_vip_userStatement").value;
+        third_categorys = $("#v_vip_third_category option:selected");
+        categoryIds = ""
+        for (var i = 0; i < third_categorys.length; i++) {
+            categoryIds += third_categorys[i].value + ",";
+        }
+        categoryIds = categoryIds.substring(0, categoryIds.length - 1)
+        //ajax请求批量更新数据
+        postJSON("{% url 'edit_vip_card' %}",
+                {
+                    title: title,
+                    userProtocolUrl: userProtocolUrl,
+                    descsSimple: descsSimple,
+                    descs: descs,
+                    categoryIds: categoryIds,
+                },
+                function (data) {
+                    msg = eval(data);
+                    <!--alert(msg);-->
+                }
+        );
+    }
+
+</script>

@@ -1,0 +1,367 @@
+{% extends "main-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <style type="text/css">
+    </style>
+{% endblock %}
+{% block title %}活跃用户{% endblock %}
+{% block content %}
+    <table border="1px" class="overview">
+        <thead>
+            <tr>
+                <th colspan="5">
+                    <span>活跃用户概况</span>
+                    <span id="overview" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td width="20%">昨日活跃用户</td>
+                <td width="20%">过去7天活跃用户</td>
+                <td width="20%">昨日活跃 / 过去7天活跃</td>
+                <td width="20%">过去30天活跃用户</td>
+                <td width="20%">昨日活跃 / 过去30天活跃</td>
+            </tr>
+            <tr style="font-size: 20px;font-weight: bold">
+                <td>{{ active_users_1 }}</td>
+                <td>{{ active_users_7 }}</td>
+                <td>{{ active_users_7_div }}</td>
+                <td>{{ active_users_30 }}</td>
+                <td>{{ active_users_30_div }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <br />
+    <br />
+    <br />
+    版本选择：
+    <select id="ver">
+        <option value="">全部版本</option>
+        {% for ver in versions %}
+            <option value="{{ ver }}">{{ ver }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    渠道选择：
+    <select id="channel">
+        <option value="">全部渠道</option>
+        {% for channel in channels %}
+            <option value="{{ channel }}">{{ channel }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(0)">今日</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    <a id="export_csv" href="{% url active_users_csv %}" style="margin-left: 20px;">
+        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+    </a>
+    <br />
+    <br />
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail">
+        <thead>
+            <tr>
+                <th colspan="3">
+                    <span>活跃用户明细</span>
+                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                    <span style="position: absolute;right:30px;" id="period">
+                        <a id="period_1" href="javascript:void(0);" class="period_normal period_active" onclick="updatePeriod(1)">日</a>
+                        <a id="period_2" href="javascript:void(0);" class="period_normal" onclick="updatePeriod(2)">周</a>
+                        <a id="period_3" href="javascript:void(0);" class="period_normal" onclick="updatePeriod(3)">月</a>
+                    </span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="colname">
+                <td style="width:33%">日期</td>
+                <td style="width:33%">活跃用户</td>
+                <td style="width:33%">活跃用户占比</td>
+            </tr>
+        </tbody>
+    </table>
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;
+        var g_current_page = 1;
+        var g_date_control = $("#date_control");
+        var g_data = {{ data|safe }};
+        var g_period = 1;
+        $(document).ready(function()
+        {
+            setLeftNav("nav_active_users");
+            loading.init(".loading_gif", "#data_table");
+            $('#ver').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#channel').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            modifyCsvHref(getDateStr("{{ currentdate }}", -29).replace(/-/g, ""), "{{ currentdate }}".replace(/-/g, ""));
+            g_date_control.daterangepicker(
+                {
+                    locale:
+                    {
+                        applyLabel: "确定",
+                        cancelLabel: "取消"
+                    },
+                    format: 'YYYY-MM-DD',
+                    separator: ' 到 ', //前后有空格
+                    startDate: getDateStr("{{ currentdate }}", -29),
+                    endDate: "{{ currentdate }}",
+                    maxDate: getDateStr("{{ currentdate }}", 1)// < maxDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+            ).val(getDateStr("{{ currentdate }}", -29) + " 到 {{ currentdate }}");
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function(ev, picker){
+                setDefaultPeriod();
+                requestData();
+            });
+
+            $('#overview').tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>ptCID：</span>MD5(IMEI + MAC + AndroidID)</p>',
+                    '<p><span>昨日活跃用户：</span>昨日，至少启动过一次应用的用户称为1个活跃用户（去重，以ptCID为准）</p>',
+                    '<p><span>过去7天活跃用户：</span>过去7天（不含当日），至少启动过一次应用的用户称为1个活跃用户（去重，以ptCID为准）</p>',
+                    '<p><span>昨日活跃/过去7天活跃：</span>昨日活跃用户占过去7天活跃用户的比例</p>',
+                    '<p><span>过去30天活跃用户：</span>过去30天（不含当日），至少启动过一次应用的用户称为1个活跃用户（去重，以ptCID为准）</p>',
+                    '<p><span>昨日活跃/过去30天活跃：</span>昨日活跃用户占过去30天活跃用户的比例</p>',
+                    '</div>'
+                ].join(""))
+            });
+
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>活跃用户：</span>该日/周/月至少启动过一次应用的用户称为1个活跃用户（去重，以ptCID为准）</p>',
+                    '<p><span>活跃用户占比：</span>某日/周/月的活跃用户占所选时间段的总活跃用户的比例</p>',
+                    '<p><span>周活跃率：</span>周活跃用户占截止当周累计用户的比例</p>',
+                    '<p><span>月活跃率：</span>月活跃用户占截止当月累计用户的比例</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+            //初始化分页框
+            updateDividePage();
+            //初始化table第一页
+            updateTable(1);
+        });
+
+        function updateDividePage()
+        {
+            var count = 1 + parseInt((g_data.length - 1) / g_per);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+        //参数i是页数
+        function updateTable(page)
+        {
+            var total_page = 1 + parseInt((g_data.length - 1) / g_per);
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for(var i = (page - 1) * g_per; i < g_per * page && i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(j in g_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //更新显示行数
+        function updatePer(per)
+        {
+            g_per = per;
+            updateDividePage();
+            updateTable(1);
+        }
+
+        function requestData()
+        {
+            //截取出开始日期和结束日期
+            var start_date = g_date_control.val().substr(0,10).replace(/-/g, "");
+            var end_date = g_date_control.val().substr(13).replace(/-/g, "");
+            //修改导出文件的href地址
+            modifyCsvHref(start_date, end_date);
+            postJSON("{% url active_users_ajax %}",
+                {
+                    app: getURLParam("app"),
+                    start_date: start_date,
+                    end_date: end_date,
+                    period: g_period,
+                    vers: arr2str($("#ver").val()),
+                    channels: arr2str($("#channel").val())
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data);
+                    updatePeriodColor(g_period);
+                    updateDividePage();
+                    updateTable(1);
+                    updateCol();
+                }
+            );
+        }
+
+        //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+        function updateTime(delay)
+        {
+            var start_date = getDateStr("{{ currentdate }}", delay);
+            var end_date = "{{ currentdate }}";
+
+            g_date_control.data('daterangepicker').setStartDate(start_date);
+            g_date_control.data('daterangepicker').setEndDate(end_date);
+            g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+            setDefaultPeriod();
+            requestData();
+        }
+
+        function modifyCsvHref(start_date, end_date)
+        {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url active_users_csv %}?app={0}&start_date={1}&end_date={2}&period={3}&vers={4}&channels={5}".
+                format(getURLParam("app"), start_date, end_date, g_period, arr2str($("#ver").val()), arr2str($("#channel").val())));
+        }
+
+        function updatePeriod(type)
+        {
+            g_period = type;
+            requestData();
+        }
+
+        function updatePeriodColor(type)
+        {
+            $("#period a").removeClass("period_active");
+            $("#period_" + type).addClass("period_active");
+        }
+
+        function setDefaultPeriod()
+        {
+            var diff = getDateDiff(g_date_control.val().substr(0,10), g_date_control.val().substr(13));
+            //小于等于30天，默认是天；大于30天，默认是周
+            if(diff <= 30)
+                g_period = 1;
+            else
+                g_period = 2;
+        }
+
+        function updateCol()
+        {
+            var head = $("#data_table thead tr th");
+            var col = $("#colname");
+
+            if(head.attr("colspan") > "3")
+                $("#colname td:last").remove();
+            if(g_period == 1)
+            {
+                head.attr("colspan", "3");
+            }
+            else if(g_period == 2)
+            {
+                head.attr("colspan", "4");
+                col.append("<td>周活跃率</td>");
+            }
+            else if(g_period == 3)
+            {
+                head.attr("colspan", "4");
+                col.append("<td>月活跃率</td>");
+            }
+            $("#colname td").css("width", "{0}%".format(100 / parseInt(head.attr("colspan"))));
+        }
+
+    </script>
+{% endblock %}

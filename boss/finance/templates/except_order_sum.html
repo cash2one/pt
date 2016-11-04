@@ -1,0 +1,351 @@
+﻿{% extends "finance_base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <style type="text/css">
+{#     td#}
+{#        {#}
+{#            white-space: nowrap;/*不允许td换行*/#}
+{#        }#}
+    </style>
+{% endblock %}
+{% block title %}财务对账{% endblock %}
+{% block content %}
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+
+    <br />
+    <br />
+    <div class="loading_gif" style="display: none"></div>
+{#    <DIV  style=" overflow-x: scroll; " align=center>   增加横向滚动条#}
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px">
+        <thead>
+            <tr>
+                <th colspan="24">
+                    <span id="table_title">异常订单汇总表</span>
+                    <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip" data-placement="right"></span>
+                    <a id="export_csv" href="{% url unpending_order_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="colname">
+                <td>业务类型</td>
+                <td>无支付平台数据,CP数据</td>
+                <td>无支付平台数据</td>
+                <td>无CP数据</td>
+                <td>实收价格不等于实付价格</td>
+                <td>PT退款,CP未退款</td>
+                <td>CP退款,PT未退款</td>
+                <td>未知</td>
+            </tr>
+        </tbody>
+    </table>
+{#    </div>#}
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;
+        var g_current_page = 1;
+        var g_date_control = $("#date_control");
+        var g_data = [],g_period = 1,
+                initStartDate = getURLParam("start_date") || (getDateStr("{{ currentdate }}", -29)),
+                initEndDate = getURLParam("end_date") || "{{ currentdate }}";
+        $(document).ready(function()
+        {
+            setTopNav(2);
+            loading.init(".loading_gif", "#data_table");
+            modifyCsvHref(initStartDate.replace(/-/g, ""), initEndDate.replace(/-/g, ""));
+            $('#ver').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#channel').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#order_types').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+
+            $('#order_states').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+            $('#finance_results').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+            $('#cp_types').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+            $('#payment_types').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function(option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+            g_date_control.daterangepicker(
+                {
+                    locale:
+                    {
+                        applyLabel: "确定",
+                        cancelLabel: "取消"
+                    },
+                    format: 'YYYY-MM-DD',
+                    separator: ' 到 ', //前后有空格
+                    startDate: initStartDate,
+                    endDate: initEndDate,
+                    maxDate: getDateStr(initEndDate, 1)// < maxDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+            ).val(initStartDate + " 到 "+ initEndDate);
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function(ev, picker){
+                requestData();
+            });
+
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>（1）正常订单，无压单：</span></p>',
+                    '<p><span>无退款对账规则：</span>支付收款 +  优惠券面值 - 支付退款 + CP收款价格 - 葡萄标价 = CP收款价格 - CP退款价格 </p>',
+                    '<p><span>有退款对账规则：</span>支付收款 - 支付退款 = CP收款价格 - CP退款价格;  并且,支付退款 > 0, CP退款价格 > 0</p>',
+                    '<p><span>（2）优惠券大于标价订单：</span></p>',
+                    '<p>当优惠券大于商品标价，设支付收款 = 0.01</p>',
+                    '<p><span>无退款对账规则：</span>CP收款价格 = CP标价</p>',
+                    '<p><span>有退款对账规则： </span>支付收款 - 支付退款 = CP收款价格 - CP退款价格;   并且,支付退款 > 0, CP退款价格 > 0</p>',
+                    '<p><span>（3）</span>订单有压单</p>',
+                    '<p><span>有压单无退款对账规则：</span>支付收款 + 优惠券面值 - 支付退款 + CP收款价格 - 葡萄标价 =  SUM(CP收款价格) – SUM(CP退款价格)</p>',
+                    '<p><span>有压单有退款对账规则：</span>支付收款 - 支付退款 = SUM( CP收款价格) – SUM(CP退款价格)   并 且 支付退款 > 0, CP	退款价格 > 0</p>',
+                    '<p><span>（4） 营收、运营成本计算：</span></p>',
+                    '<p><span>无退款订单：</span>支付收款 - CP收款价格 - 支付费率</p>',
+                    '<p><span>退款订单：</span> 支付收款 -支付退款 - CP收款价格 + CP退款价格 -支付费率</p>',
+                    '</div>'
+                ]).join("")
+            });
+            requestData();
+        });
+
+        function updateDividePage()
+        {
+            var count = 1 + parseInt((g_data.length - 1) / g_per);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+        //参数i是页数
+        function updateTable(page)
+        {
+            var total_page = 1 + parseInt((g_data.length - 1) / g_per);
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for(var i = (page - 1) * g_per; i < g_per * page && i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(j in g_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //更新显示行数
+        function updatePer(per)
+        {
+            g_per = per;
+            updateDividePage();
+            updateTable(1);
+        }
+
+        function requestData()
+        {
+            //截取出开始日期和结束日期
+            var start_date = g_date_control.val().substr(0,10);
+            var end_date = g_date_control.val().substr(13);
+            //修改导出文件的href地址
+            modifyCsvHref(start_date, end_date);
+            postJSON("{% url except_order_sum_ajax %}",
+                {
+                    start_date: start_date,
+                    end_date: end_date,
+                    ot: $("#order_types").val(),
+                    app: getURLParam("app"),
+                    ver: $("#ver").val(),
+                    channel: $("#channel").val(),
+                    order_state:$("#order_states").val(),
+                    finance_result:$("#finance_results").val(),
+                    cp_type:$("#cp_types").val(),
+                    payment_type:$("#payment_types").val(),
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data);
+                    updateDividePage();
+                    updateTable(1);
+                    changeTableTitle();
+                }
+            );
+        }
+
+        //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+        function updateTime(delay)
+        {
+            var start_date = getDateStr("{{ currentdate }}", delay);
+            var end_date = "{{ currentdate }}";
+
+            g_date_control.data('daterangepicker').setStartDate(start_date);
+            g_date_control.data('daterangepicker').setEndDate(end_date);
+            g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+            requestData();
+        }
+
+        function modifyCsvHref(start_date, end_date)
+        {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url except_order_sum_csv %}?start_date={0}&end_date={1}&ot={2}&app={3}&ver={4}&channel={5}&order_state={6}&finance_result={7}&cp_type={8}&payment_type={9}".
+                format(start_date, end_date, $("#order_types").val(), getURLParam("app"), $("#ver").val(), $("#channel").val(), $("#order_states").val(), $("#finance_results").val(), $("#cp_types").val(), $("#payment_types").val()));
+        }
+
+        function changeTableTitle()
+        {
+            var order_type = $("#order_types").val();
+            var table_tile = $("#table_title");
+
+            table_tile.html("异常账单汇总表");
+        }
+
+    </script>
+{% endblock %}

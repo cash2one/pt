@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml11.dtd">
+
+<html lang="zh-CN">
+<head profile="http://gmpg.org/xfn/11" >
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="葡萄统计平台">
+    <meta name="description" content="葡萄统计平台">
+    <link rel="shortcut icon" type="image/icon" href="/static/img/favicon.png">
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.css" />
+    <script type="text/javascript" src="/static/js/jquery.js" ></script>
+    <script type="text/javascript" src="/static/js/bootstrap.js" ></script>
+    <title>葡萄统计平台</title>
+    <style type="text/css">
+        .input-group
+        {
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <form method="post" action="/accounts/login/" style="margin-left: 40px;margin-top:40px;">
+        {% csrf_token %}
+        {% if form.errors %}
+            <div class="alert alert-danger alert-dismissible fade in" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <p>您的用户名或者密码错误,请重试!!!</p>
+            </div>
+        {% endif %}
+
+        <div class="panel panel-success" style="width:500px;">
+            <div class="panel-heading" style="font-size: 16px;font-weight: bold;">登录葡萄统计平台</div>
+            <div class="panel-body">
+                <div class="input-group">
+                    <span class="input-group-addon" id="sizing-addon2"><span class="glyphicon glyphicon-user"></span></span>
+                    <input style="display:none"><!-- for disable autocomplete on chrome -->
+                    <input id="id_username" type="text" name="username" class="form-control" maxlength="20" placeholder="用户名" aria-describedby="sizing-addon2" autocomplete="off" >
+                </div>
+                <br />
+                <div class="input-group">
+                    <span class="input-group-addon" id="sizing-addon2"><span class="glyphicon glyphicon-lock"></span></span>
+                    <input style="display:none"><!-- for disable autocomplete on chrome -->
+                    <input id="id_password" type="password" name="password" class="form-control" maxlength="20" placeholder="密码" aria-describedby="sizing-addon2" autocomplete="off" >
+                </div>
+                <br />
+                <input type="submit" class="btn btn-success" value="登录" />
+                <input type="hidden" name="next" value="{{ next }}" />
+          </div>
+        </div>
+    </form>
+</body>
+
+

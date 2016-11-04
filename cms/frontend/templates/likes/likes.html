@@ -1,0 +1,536 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}猜你喜欢{% endblock %}
+{% block head %}
+    <style>
+        #table td a {
+            display: block;
+            margin: .1rem auto;
+        }
+
+        .service-table table td {
+            border: 1px solid #aaa;
+            height: .6rem;
+            min-width: .6rem;
+            max-width: .8rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #table td.operate a {
+            display: inline-block;
+        }
+
+        #table .dropdown-menu {
+            position: absolute;
+            top: 32%;
+            left: 4%;
+            z-index: 999;
+            float: left;
+            min-width: 72px;
+            padding: 0;
+            margin: 0;
+            font-size: 14px;
+            text-align: center;
+            list-style: none;
+            background-color: #ffffff;
+        }
+
+        #table .dropdown-menu li {
+            font-size: .12rem;
+        }
+
+        #table td .dropdown a {
+
+        }
+
+        #table td .mblock {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        #edit-group　 {
+            overflow: visible;
+        }
+
+
+    </style>
+    <link rel="stylesheet" href="{% static 'css/selectImg.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/webuploader.css' %}"/>
+{% endblock %}
+
+{% block content %}
+    <section class="top-sec top-bar" style="border: none;">
+        <div class="cms-subtitle">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+                <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+                <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+                <li class="active">猜你喜欢</li>
+            </ol>
+
+            {% if perms.man.config %}
+                <a class="adbtn-new" href="{% url 'new_likes_group' %}?channel={{ channel }}"><b
+                        style="font-size:.18rem">＋&nbsp</b>新建组</a>
+            {% endif %}
+
+        </div>
+    </section>
+
+    <section class="service-table adservice-table">
+        <table id="table">
+            <caption></caption>
+            <thead class="my_thead">
+            <tr>
+                <th>场景</th>
+                <th>标题</th>
+                <th>标题颜色</th>
+                <th>描述</th>
+                <th>描述颜色</th>
+                <th>状态</th>
+                <th id="edit-group"></th>
+                <th>小图标</th>
+                <th>名称</th>
+                <th>名称颜色</th>
+                <th>描述</th>
+                <th>描述颜色</th>
+                <th>排序</th>
+                <th>打点信息</th>
+                <th>动作</th>
+                <th>类别</th>
+                <th>有效时间</th>
+                <th>城市</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+
+            <div id="loading" style="display:none;">
+                <img src="{% static 'images/loading.gif' %}"/>
+            </div>
+            <tbody id="tbody" class="tbody">
+
+            </tbody>
+
+        </table>
+        <!-- 新建商品 -->
+        <div class="modal fade" id="myModal_goods_id" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">+ 添加商品</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input name="open_type" value="0" id="open_type" type="hidden"/>
+                        {# <input name="channel_id" value="{{ channel }}" id="channel_id" type="hidden"/>#}
+                        <input name="status" value="0" id="status" type="hidden"/>
+
+                        <div style="position: relative;display: inline-block;width: 100%;">
+
+                            <div class="input-group-lg form-control item-dropmenu" id="itemselect">
+                                <a data-value=""></a>
+                                {% for good in goods %}
+                                    <a data-value="{{ good.0 }}">
+                                        {{ good.1 }}{% if good.2 %}（{{ good.2 }}）{% endif %}</a>
+                                {% endfor %}
+                                {#                        <option class="form-control">测试0</option>#}
+                                {#                        <option class="form-control">测试1</option>#}
+                                {#                        <option class="form-control">测试2</option>#}
+                            </div>
+
+                            <input type="hidden" id="goods_id" name="goods_id" class="form-control real_id"
+                                   style="width:400px;"/>
+                            <input type="text" id="goods_uid" name="goods_uid" class="form-control item_id"
+                                   style="width:100%;" required maxlength="11" placeholder="请选择下拉列表中的商品或输入搜索"/>
+
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary"
+                                onclick='addEventConfirm("goods_id","{% url 'likes_new_goods' %}")'>确定
+                        </button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+        </div>
+        <!-- /.modal -->
+        <!-- 新建服务 -->
+        <div class="modal fade" id="myModal_service_id" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">+ 添加服务</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input name="open_type" value="0" id="open_type" type="hidden"/>
+                        <input name="channel_id" value="{{ channel }}" id="channel_id" type="hidden"/>
+                        <input name="status" value="0" id="status" type="hidden"/>
+
+                        <div style="position: relative;display: inline-block;width: 100%;">
+                            <div class="input-group-lg form-control item-dropmenu">
+                                <a data-value=""></a>
+                                {% for service in services %}
+                                    <a data-value="{{ service.0 }}">
+                                        {{ service.1 }}{% if service.2 %}（{{ service.2 }}）{% endif %}</a>
+                                {% endfor %}
+                                {#                        <option class="form-control">测试0</option>#}
+                                {#                        <option class="form-control">测试1</option>#}
+                                {#                        <option class="form-control">测试2</option>#}
+                            </div>
+                            <input type="hidden" id="service_id" name="service_id" class="form-control real_id"
+                                   style="width:400px;"/>
+                            <input type="text" id="service_uid" name="service_uid" class="form-control item_id"
+                                   style="width:100%;" required maxlength="11" placeholder="请选择下拉列表中的服务或输入搜索"/>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="common_ser_confirm"
+                                onclick='addEventConfirm("service_id","{% url 'likes_new_service' %}")'>确定
+                        </button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+        </div>
+        <!-- /.modal -->
+
+
+        <div class="no_content"><p>暂无猜你喜欢，请新建猜你喜欢</p></div>
+
+        <script type="text/javascript">
+            //设置一个全局变量
+            var like_id;
+            $(document).ready(function () {
+                setNavBg({{t}});
+                requestData();
+            });
+
+            function CreateTable(data) //表格创建函数
+            {
+                if (data.length > 0) {
+                    $(".my_thead").show();
+                }
+                if (data.length == 0) {
+                    $(".no_content").show();
+                    $(".my_thead").hide();
+                }
+                var tbody = $("<tbody>");
+                var cellCount = 23;
+                var rowCount = data.length;
+                $("#table tbody").remove();
+                tbody.appendTo($("#table"));
+                for (var i = 0; i < rowCount; i++) {
+                    var tr = $("<tr class='primary' ></tr>");
+                    tr.appendTo('table');
+                    for (var j = 0; j < 6; j++) {
+                        var td = $("<td>" + data[i].group[j] + "</td>");
+                        //为色值cell填充色块
+                        if (j == 2 || j == 4) {
+                            var td = $("<td><span class='mblock' style='background-color:" + data[i].group[j] + "'></span></td>");
+                        }
+                        td.appendTo(tr);
+
+                    }
+                    if (data[i].group[6] == 1) {
+                        var td = $("<td style='overflow:visible'><div class='dropdown'><a onclick='getID(this)' title='新建' class='btn dropdown-toggle glyphicon glyphicon-plus' data-id='" + data[i].group[7] + "' id='dropdownMenu1' data-toggle='dropdown' " +
+                                "href=''></a><a class='edit_streamsgroup glyphicon glyphicon-edit' " +
+                                "href='{% url 'edit_likes_group' %}?id=" + data[i].group[7] + "&channel={{ channel }}' title='编辑组'></a><a href='' title='删除组' class='del glyphicon glyphicon-trash' data-toggle='modal' " +
+                                "data-target='#myModal-del' ' onclick='groupConfirms(" + data[i].group[7] + ")'></a><ul " +
+                                "class='dropdown-menu' role='menu' aria-labelledby='dropdownMenu1'><li role='presentation'><a " +
+                                "role='menuitem' tabindex='-1' href='#' data-toggle='modal' data-target='#myModal_goods_id'>商品</a></li><li role='presentation'><a " +
+                                "role='menuitem' tabindex='-1' href='#' data-toggle='modal' data-target='#myModal_service_id'>服务</a></li></ul></div></td>");
+                    } else if (data[i].group[6] == 0) {
+                        var td = $("<td><a class='glyphicon glyphicon-eye-open'></a></td>");
+                    }
+
+                    td.appendTo(tr);
+                    //console.log("删除组的id是"+data[i].group[3]);
+
+                    var mLen = data[i].members.length; //获取data中的members的长度
+                    //console.log("mlen is" + mLen);
+
+                    if (mLen == 0) {
+                        for (var j = 0; j <= 12; j++) {
+                            var td = $("<td ></td>");
+                            td.appendTo(tr);
+                        }
+                    }
+                    if (mLen !== 0) {
+                        var s0_count = data[i].members[0].length;
+                        var td0_status = data[i].members[0][s0_count - 2];
+                        for (var j = 0; j < 12; j++) {
+                            var td = $("<td>" + data[i].members[0][j] + "</td>");
+
+                            if (j == 0) {
+                                var td = $("<td> <img src=" + getImgURL(data[i].members[0][j]) + " class='big' data-toggle='modal' data-target='#myModal_img'></td>");
+                            }
+                            if (j == 2 || j == 4) {
+                                var td = $("<td><span class='mblock' style='background-color:" + data[i].members[0][j] + "'></span></td>");
+                            }
+                            td.appendTo(tr);
+                        }
+
+                        //显示编辑状态和顺序交换
+                        if (data[i].members[0][13] == 1) {
+                            if (mLen == 1) {
+                                var td = $("<td class='operate edit-td' data-status='" + td0_status + "'><a data-id='" + data[i].members[0][14] + "' " +
+                                        "data-type='" + data[i].members[0][12] + "' class='edit glyphicon glyphicon-edit' title='编辑' aria-hidden='true' " +
+                                        "style='margin-right:10px;cursor: pointer'></a><a data-id='" + data[i].members[0][14] + "' " +
+                                        "class='del glyphicon glyphicon-trash' aria-hidden='true' title='删除' style='cursor: pointer' data-toggle='modal' " +
+                                        "data-target='#myModal-del' onclick='confirms(" + data[i].members[0][14] + "," + data[i].members[0][12] + ",7" + ")'></a></td>");
+                            } else if (mLen > 1) {
+                                var td = $("<td class='operate edit-td' data-status='" + td0_status + "'><a data-id='" + data[i].members[0][14] + "' " +
+                                        "data-type='" + data[i].members[0][12] + "' class='edit glyphicon glyphicon-edit' title='编辑' aria-hidden='true' " +
+                                        "style='margin-right:10px;cursor: pointer'></a><a data-id='" + data[i].members[0][14] + "' " +
+                                        "class='del glyphicon glyphicon-trash' aria-hidden='true' title='删除' style='cursor: pointer' data-toggle='modal' " +
+                                        "data-target='#myModal-del' onclick='confirms(" + data[i].members[0][14] + "," + data[i].members[0][12] + ",7" + ")'></a><br>" +
+                                        "<a style='cursor:pointer' class='glyphicon glyphicon-arrow-down' " +
+                                        "onclick='sort(" + data[i].members[0][14] + "," + data[i].members[1][14] + "," + data[i].members[0][12] + "," + data[i].members[1][12] + ")'></a></td>");
+                            }
+                        } else if (data[i].members[0][13] == 0) {
+                            var td = $("<td class='edit-td' data-status='" + td0_status + "'><a class='glyphicon glyphicon-eye-open'></a></td>");
+                        }
+                        td.appendTo(tr);
+
+                    }
+
+
+                    for (var m = 1; m < mLen; m++) {
+
+                        var mtr = $("<tr class='mtr' ></tr>");
+                        var mtd = $("<td colspan='7'></td>");
+                        var s1_count = data[i].members[m].length;
+                        var td_status = data[i].members[m][s1_count - 2];
+                        $(".mtr:last").addClass('last');
+                        $(mtr).prepend(mtd);
+                        //$(tr).after(mtr);
+                        $(tbody).append(mtr);
+
+                        for (var j = 0; j < 12; j++) {
+                            var td = $("<td>" + data[i].members[m][j] + "</td>");
+                            if (j == 0) {
+                                var td = $("<td> <img src=" + getImgURL(data[i].members[m][j]) + " class='big' data-toggle='modal' data-target='#myModal_img'></td>");
+                            }
+                            if (j == 2 || j == 4) {
+                                var td = $("<td><span class='mblock' style='background-color:" + data[i].members[m][j] + "'></span></td>");
+                            }
+                            td.appendTo(mtr);
+                        }
+
+
+                        if (data[i].members[m][13] == 1) {
+                            if (m == mLen - 1) {
+                                var td = $("<td class='operate edit-td' data-status='" + td_status + "'><a data-id='" + data[i].members[m][14] + "' " +
+                                        "data-type='" + data[i].members[m][12] + "' class='edit glyphicon glyphicon-edit' title='编辑' aria-hidden='true' " +
+                                        "style='margin-right:10px;cursor: pointer'></a><a data-id='" + data[i].members[m][14] + "' class='del glyphicon glyphicon-trash' " +
+                                        "aria-hidden='true' title='删除' style='cursor: pointer' data-toggle='modal' data-target='#myModal-del' " +
+                                        "onclick='confirms(" + data[i].members[m][14] + "," + data[i].members[m][12] + ",2" + ")'></a><br><a " +
+                                        "style='cursor:pointer' class='glyphicon glyphicon-arrow-up sortup' " +
+                                        "onclick='sort(" + data[i].members[m][14] + "," + data[i].members[m - 1][14] + "," + data[i].members[m][12] + "," + data[i].members[m - 1][12] + ")'></a></td>");
+                            } else {
+                                var td = $("<td class='operate edit-td' data-status='" + td_status + "'><a data-id='" + data[i].members[m][14] + "' " +
+                                        "data-type='" + data[i].members[m][12] + "' class='edit glyphicon glyphicon-edit' title='编辑' aria-hidden='true' " +
+                                        "style='margin-right:10px;cursor: pointer'></a><a data-id='" + data[i].members[m][14] + "' class='del glyphicon glyphicon-trash' " +
+                                        "aria-hidden='true' title='删除' style='cursor: pointer' data-toggle='modal' data-target='#myModal-del' " +
+                                        "onclick='confirms(" + data[i].members[m][14] + "," + data[i].members[m][12] + ",2" + ")'></a><br><a style='margin-right:.1rem;cursor:pointer' class='glyphicon glyphicon-arrow-up sortup' " +
+                                        "onclick='sort(" + data[i].members[m][14] + "," + data[i].members[m - 1][14] + "," + data[i].members[m][12] + "," + data[i].members[m - 1][12] + ")'></a><a " +
+                                        "class='glyphicon glyphicon-arrow-down' style='cursor:pointer' onclick='sort(" + data[i].members[m][14] + "," + data[i].members[m + 1][14] + "," + data[i].members[m][12] + "," + data[i].members[m + 1][12] + ")'></a></td>");
+                            }
+                        } else if (data[i].members[m][13] == 0) {
+                            var td = $("<td class='edit-td' data-status='" + td_status + "'><a class='glyphicon glyphicon-eye-open'></a></td>");
+                        }
+
+                        td.appendTo(mtr);
+                    }
+                }
+
+                $("table").append("</tbody>");
+            }
+
+            //相邻两个类别按照内容排序进行排序
+            function sort(id1, id2, type1, type2) {
+                $.ajax({
+                    type: "post",
+                    url: "{% url 'exchange_likes' %}",
+                    data: {
+                        id1: id1,
+                        id2: id2,
+                        type1: type1,
+                        type2: type2,
+                        channel:{{channel}}
+                    },
+                    dataType: "json",
+                    success: function (data) {
+                        //console.log(data);
+                        window.location.reload();
+                    },
+                    error: function (data) {
+                        console.log(data);
+                    }
+                })
+            }
+            function requestData() {
+                $.ajax("{% url 'search_likes' %}", {
+                    type: "get",
+                    cache: false,
+                    data: {
+                        channel: {{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+
+                        //loading.show();
+                    },
+                    success: function (result) {
+                        //console.log("返回数据是" + result);
+                        //console.log(result);
+                        CreateTable(eval(result));
+                        hideExhangeIcon();
+                        checkAuthority();
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            }
+
+
+            //编辑时候，确定是商品还是内容流跳转
+            $("#table").on("click", "a.edit", function () {
+                var type = $(this).data("type");
+                var id = $(this).data("id");
+                var url = "";
+                if (type == "0") {
+                    url = "{% url 'likes_edit_goods' %}?id=" + id + "&channel={{ channel }}";
+                    $(this).attr("href", url);
+                } else if (type == "1") {
+                    url = "{% url 'likes_edit_service' %}?id=" + id + "&channel={{ channel }}";
+                    $(this).attr("href", url);
+                }
+            });
+
+            //确认删除内容流组
+            function groupConfirms(id) {
+
+                var del_info = $(event.target).parents(".dropdown").parent().siblings().eq(1).text();//获取当前元素的父节点的兄弟节点的第二个节点
+
+                $("span.del_info").text(del_info);
+                $(".btn-primary").off("click").one("click", function (event) {
+                    delGroup(id);
+                });
+            }
+
+            //删除内容流组函数
+            function delGroup(id) {
+                $.ajax("{% url 'delete_likes_group' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id: id,
+                        channel: {{ channel }}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        if (result == 0) {
+                            requestData();
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            }
+
+            //删除内容流和确认删除函数
+            var url = "";
+            function confirms(id, param, idx) {
+                //获取当前元素的父节点的兄弟节点的第二个节点
+                var del_info = $(event.target).parent().siblings().eq(idx).text();
+                $("span.del_info").text(del_info);
+                $(".btn-primary").off("click").one("click", function (event) {
+                    if (param == "0") {
+                        url = "{% url 'likes_delete_goods' %}";
+                    }
+                    else if (param == "1") {
+                        url = "{% url 'likes_delete_service' %}";
+                    }
+                    delstreams(id);
+                });
+            }
+            function delstreams(id) {
+
+                $.ajax(url, {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id: id,
+                        channel: {{channel}}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        if (result == 0) {
+                            requestData();
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            }
+
+            //获取要添加商品流的内容组的id，然后通过选择函数进行确认
+            function getID(obj) {
+                like_id = $(obj).data("id");
+                //console.log("获取到的id"+group_id);
+            }
+
+            //商品选择函数
+            function addEventConfirm(id, url) {
+                var some_id = $('#' + id).val();
+                var params = {like_id: like_id, channel_id:{{ channel }}};
+                //var datas = id + "=" + some_id;
+                var datas = $.param(params) + "&" + id + "=" + some_id;
+                $.ajax({
+                    type: "post",
+                    url: url,
+                    data: datas,
+                    dataType: "json",
+                    success: function (data) {
+                        //console.log(data);
+                        $('#myModal_' + id).modal('toggle');
+                        window.location.reload();
+                    },
+                    error: function (data) {
+                        console.log(data);
+                    }
+                })
+            }
+
+
+        </script>
+
+    </section>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "man-base.html" %}
+{% block title %}查看权限{% endblock %}
+{% block myhead %}
+    <style type="text/css">
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="alert alert-success alert-dismissible fade in" role="alert">
+        <span style="font-weight: bold;font-size: 16px;">{{ name }}</span>&nbsp;&nbsp;账户权限
+        <br />
+        <br />
+        1. 账号管理开关：
+        <ul>
+            <li>{{ staff_on }}</li>
+        </ul>
+        2. 用户模块开关：
+        <ul>
+            <li>{{ user_on }}</li>
+        </ul>
+        3. 业务模块查看权限：
+        <ul>
+            {% for module in modules %}
+                <li>{{ module }}</li>
+            {% endfor %}
+        </ul>
+        4. 业务应用查看权限：
+        <ul>
+            {% for app in apps %}
+                <li>{{ app }}</li>
+            {% endfor %}
+        </ul>
+        5. 支付账户查看权限：
+        <ul>
+            {% for zf in zfs %}
+                <li>{{ zf }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <script type="application/javascript">
+    $(document).ready(function()
+    {
+        setLeftNav("nav_user_list");
+    });
+
+    </script>
+{% endblock %}

@@ -1,0 +1,41 @@
+1. python 3.4.3
+
+./configure
+
+make
+
+make install
+
+
+2. setuptools
+
+###apt-get install python3-setuptools
+
+/usr/local/bin/python3.4 setup.py install
+
+报错如下：
+File "/usr/local/lib/python3.4/zipfile.py", line 585, in _check_compression
+    "Compression requires the (missing) zlib module")
+RuntimeError: Compression requires the (missing) zlib module
+解决方法：
+yum install zlib
+yum install zlib-devel
+安装完成后，重新编译 python2.7【不需要删除，只需要重新编译，make，安装就行了】
+#################################################################################################
+然后重新安装setuptools：
+cd setuptools
+python setup.py install
+
+
+3. 安装pip
+
+
+
+4. django 1.8.3
+
+ /usr/local/bin/pip3 install Django==1.8.3
+
+5. pip3 install uwsgi
+
+6. 安装nginx，注意指定安装路径
+./configure --user=daemon --group=daemon --prefix=/usr/local/cms/nginx --with-http_stub_status_module --with-http_ssl_module

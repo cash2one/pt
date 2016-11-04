@@ -1,0 +1,656 @@
+{% extends "pt_card_base.html" %}
+{% block myhead %}
+{% endblock %}
+{% block title %}葡萄卡管理{% endblock %}
+{% block content %}
+    <style>
+        .form-group {
+            margin-top: 0px;
+            width: 20%;
+            padding-left: 0%;
+            left: 0%;
+        }
+
+        .li-style {
+            float: left;
+            padding-left: 10px;
+
+        }
+
+        .modal-body > ul > li > input {
+            width: 300px;
+        }
+
+        table td img {
+            max-width: 70px;
+            border: 1px solid transparent !important;
+        }
+
+        table td img:hover {
+            border: 1px solid #5cb85c !important;
+        }
+
+        td {
+            word-wrap:break-word;
+        }
+        table{
+            font-size: 12px;
+            table-layout:fixed;
+        }
+
+    </style>
+    <div class="col-md-10">
+
+    <div class="form-inline">
+        <ul style="float: right">
+            <li class="li-style">
+                <button type="button" class="btn btn-info" id="showCouponModal" style="display: none">下载电子码
+                </button>
+                <button type="button" class="btn btn-info" id="add_new_product" data-toggle="modal"
+                        data-target="#mymodal" onclick="beforeEdit(-1)">生成实体卡
+                </button>
+                {#                <a class="btn btn-info" ><b style="font-size:.18rem;"></b>生成实体卡</a>#}
+                </button>
+            </li>
+        </ul>
+    </div>
+    <br/>
+    <div class="modal fade" id="downloadcoupon" tabindex="-1" role="dialog"
+         aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: 980px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="">
+                        葡萄卡列表
+                    </h4>
+                </div>
+                <div class="modal-body" style="text-align:center;">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                            data-dismiss="modal">取消
+                    </button>
+                    <!-- <button type="button" class="btn btn-primary btn-default" data-dismiss="modal">
+                         确定
+                     </button>-->
+                </div>
+            </div><!-- /.modal-content
+                    </div><!-- /.modal -->
+        </div>
+    </div>
+    <br/>
+    <div class="modal" id="mymodal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                            class="sr-only">Close</span></button>
+                    <h4 class="modal-title"><span id="modal_title">vip充值卡商品编辑</span>&nbsp;&nbsp;&nbsp;<span
+                            id="error-hints" style="color:red;">
+                    </span></h4>
+
+                </div>
+                <div class="modal-body">
+                    <ul>
+                        <li>
+                        <span>
+                            <label>*选择葡萄卡:</label>
+                        </span>
+                            <select class="form-control" id="pt_id">
+                                <option value="-1">请选择葡萄卡</option>
+                                {% for i in ptlist %}
+                                    <option value="{{ i.0 }}">
+                                        {{ i.1 }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </li>
+                        <li>
+                        <span>
+                            <label>*激活时间范围:</label>
+                        </span>
+                            <select class="form-control" style="width:300px;" id="selecttime">
+                                <option value="0">
+                                    不限
+                                </option>
+                                <option value="1">
+                                    选取范围
+                                </option>
+                            </select>
+                        </li>
+                        <div id="showtime" style="display: none">
+                            <li id="start_time">
+                            <span>
+                                <label>*开始时间:</label>
+                            </span>
+                                <input id="v_start_time" type="text" class="form-control ui_timepicker"
+                                       min="1999-12-31T23:59" max="9999-12-31T23:59" name="start_time" required
+                                       placeholder="时间格式：yyyy-mm-dd hh:mm:ss"/>
+                            </li>
+                            <li id="end_time">
+                            <span>
+                                <label>*结束时间:</label>
+                            </span>
+                                <input id="v_end_time" type="text" class="form-control ui_timepicker"
+                                       min="1999-12-31T23:59"
+                                       max="9999-12-31T23:59" name="start_time" required
+                                       placeholder="时间格式：yyyy-mm-dd hh:mm:ss"/>
+                            </li>
+                        </div>
+                        <li>
+                        <span>
+                            <label>*数量:</label>
+                        </span>
+                            <input class="form-control" id="exchange_amount" placeholder="单位为张">
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="save_order">保存</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    <br/>
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px">
+        <tbody>
+        <tr id="colname">
+            <td>葡萄卡ID</td>
+            <td>葡萄卡图</td>
+            <td>葡萄卡名称</td>
+            <td>服务次数</td>
+            <td>服务时长</td>
+            <td>使用说明</td>
+            <td>使用有效期</td>
+            <td>激活有效期</td>
+            <td>最大可领次数</td>
+            <td>操作</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <br/>
+
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block;margin-bottom: 200px;">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="requestData(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="requestData(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;
+        var num_pages = 1;
+        var g_date_control = $("#date_control");
+        var g_current_page = 1;
+        var g_data = [];
+        var g_period = 1;
+        var g_order_detail = [];
+        var g_order_pos = -1;
+        var vendibility = 0;
+        var is_edit = 0;
+        var p_id; //葡萄卡id
+        var e_id; //实体卡id
+
+        var is_show = 0; //判断选的是时间选择
+        var g_special_filter = 0; //判断选的是时间选择
+
+
+        $(document).ready(function () {
+            setLeftNav("nav_full_hosting");
+            loading.init(".loading_gif", "#data_table");
+            modifyCsvHref();
+
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>货架商品管理说明</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+
+            $('#pt_id').multiselect({
+                maxHeight: 400,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function (option, checked, select) {
+                    //showTable()
+                    //requestData(1);
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#selecttime').multiselect({
+                maxHeight: 200,
+                onChange: function (option, checked, select) {
+                    if (option.val() == '0') {
+                        is_show = 0;
+                        $("#showtime").hide()
+                    } else {
+                        is_show = 1;
+                        $("#showtime").show()
+                    }
+                },
+            });
+
+            requestData(1);
+        });
+
+
+        $("#showCouponModal").click(function (e) {
+            e.preventDefault();
+            $.get('/pt_card/entity/codes/list/', function (data) {
+                console.log(data)
+                var htmlStr = '';
+                if (!$.isArray(data) || data.length == 0) {
+                    htmlStr = '暂无优惠券信息'
+                }
+                else {
+                    htmlStr += '<table class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px"><tr>' +
+                            '<th style="text-align: center;">创建时间</th>' +
+                            '<th style="text-align: center;">可兑换优惠券ID</th>' +
+                            '<th style="text-align: center;">券码批次</th>' +
+                            '<th style="text-align: center;">下载</th>' +
+                            '</tr>';
+                    $.each(data, function (i, ele) {
+                        htmlStr += '<tr data-id="' + ele.id + '">' +
+                                '<td>' + ele.c_time + '</td>' +
+                                '<td>' + ele.name.toString() + '</td>' +
+                                '<td>' + ele.id + '</td>' +
+                                '<td><a href="/pt_card/entity/codes/down/?cid=' + ele.id + '">下载券码</a></td>' +
+                                '</tr>'
+                    })
+                    htmlStr += '</table>';
+                }
+
+                $("#downloadcoupon").find(".modal-body").html(htmlStr)
+                        .end().modal("show");
+            });
+        });
+
+        function updateDividePage() {
+            var count = num_pages;
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for (var i = count; i >= 1; i--) {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='requestData({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+        function updateTable(page) {
+            var total_page = num_pages;
+            if (page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for (var i = 0; i < g_data.length; i++) {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                tr.append($("<td>{0}</td>".format(g_data[i]['id'])));
+                if (g_data[i]['icon'].length == 0) {
+                    tr.append($("<td>{0}</td>".format('')));
+                } else {
+
+                    tr.append($("<td><img   src={0} alt='img'></td>".format(g_data[i]['icon'])));
+                }
+                tr.append($("<td>{0}</td>".format(g_data[i]['name'])));
+                tr.append($("<td>{0}</td>".format(g_data[i]['usable_times'])));
+                tr.append($("<td>{0}</td>".format(g_data[i]['service_length'])));
+                tr.append($("<td>{0}</td>".format(g_data[i]['instruction'])));
+                tr.append($("<td>{0}</td>".format(g_data[i]['expire_dates'])));
+                tr.append($("<td>{0}</td>".format(g_data[i]['valid_dates'])));
+                tr.append($("<td>{0}</td>".format(g_data[i]['exchange_amount'])));
+                tr.append($("<td>{0}</td>".format(
+                        ("<a style='cursor:pointer' onclick='beforeEdit({1})' >{0}</a>&nbsp;&nbsp;<a style='cursor:pointer' href='/pt_card/entity/codes/down/?id={2}'>下载电子码</a>".format("编辑", JSON.stringify(g_data[i]), g_data[i]['eid'])))));
+                //console.log(g_data[i]['cardGoodsId'], g_data[i]['vendibility'])
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for (var i = 1; i <= total_page; i++) {
+                if (i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+
+        //更新显示行数
+        function updatePer(per) {
+            g_per = per;
+            requestData(1);
+        }
+
+
+        //新增商品和编辑
+        $("#save_order").click(function () {
+            entityEdit();
+        });
+
+
+        function requestData(cur_page) {
+            //修改导出文件的href地址
+            modifyCsvHref();
+            if (cur_page <= 0 || cur_page > num_pages)
+                return;
+            $.ajax({
+                url: '/pt_card/entity_putao_card_goods/',
+                type: "GET",
+                cache: false,
+                data: {
+                    per_page: g_per,
+                    cur_page: cur_page,
+                },
+                beforeSend: function (XMLHttpRequest) {
+                    loading.show();
+                },
+                success: function (data) {
+                    //console.log('retur', data);
+                    var data = eval(data);
+                    //字符串转json
+                    if (data['code'] == '0') {
+                        num_pages = data['page']
+                        g_data = data['data'];
+                        updateDividePage();
+                        updateTable(cur_page);
+                        showCheckbox();
+                        loading.hide();
+                    }
+                    else {
+                        console.log(eval(data)['msg'])
+                    }
+                },
+                complete: function (result) {
+                    loading.hide();
+                }
+            });
+
+
+        }
+
+        function modifyCsvHref() {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url 'vip_goods_csv' %}?per_page={0}&cur_page={1}".format(g_per, 1));
+        }
+
+
+        // 显示每行的checkbox
+        function showCheckbox() {
+            if (g_special_filter == 1 || g_special_filter == 2 || g_special_filter == 3) {
+                var ch = document.getElementsByClassName('id_sub_check');
+                for (var i = 0; i < ch.length; i++) {
+                    ch[i].style.display = "";
+                }
+            }
+        }
+
+        //编辑话费商品新增编辑界面
+        function beforeEdit(product_info) {
+            //product_info等于-1，为新增商品
+            $("#error-hints").html('').hide();
+            if (product_info == -1) {
+                $("#modal_title").text('生成实体卡');
+                $('#pt_id').multiselect('select', '-1');
+                $('#pt_id').multiselect('refresh');
+                $("#selecttime").multiselect('select', '0');
+                $('#selecttime').multiselect('refresh');
+                document.getElementById("v_start_time").value = ''
+                document.getElementById("v_end_time").value = ''
+                $('#pt_id').multiselect('enable');
+                $("#showtime").hide()
+                $('#exchange_amount').val('');
+                is_show = 0;
+                is_edit = 0;
+                $('#exchange_amount').attr('disabled', false);
+            }
+            else {
+                //console.log(product_info)
+                $("#modal_title").text('编辑实体卡');
+                $('#pt_id').multiselect('select', product_info['id']);
+                $('#pt_id').multiselect('refresh');
+                $('#pt_id').multiselect('disable');
+                if (product_info['valid_dates'] !== '无限制') {
+                    is_show = 1;
+                    $("#selecttime").multiselect('select', '1');
+                    $('#selecttime').multiselect('refresh');
+                    $("#showtime").show()
+                    var tim = product_info['valid_dates'].split("至");
+                    //console.log(tim)
+                    document.getElementById("v_start_time").value = tim[0]
+                    document.getElementById("v_end_time").value = tim[1]
+                } else {
+                    $("#selecttime").multiselect('select', '0');
+                    $('#selecttime').multiselect('refresh');
+                    $("#showtime").hide()
+                    document.getElementById("v_start_time").value = ''
+                    document.getElementById("v_end_time").value = ''
+                    is_show = 0;
+                }
+                $('#exchange_amount').val(product_info['exchange_amount']);
+                $('#exchange_amount').attr('disabled', 'disabled');
+                $("#mymodal").modal('show');
+                //编辑识别
+                is_edit = 1;
+                //编辑id
+                p_id = product_info['id'];
+                e_id = product_info['eid'];
+
+            }
+        }
+
+
+        function entityEdit() {
+            {#            if ($.trim(_this.putaoDitu).length == 0) {#}
+            {#                $("#error-hints").html('请选择葡萄卡底图').show();#}
+            {#                return#}
+            {#            }#}
+            if (e_id && is_edit) {
+
+                if (is_show == 1) {
+                    var starttime = $("#v_start_time").val()
+                    var endtime = $("#v_end_time").val()
+                    if (starttime.length == 0) {
+                        $("#error-hints").html('请选择开始时间').show()
+                        return
+                    }
+                    if (endtime.length == 0) {
+                        $("#error-hints").html('请选择结束时间').show()
+                        return
+                    }
+                    $.ajax({
+                        url: '/pt_card/entity_putao_card_goods_detail/?pk=' + e_id,
+                        type: 'PUT',
+                        data: JSON.stringify(
+                                {
+                                    pt_id: e_id,
+                                    g_id :p_id,
+                                    starttime: starttime,
+                                    endtime: endtime,
+                                    exchange_amount: $('#exchange_amount').val(),
+
+                                }
+                        ),
+                        beforeSend: function () {
+                            $("#error-hints").html('').hide();
+                        }
+                        ,
+                        success: function (result) {
+                            var result = eval(result)
+                            if (result.code == '0') {
+                                $("#mymodal").modal('hide')
+                                requestData(g_current_page)
+                            } else {
+                                $("#error-hints").html(result.msg).show();
+                            }
+                        }
+                    })
+                } else {
+                    $.ajax({
+                        url: '/pt_card/entity_putao_card_goods_detail/?pk=' + e_id,
+                        type: 'PUT',
+                        data: JSON.stringify(
+                                {
+                                    pt_id: e_id,
+                                    g_id :p_id,
+
+                                }
+                        ),
+                        beforeSend: function () {
+                            $("#error-hints").html('').hide();
+                        }
+                        ,
+                        success: function (result) {
+                            var result = eval(result)
+                            if (result.code == '0') {
+                                $("#mymodal").modal('hide')
+                                requestData(g_current_page)
+                            } else {
+                                $("#error-hints").html(result.msg).show();
+                            }
+                        }
+                    })
+                }
+            } else {
+                if (is_show == 1) {
+                    var starttime = $("#v_start_time").val()
+                    var endtime = $("#v_end_time").val()
+                    if ($('#pt_id').val() == '-1') {
+                        $("#error-hints").html('请选择葡萄卡').show()
+                        return
+                    }
+                    if (starttime.length == 0) {
+                        $("#error-hints").html('请选择开始时间').show()
+                        return
+                    }
+                    if (endtime.length == 0) {
+                        $("#error-hints").html('请选择结束时间').show()
+                        return
+                    }
+                    if ($.trim($('#exchange_amount').val()).length == 0) {
+                        $("#error-hints").html('请填写数量').show()
+                        return
+                    }
+                    $.post('/pt_card/entity_putao_card_goods/', JSON.stringify({
+                        pt_id: $('#pt_id').val(),
+                        starttime: starttime,
+                        endtime: endtime,
+                        exchange_amount: $('#exchange_amount').val(),
+
+                    }), function (result) {
+                        var result = eval(result)
+                        if (result.code == '0') {
+                            $("#mymodal").modal('hide')
+                            $("#error-hints").html('').hide();
+                            requestData(g_current_page)
+                        } else {
+                            $("#error-hints").html(result.msg).show()
+                        }
+                    });
+                } else {
+                    if ($('#pt_id').val() == '-1') {
+                        $("#error-hints").html('请选择葡萄卡').show()
+                        return
+                    }
+                    if ($.trim($('#exchange_amount').val()).length == 0) {
+                        $("#error-hints").html('请填写数量').show()
+                        return
+                    }
+                    $.post('/pt_card/entity_putao_card_goods/', JSON.stringify({
+                        pt_id: $('#pt_id').val(),
+                        exchange_amount: $('#exchange_amount').val(),
+
+                    }), function (result) {
+                        var result = eval(result)
+                        if (result.code == '0') {
+                            $("#mymodal").modal('hide')
+                            $("#error-hints").html('').hide();
+                            requestData(g_current_page)
+                        } else {
+                            $("#error-hints").html(result.msg).show()
+                        }
+                    });
+                }
+
+            }
+        }
+
+        //删除实体卡
+        function entityDelete(p_id) {
+            var r = confirm("你确定 删除 吗？");
+            if (r == true) {
+                $.ajax({
+                    url: '/pt_card/entity_putao_card_goods_detail/?pk=' + p_id,
+                    type: 'DELETE',
+                    success: function (result) {
+                        var result = eval(result)
+                        if (result.code == '0') {
+                            requestData(g_current_page)
+                        } else {
+                            $("#error-hints").html(result.msg).show();
+                        }
+                    }
+                })
+            }
+            else {
+                return false
+            }
+
+
+        }
+
+
+        $(function () {
+            $("#v_start_time").datetimepicker({
+                showSecond: true,
+                timeFormat: 'hh:mm:ss',
+                stepHour: 1,
+                stepMinute: 1,
+                stepSecond: 1
+            })
+            $("#v_end_time").datetimepicker({
+                showSecond: true,
+                timeFormat: 'hh:mm:ss',
+                stepHour: 1,
+                stepMinute: 1,
+                hour: 23,
+                minute: 59,
+                second: 59,
+                stepSecond: 1
+            })
+        })
+
+    </script>
+{% endblock %}

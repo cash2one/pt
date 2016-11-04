@@ -1,0 +1,479 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}记录中心{% endblock %}
+{% block head %}
+<style>
+    .my_thead{
+        display: table-header-group;
+    }
+    #table td .mblock{
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    .tabTitle{
+        width:95%;
+        margin: 0 auto;
+        margin-top: 10px;
+    }
+    .tabTitle > li{
+        padding:0;        
+    }
+    .tabTitle a{
+        background: #eee;
+        color:#333
+    }
+    .service-table table td a{
+        margin-right: .15rem;
+        height: auto;
+        line-height: initial;
+        color: #fff;
+        margin-left: 0;
+    }
+    #emailselect a span{
+        position: absolute;
+        right: 10px;
+        top: 7px;
+        font-weight: normal;
+    }
+    #emailselect a{
+        position: relative;
+        font-size: 16px;
+        color: #000;
+        display: block;
+        padding: 3px 10px;
+        cursor: pointer;
+    }
+    #emailselect a:hover {
+        background: #1E90FF;
+        color: #fff;
+    }
+    .emailItem{
+        margin-right: 8px;
+    }
+    .no_content{
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<ul class="nav nav-pills tabTitle nav-justified">
+    <li role="presentation" class="active col-md-6"><a href="#">待处理</a></li>
+    <li role="presentation" class="col-md-6"><a href="#">历史记录</a></li>
+</ul>
+<section class="service-table">
+    <a class="btn btn-success disabled" href="#" style="float: right;margin-top: 18px;" id="commitAll"><b style="font-size:.18rem">＋&nbsp</b>全部提交</a>
+    <table id="table">
+        <caption></caption>
+        <thead class="my_thead">
+        <tr>
+            <th><input type="checkbox" name="checkall"/> </th>
+        </tr>
+        </thead>
+        <div id="loading" style="display:none;">
+            <img src="{% static 'images/loading.gif' %}"/>
+        </div>
+        <tbody id="tbody">
+            <tr> </tr>
+        </tbody>
+    </table>
+    <div class="no_content" ><p>未找到相关内容，请重新搜索</p></div>
+    <div id="pagination" ></div>
+    <!--提交确认框-->
+    <div class="modal fade" id="myModal-commit" tabindex="-1" role="dialog"
+         aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: 480px;">
+            <div class="modal-content" style="width:5rem;margin:0 auto;">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title">
+                        提交审核
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <h6>请先输入提交信息</h6>
+                    <textarea class="input-lg form-control" placeholder="[选填]" id="appendText"></textarea>
+                    <h6>邮件通知接收人：</h6>
+                    <div class="emailList">
+                        <div style="position: relative;width: 70%;margin-bottom: 10px">
+                            <div class="input-group-lg form-control"
+                                 style="width:100%;height: 150px;padding: 6px 0;overflow-y: auto;position: absolute;z-index: 999;top: 33px;display: none"
+                                 id="emailselect" name="email_id">
+                                {% for staff in staffs %}
+                                <a data-value="{{ staff.1 }}" onclick="selectEmail(this)">{{ staff.0 }}<span class="glyphicon glyphicon-plus"></span></a>
+                                {% endfor %}
+                            </div>
+
+                            <input type="hidden" id="emailList" name="emailList" class="form-control" style="width:400px;"/>
+                            <input type="text" id="email_list" name="email_list" class="form-control" style="width:100%;"
+                                   required maxlength="11" placeholder="请选择下拉列表中选择邮件通知人"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"  data-dismiss="modal">取消 </button>
+                    <button type="button" class="btn btn-primary btn-default"> 确认提交
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--撤销确认框-->
+    <div class="modal fade" id="myModal-cancel" tabindex="-1" role="dialog"
+         aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: 480px;">
+            <div class="modal-content" style="width:5rem;margin:0 auto;">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title">
+                       <!-- <div class="hint_icon"><img src="{% static 'images/delete.png' %}"></div>-->撤销提示
+                    </h4>
+                </div>
+                <div class="modal-body" style="text-align:center;">
+                    <span>是否确认要撤销已提交的审核？</span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                            data-dismiss="modal">取消
+                    </button>
+                    <button type="button" class="btn btn-primary btn-default" data-dismiss="modal">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/cms/initTable.js' %}"></script>
+    <script>
+        var myTable,tabIndex = 0,tabContent = ["{% url 'record_handle' %}","{% url 'record_history' %}"],
+                theadStr = '<th>状态</th>'+
+                            '<th>修改人</th>'+
+                            '<th>应用类型</th>'+
+                            '<th>版本</th>'+
+                            '<th>渠道</th>'+
+                            '<th>修改模块</th>'+
+                            '<th>操作</th>';
+        $(function(){
+            init();
+            myTable = new tableInit({});
+            myTable.getData();
+            /*绑定搜索部分功能*/
+           // myTable.searchInit();
+            $(".tabTitle li").on("click",function(){
+                $(".no_content").hide();
+                $("#table").hide();
+                $(this).addClass("active").siblings().removeClass("active");
+                tabIndex = $(this).index();
+                requestData(myTable.default);
+            });
+            /*全部提交*/
+            $("#commitAll").on("click",function(){
+                var ids = '',emailArray=[],dataList;
+                $("#tbody input[type=checkbox]:checked").each(function(i,ele){
+                    var parentEle = $(this).parents("tr");
+                    if(parentEle.find("td").eq(1).text() == '待提交'){
+                        ids += parentEle.data("id")+',';
+                    }
+                });
+                ids = ids.substr(0,ids.length-1);
+                dataList= {
+                    "ids": JSON.stringify(ids.split(",")),message:"", recipient_list:emailArray
+                };
+                $("#myModal-commit").find(".btn-primary").off("click").on("click",function(){
+                    $(".emailList .emailItem").each(function(i,ele){
+                        emailArray[i] = $(ele).data("value");
+                    })
+                    dataList.message =  $("#appendText").val()||"";
+                    dataList.recipient_list = JSON.stringify(emailArray);
+                    commitData(dataList);
+                    $("#myModal-commit").modal("hide");
+                    return false;
+                }).end().modal("show");
+                return false;
+            })
+        })
+        function selectEmail(obj){
+            var action_id=$(obj).data("value");
+            var action_name=$(obj).html();
+            $("#emailList ").val(action_id);
+            $("#email_list").val(action_id);
+            $("#emailselect").hide();
+        }
+        function init(){
+            /*初始化页面*/
+            $("#email_list").focus(function () {
+                $("#emailselect").show();
+            })/*.blur(function(){
+                $("#emailselect").hide();
+            });*/
+
+
+            $("#email_list").on("input propertychange", function () {
+                var action_str = $(this).val();
+                var action_arr = $("#emailselect a");
+                var act_len = action_arr.length;
+                for (var i = 0; i < act_len; i++) {
+                    var htmlstr = $(action_arr[i]).html();
+                    if (htmlstr.indexOf(action_str) >= 0) {
+                        $(action_arr[i]).show();
+                    } else {
+                        $(action_arr[i]).hide();
+                    }
+                }
+            });
+            $("#emailselect a span").on("click",function(){
+                var parentId = $(this).parent();
+                if($(this).hasClass("glyphicon-plus")){
+                    $(this).removeClass("glyphicon-plus").addClass("glyphicon-minus").parent("a").css({
+                        background: '#ccc',color: '#999'
+                    });
+                    $(".emailList").append('<span class="emailItem"data-value="'+parentId.data("value")+'" checked>'+parentId.text()+'</span>');
+                }
+                else{
+                    $(this).removeClass("glyphicon-minus").addClass("glyphicon-plus").parent("a").css({
+                        background: 'transparent',color: '#000'
+                    });
+                    $(".emailList .emailItem").each(function(i,ele){
+                        if($(this).data("value") == parentId.data('value')){
+                            $(this).remove();
+                        }
+                    })
+                }
+            });
+            function selectEmail(obj){
+                var action_id=$(obj).data("value");
+                var action_name=$(obj).html();
+                $("#emailList ").val(action_id);
+                $("#email_list").val(action_id);
+                $("#emailselect").hide();
+            }
+        }
+        function requestData(options){
+            $.ajax(tabContent[tabIndex],{
+                type:"get",
+                cache:false,
+                data:{
+                },
+                beforeSend:function(XMLHttpRequest){
+                    $("#"+options.loadImgId).show();
+                    $("#pagination").hide();
+                    $("#table").hide();
+                },
+                success:function(result){
+                    var data = JSON.parse(result);
+                    if(data.length == 0){
+                        $('#'+myTable.default.tbodyId).empty();
+                        $("#pagination").hide();
+                        $(".no_content").show();
+                        $(".service-table > .btn").hide();
+                    }
+                    else{
+                        $(".no_content").hide();
+                        $("#table").show();
+                        myTable.processData(data);
+                    }
+                },
+                error:function(result){
+                    console.log(result);
+                },
+                complete:function(result){
+                    $("#"+options.loadImgId).hide();
+                    var currentpage = options.curPage-1;
+                    $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                    if(currentpage>5){
+                        $(options.pageSelector).eq(currentpage-5).prevAll().hide();
+                    }
+                }
+            })
+        }
+        function delData(id){
+            $.ajax("{% url 'del_category' %}", {
+                type: "post",
+                cache: false,
+                data: {
+                    id: id
+                },
+                beforeSend: function (XMLHttpRequest) {
+                    $("#loading").show();
+                },
+                success: function (result) {
+                    if (result == 0) {
+                        requestData(myTable.default);
+                    }
+                },
+                error: function (result) {
+                    console.log(result);
+                },
+                complete: function (result) {
+                    $("#loading").hide();
+                }
+            });
+        };
+        /*处理后台返回数据*/
+        function dataInit(data){
+            var tbodyId = myTable.default.tbodyId,htmlStr='',trId,
+                    statusHtml ='',trData;
+            if(data.length == 0) return ;
+            if(tabIndex == 1){
+                theadStr =  '<th>状态</th>'+
+                        '<th>审核人</th>'+
+                        '<th>审核时间</th>'+
+                        '<th>应用类型</th>'+
+                        '<th>版本</th>'+
+                        '<th>渠道</th>'+
+                        '<th>修改模块</th>'+
+                        '<th>提交人</th>'+
+                        '<th>提交时间</th>'+
+                        '<th>操作</th>';
+                $("#commitAll").hide();
+                $(".my_thead tr").find("th").remove()
+                        .end().append($(theadStr));
+            }
+            else{
+                $("#commitAll").show();
+                theadStr = '<th>状态</th>'+
+                        '<th>修改人</th>'+
+                        '<th>应用类型</th>'+
+                        '<th>版本</th>'+
+                        '<th>渠道</th>'+
+                        '<th>修改模块</th>'+
+                        '<th>操作</th>';
+                $(".my_thead tr").find("th:gt(0)").remove()
+                        .end().append($(theadStr));
+            }
+            $.each(data,function(i,value){
+                if(tabIndex == 1){
+                    trId = value[value.length-1];
+                    trData = value.splice(0,value.length-1);
+                }
+                else{
+                    trData = value.record;
+                    trId = value.ids;
+                }
+                statusHtml = '<a class="btn btn-warning cancelitem" href="#">撤回</a>';
+                htmlStr+='<tr data-id="'+trId+'">';
+                if(tabIndex == 0){
+                    htmlStr += '<td><input type="checkbox" name="checktr"/></td>';
+                }
+
+                $.each(trData,function(j,ele){
+                    htmlStr +='<td>'+ele+'</td>';
+                    if(j == 0 && ele == "待提交"){
+                        statusHtml = '<a class="btn btn-success commititem" href="#">提交</a>';
+                    }
+                    if(tabIndex == 1){
+                        statusHtml = '';
+                    }
+                })
+                htmlStr += '<td><a class="btn btn-info detailinfo" href="#">查看</a>'+statusHtml+'</td></tr>';
+            });
+            $('#'+tbodyId).empty().append($(htmlStr)).off("click",'.gdetailinfo').on("click",'.detailinfo',function(e){
+                var mytr = $(this).parents("tr"),tdList = mytr.children(),
+                        param = {type: $(tdList[3]).text(),version:$(tdList[4]).text(),channel:$(tdList[5]).text(),module:$(tdList[6]).text()};
+                window.location.href = "{% url 'record_detail' %}?ids="+ mytr.data("id")+"&tabIndex="+tabIndex;
+                return false;
+            }).off("click",'.commititem').on("click",'.commititem',function(e){
+                var tr = $(this).parents("tr"),emailArray=[],dataList;
+                dataList= {
+                    "ids": JSON.stringify(tr.data("id").toString().split(",")),message:"", recipient_list:emailArray
+                };
+                $("#myModal-commit").find(".btn-primary").off("click").on("click",function(){
+                    $(".emailList .emailItem").each(function(i,ele){
+                        emailArray[i] = $(ele).data("value");
+                    })
+                    dataList.message =  $("#appendText").val()||"";
+                    dataList.recipient_list = JSON.stringify(emailArray);
+                    commitData(dataList);
+                    $("#myModal-commit").modal("hide");
+                    return false;
+                }).end().modal("show");
+                return false;
+            }).off("click",'.cancelitem').on("click",'.cancelitem',function(e){
+                var tr = $(this).parents("tr");
+                $("#myModal-cancel").find(".btn-primary").off("click").on("click",function(){
+                    var data = {'ids': JSON.stringify(tr.data("id").toString().split(','))};
+                    cancelData(data);
+                }).end().modal("show");
+                return false;
+            });
+            /*绑定全选和全不选功能*/
+            $('input[name="checkall"]').on("click",function(e){
+                $('input[name="checktr"]').prop("checked",this.checked);
+                checkAll();
+            });
+            $('input[name="checktr"]').on("click",function(){
+                if($('input[name="checktr"]').length !== $('input[name="checktr"]:checked').length){
+                    $('input[name="checkall"]').prop("checked",false);
+                }
+                else{
+                    $('input[name="checkall"]').prop("checked",true);
+                }
+                checkAll();
+            })
+            function checkAll(){
+                if($('input[name="checktr"]:checked').length == 0){
+                    $("#commitAll").addClass("disabled")
+                }else{
+                    $("#commitAll").removeClass("disabled")
+                }
+            }
+        }
+
+        /*提交记录信息*/
+        function commitData(data){
+            $.ajax("{% url 'record_submit' %}", {
+                type: "post",
+                cache: false,
+                data: data,
+                beforeSend: function (XMLHttpRequest) {
+                    $("#loading").show();
+                },
+                success: function (result) {
+                    if (result == 0) {
+                        requestData(myTable.default);
+                    }
+                },
+                error: function (result) {
+                    console.log(result);
+                },
+                complete: function (result) {
+                    $("#loading").hide();
+                }
+            });
+        }
+
+        /*撤销已提交记录信息*/
+        function cancelData(data){
+            $.ajax("{% url 'record_revert' %}", {
+                type: "post",
+                cache: false,
+                data: data,
+                beforeSend: function (XMLHttpRequest) {
+                    $("#loading").show();
+                },
+                success: function (result) {
+                    if (result == 0) {
+                        requestData(myTable.default);
+                    }
+                },
+                error: function (result) {
+                    console.log(result);
+                },
+                complete: function (result) {
+                    $("#loading").hide();
+                }
+            });
+        }
+    </script>
+
+</section>
+{% endblock %}
+

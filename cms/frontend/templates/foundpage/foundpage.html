@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}发现页专题{% endblock %}
+{% block head %}
+    <style>
+        .my_thead {
+            display: table-header-group;
+        }
+
+        #table .mimg {
+            width: 100px;
+            height: 100px;
+            margin: 10px 0;
+        }
+
+        #table td .mblock {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        #table .noContent {
+            height: 200px;
+            font-size: 20px;;
+        }
+
+        #table .noContent:hover {
+            background: transparent;
+        }
+
+        .top-btn {
+            width: 50px;
+            height: 25px;
+            line-height: 25px;
+            /*content:"23";*/
+        }
+
+        /* .selected{
+             color:red;
+         }*/
+    </style>
+{% endblock %}
+{% block content %}
+    <section class="top-sec">
+        <ol class="breadcrumb" id="breadcrumb">
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+            <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+            <li class="active">发现页专题</li>
+        </ol>
+        {% if perms.man.config %}
+            <a class="adbtn-new" href="javascirpt:void(0)" data-toggle="modal" data-target="#myModal_foundpage"
+               style="width:140px;"><b style="font-size:.18rem">＋&nbsp</b>新增发现页专题</a>
+        {% endif %}
+
+        <!--<a class="btn-new" href="{% url 'new_homepage_specialtopic' %}"><b style="font-size:.18rem">＋&nbsp</b>新增首页专题</a>-->
+    </section>
+    <section class="service-table">
+        <table id="table">
+            <caption></caption>
+            <thead class="my_thead">
+            <tr>
+                <th>场景</th>
+                <th>图片</th>
+                <th>标题</th>
+                <th>标题颜色</th>
+                <th>副标题</th>
+                <th>副标题颜色</th>
+                <th>动作</th>
+                <th>是否置顶</th>
+                <th>运营标签</th>
+                <th>有效时间</th>
+                <th>城市</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <div id="loading" style="display:none;">
+                <img src="{% static 'images/loading.gif' %}"/>
+            </div>
+            <tbody id="tbody">
+            <div id="loading" style="display:none;">
+                <img src="{% static 'images/loading.gif' %}"/>
+            </div>
+            </tbody>
+        </table>
+        <div class="no_content"><p>暂无发现页专题，请新建专题</p></div>
+        <div id="pagination"></div>
+        <div class="modal fade" id="myModal_foundpage" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">+ 添加发现页专题</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input name="open_type" value="0" id="open_type" type="hidden"/>
+                        <input name="status" value="0" id="status" type="hidden"/>
+
+                        <div style="position: relative;display: inline-block;width: 100%;">
+                            <div class="input-group-lg form-control item-dropmenu" id="itemselect">
+                                <a data-value=""></a>
+                                {% for topic in topics %}
+                                    <a data-value="{{ topic.0 }}">
+                                        {{ topic.1 }}{% if topic.2 %}({{ topic.2 }}){% endif %}</a>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" id="specialtopic_id" name="specialtopic_id"
+                                   class="form-control real_id" style="width:400px;"/>
+                            <input type="text" id="specialtopic_uid" name="specialtopic_uid"
+                                   class="form-control item_id" style="width:100%;" required maxlength="11"
+                                   placeholder="请选择下拉列表中的专题或输入搜索"/>
+                        </div>
+                    </div>
+                    <div class="class_repeat" style="text-align:center; color:red;font-size:.16rem;display:none">
+                        <p>您已添加该专题，请勿重复添加</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="confirm_addnew" onclick="addEventConfirm()">
+                            确定
+                        </button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+        </div>
+        <!-- /.modal -->
+
+        <div class="modal fade" id="myModal_config" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">修改运营标签</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input class="form-control" name="mark_info" value="" id="mark_info" type="text">
+                    </div>
+                    <div class="class_repeat" style="text-align:center; color:red;font-size:.16rem;display:none">
+                        <p>您已添加该专题，请勿重复添加</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="add-config" onclick="addConfig()">确定</button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+        </div>
+        <!-- /.modal -->
+
+        <script src="{% static 'js/cms/initTable.js' %}"></script>
+        <script>
+            var myTable;
+            $(function () {
+                init();
+                myTable = new tableInit({});
+                myTable.getData();
+            })
+
+            function init() {
+                /*初始化页面*/
+                setNavBg({{t}});
+            }
+
+            function requestData(options) {
+
+                $.ajax("{% url 'search_foundpage_specialtopic' %}", {
+                    type: "get",
+                    cache: false,
+                    data: {
+                        channel:{{ channel}}
+
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $(".no_content").hide();
+                        $("#" + options.loadImgId).show();
+                    },
+                    success: function (result) {
+                        myTable.processData(result);
+                        // console.log(result);
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#" + options.loadImgId).hide();
+                    }
+                })
+                // pt_data =  result[1][7];
+                // alert(pt_data);
+            }
+            function delData(id) {
+                $.ajax("{% url 'delete_foundpage_specialtopic' %}", {
+                    type: "post",
+                    cache: false,
+                    data: {
+                        id: id,
+                        channel: {{channel}}
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        $("#loading").show();
+                    },
+                    success: function (result) {
+                        if (result == 0) {
+                            requestData(myTable.default);
+                        }
+                    },
+                    error: function (result) {
+                        console.log(result);
+                    },
+                    complete: function (result) {
+                        $("#loading").hide();
+                    }
+                });
+            }
+            ;
+            /*处理后台返回数据*/
+            function dataInit(data) {
+                var tbodyId = myTable.
+                        default.tbodyId, htmlStr = '', trId;
+                data = JSON.parse(data);
+                if (data.length == 0) {
+                    $("#tbody").empty();
+                    $("#table thead").hide();
+                    $(".no_content").show();
+                    return;
+                }
+                $.each(data, function (i, value) {
+                    trId = value[value.length - 1];
+                    var td_status = value[value.length - 2];
+                    var edit_status = td_status.split("/")[0];
+                    var delete_status = td_status.split("/")[1];
+                    htmlStr += '<tr data-id=' + trId + '>';
+                    value.splice(value.length - 2, 2);
+                    $.each(value, function (j, ele) {
+                        if (j == 3 || j == 5) {
+                            htmlStr += '<td><span class="mblock" style="background-color:' + ele + '"></span></td>';
+                        } else if (j == 1) {
+                            htmlStr += '<td><img style="cursor:pointer" class="mimg" data-toggle="modal" data-target="#myModal_img" src="' + ele + '" /></td>';
+                        } else if (j == 7) {
+                            //是否置顶逻辑和删除一致
+                            if (delete_status == 1) {
+                                htmlStr += '<td class=' + trId + '><input type="button" class="top-btn" value="' + ele + '" name="" onclick="top_seclet(' + trId + ')"/></td>';
+                            } else if (delete_status == 0) {
+                                htmlStr += '<td class=' + trId + '><a class="glyphicon glyphicon-eye-open"></a></td>';
+                            }
+                            //htmlStr += '<td class=' + trId + '><input type="button" class="top-btn" value="' + ele + '" name="" onclick="top_seclet(' + trId + ')"/></td>';
+                        } else if (j == 8) {
+                            if (delete_status == 1) {
+                                htmlStr += '<td><span class="config-item">' + ele + '</span><br><span data-id="' + trId + '" class="glyphicon glyphicon-edit config-edit" aria-hidden="true" style="cursor: pointer" data-toggle="modal" data-target="#myModal_config"></span></td>';
+                            } else if (delete_status == 0) {
+                                htmlStr += '<td><span class="config-item">' + ele + '</span><br><a class="glyphicon glyphicon-eye-open"></a></td>';
+                            }
+                            //htmlStr += '<td><span class="config-item">' + ele + '</span><br><a class="glyphicon glyphicon-eye-open"></a></td>';
+                        } else {
+                            htmlStr += '<td>' + ele + '</td>';
+                        }
+                    });
+
+
+                    //判断显示操作图标
+                    if (edit_status == 1 && delete_status == 1) {
+                        htmlStr += '<td><span class="glyphicon glyphicon-edit item-edit" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span><span class="glyphicon glyphicon-trash" aria-hidden="true" style="cursor: pointer"></span></td></tr>';
+                    } else if (edit_status == 1 && delete_status == 0) {
+                        htmlStr += '<td><span class="glyphicon glyphicon-edit item-edit" aria-hidden="true" style="cursor: pointer"></span></td></tr>';
+                    } else if (edit_status == 0 && delete_status == 1) {
+                        htmlStr += '<td><span class="glyphicon glyphicon-trash" aria-hidden="true" style="cursor: pointer"></span></td></tr>';
+                    } else if (edit_status == 0 && delete_status == 0) {
+                        htmlStr += '<td><a class="glyphicon glyphicon-eye-open"></a></td></tr>';
+                    }
+                    //htmlStr += '<td><span class="glyphicon glyphicon-edit item-edit" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span><span class="glyphicon glyphicon-trash" aria-hidden="true" style="cursor: pointer"></span></td></tr>';
+                });
+                $('#' + tbodyId).empty().append($(htmlStr)).off('click', '.item-edit').on("click", '.item-edit', function (e) {
+                    window.location.href = '{% url 'edit_foundpage_specialtopic' %}?id=' + $(this).parents('tr').data("id") + '&channel={{ channel }}'
+                }).off('click', '.glyphicon-trash').on("click", '.glyphicon-trash', function () {
+                    var tr = $(this).parents("tr"),
+                            id = tr.data("id"),
+                            mtext = tr.find("td").eq(2).text();
+                    $("#myModal-del").find(".del_info").text(mtext)
+                            .end().find(".btn-primary").off('click').on("click", function () {
+                                delData(id);
+                            }).end().modal("show");
+                    return false;
+                })
+            }
+
+            function top_seclet(id) {
+                if ($(event.target).val() == "否") {
+                    $(event.target).attr('name', '1');
+                    // $(event.target).attr('value', '是');
+                } else {
+                    $(event.target).attr('name', '0');
+                    // $(event.target).attr('value', '否');
+                }
+                var top_status = $(event.target).attr("name");
+                var top_data = $(event.target).val();
+                // console.log(top_status);
+                $.ajax("{% url 'top_foundpage_specialtopic' %}", {
+                    type: "post",
+                    dataType: "json",
+                    data: {
+                        id: id,
+                        top: top_status,
+                        channel:{{ channel }}
+                    },
+                    success: function (data) {
+                        if (data == 0) {
+                            if (top_status == 1) {
+                                $("." + id).children().attr('value', '是');
+                            }
+                            else {
+                                $("." + id).children().attr('value', '否');
+                            }
+                        }
+                    },
+                    error: function (data) {
+                        console.log("errors is" + data);
+                    }
+                })
+            }
+            $(document).ajaxStart(function () {
+                $("#loading").css("display", "block");
+            });
+            $(document).ajaxComplete(function () {
+                $("#loading").css("display", "none");
+            });
+            function addEventConfirm() {
+                var specialtopic_id = $("#specialtopic_id").val();
+                $.ajax("{% url 'new_foundpage_specialtopic' %}", {
+                    type: "post",
+                    dataType: "json",
+                    data: {
+                        specialtopic_id: specialtopic_id,
+                        channel_id: {{ channel }}
+                    },
+                    success: function (data) {
+                        if (data == 0) {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (data) {
+                        console.log("errors is" + data);
+
+                    }
+                })
+            }
+            var config_id;
+            $("#table").on("click", ".config-edit", function () {
+                config_id = $(this).data("id");
+                var item = $(this).siblings("span").html();
+                //console.log(config_id);
+                $("#mark_info").val(item);
+            });
+            function addConfig() {
+                //var specialtopic_id = $("#specialtopic_id").val();
+                var mark_info = $("#mark_info").val();
+                $.ajax("{% url 'mark_info_foundpage' %}", {
+                    type: "post",
+                    dataType: "json",
+                    data: {
+                        id: config_id,
+                        mark_info: mark_info,
+                        channel: {{ channel }}
+                    },
+                    success: function (data) {
+                        if (data == 0) {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (data) {
+                        console.log("errors is" + data);
+
+                    }
+                })
+            }
+        </script>
+
+    </section>
+{% endblock %}
+

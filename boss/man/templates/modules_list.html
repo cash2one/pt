@@ -1,0 +1,232 @@
+{% extends "man-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css"/>
+    <script type="text/javascript" src="/static/js/multiselect.js"></script>
+    <style type="text/css">
+    </style>
+{% endblock %}
+{% block title %}模块列表{% endblock %}
+{% block content %}
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail">
+        <thead>
+        <tr>
+            <th colspan="3">
+                <span>模块列表</span>
+            </th>
+            <th colspan="3">
+                <a id="" onclick="showedit()"
+                   style="position: absolute;right: 50px;font-weight: normal;color: black;cursor: pointer">
+                    <span class="glyphicon glyphicon glyphicon-plus"></span>新建
+                </a>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td style="width:25%">ID</td>
+            <td style="width:25%">名称</td>
+            <td style="width:50%">操作</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="modal" id="mymodal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                            class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="modal_title">编辑</h4>
+                </div>
+                <div class="modal-body">
+                    <ul>
+                        <li>
+                            <label><i>*</i>名称:</label>
+                            <input type="text" class="form-control" name="name" id="name" required
+                                   placeholder="名称"/>
+                        </li>
+
+                    </ul>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" id="save_order" onclick="Edit()">保存</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div>
+    </div><!-- /.modal -->
+
+
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_data = [];
+        var g_userid = 0;
+        var is_code = '';
+        var edit_id = '';
+        $(document).ready(function () {
+            setLeftNav("nav_user_list");
+            loading.init(".loading_gif", "#data_table");
+            requestData();
+        });
+
+        function requestData() {
+            $.ajax({
+                url: '/man/modules_edit/',
+                type: "GET",
+                cache: false,
+                data: {},
+                beforeSend: function (XMLHttpRequest) {
+                },
+                success: function (data) {
+                    //字符串转json
+                    g_data = eval(data);
+                    //console.log(g_data)
+                    updateTable();
+                },
+                complete: function (result) {
+                    $("#mymodal").modal('hide')
+                }
+            })
+        }
+        function showedit() {
+            is_code = 0;
+            $("#name").val('');
+            $("#mymodal").modal('show');
+        }
+
+        function GetOne(id) {
+            is_code = 1;
+            edit_id = id;
+            $.ajax({
+                url: '/man/modules_detail/' + id,
+                type: "GET",
+                cache: false,
+                data: {
+                    area: $("#area").val(),
+                    community: $("#community").val(),
+                    responser: $("#responser").val(),
+                    action_time: $("#action_time").val(),
+                },
+                beforeSend: function (XMLHttpRequest) {
+                    loading.show();
+                },
+                success: function (data) {
+                    //console.log('retur', data);
+                    var data = eval(data);
+                    var d = data['data']
+                    if (data['code'] == '0') {
+                        for (var key in d) {
+                            if (key == 'action_time') d[key] = d[key].replace(' ', 'T');
+                            $("#" + key + "").val(d[key]);
+                        }
+                    }
+                    else {
+                        console.log(eval(data)['msg'])
+                    }
+                },
+                complete: function (result) {
+                    loading.hide();
+                    $("#mymodal").modal('show');
+                }
+            });
+
+        }
+
+        function Edit() {
+            if (is_code == 0) {
+                $.ajax({
+                    url: '/man/modules_edit/',
+                    type: "POST",
+                    cache: false,
+                    data: {
+                        name: $("#name").val(),
+                    },
+                    beforeSend: function (XMLHttpRequest) {
+                        loading.show();
+                    },
+                    success: function (data) {
+                        if (eval(data)['code'] == '0') {
+                            requestData()
+                        }
+                        else {
+                            console.log(eval(data)['msg'])
+                        }
+                    },
+                    complete: function (result) {
+                        loading.hide();
+                        $("#mymodal").modal('hide')
+                        requestData()
+                    }
+                });
+            } else {
+                $.ajax({
+                    url: '/man/modules_detail/' + edit_id,
+                    type: "PUT",
+                    cache: false,
+                    data: JSON.stringify({
+                        name: $("#name").val(),
+                    }),
+                    beforeSend: function (XMLHttpRequest) {
+                        loading.show();
+                    },
+                    success: function (data) {
+                        console.log('retur', data);
+                        if (eval(data)['code'] == '0') {
+                            requestData()
+                        }
+                        else {
+                            console.log(eval(data)['msg'])
+                        }
+                    },
+                    complete: function (result) {
+                        loading.hide();
+                        $("#mymodal").modal('hide')
+                        requestData()
+                    }
+                });
+            }
+        }
+
+        function Delete(code, id) {
+            if (confirm('您确定删除这条记录？')) {
+                $.ajax({
+                    url: '/man/modules_detail/' + id,
+                    type: "DELETE",
+                    cache: false,
+                    beforeSend: function (XMLHttpRequest) {
+                        loading.show();
+                    },
+                    success: function (data) {
+                        console.log('retur', data);
+                        if (eval(data)['code'] == '0') {
+                            requestData()
+                        }
+                        else {
+                            console.log(eval(data)['msg'])
+                        }
+                    },
+                    complete: function (result) {
+                        loading.hide();
+                        requestData()
+                    }
+                });
+            }
+        }
+
+
+        function updateTable() {
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for (var i = 0; i < g_data.length; i++) {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                tr.append($("<td>{0}</td>".format(g_data[i][0])));
+                tr.append($("<td>{0}</td>".format(g_data[i][1])));
+                tr.append('<td><span class="glyphicon glyphicon-edit" aria-hidden="true" style="margin-right:10px;cursor: pointer" onclick="GetOne(' + g_data[i][0] + ')"></span><span class="glyphicon glyphicon-remove" aria-hidden="true" style="cursor: pointer" onclick="Delete(0,' + g_data[i][0] + ')"></span></td>');
+
+                $("#data_table tbody").append(tr);
+
+            }
+        }
+    </script>
+{% endblock %}

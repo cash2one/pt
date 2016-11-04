@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}新增运营配置{% endblock %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block content %}
+    <div class="cms-subtitle">
+        <ol class="breadcrumb">
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+            <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+            <li><a href="{% url 'config_operation' %}?t={{ t }}&v={{ v }}&c={{ c }}">运营配置</a></li>
+            <li class="active">新增运营配置</li>
+        </ol>
+    </div>
+
+    <div id="error-hints">
+
+    </div>
+
+    <form class="sendmsg-form" action="{% url 'new_config_operation' %}?channel={{ channel }}" method="post"
+          enctype="multipart/form-data">{% csrf_token %}
+        <input type="hidden" name="channel" value="{{ channel }}" id="channel">
+        <input type="hidden" name="status" value="0">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label><i>*</i>key：</label>
+                    <input class="form-control" name="key" id="key" value="{{ key }}" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label><i>*</i>value：</label>
+                    <textarea class="form-control" name="value" id="value" rows="5" required></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="row text-center">
+            <a class="btn btn-default col-lg-1 col-lg-offset-4"
+               href="{% url 'config_operation' %}?t={{ t }}&v={{ v }}&c={{ c }}">取消</a>
+            <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="确定"/>
+        </div>
+
+    </form>
+    <script type="text/javascript">
+        setNavBg({{t}});
+
+
+        function setInPutValue() {
+            {#        console.log("{{ goods_form.initial }}");#}
+            {#        console.log("a"+"b");#}
+
+            {% for key,value in fields.items %}
+                $("[name='{{ key }}']").val({{ value|safe }});
+            {% endfor %}
+            console.log("errors:"+"{{ errors }}");
+            {#        console.log("{{ new_service_form.city.value }}")#}
+{#        console.log($("#channel_id").val());#}
+        }
+        window.onload = setInPutValue;
+
+        (function () {
+
+
+        })();
+
+
+
+    </script>
+{% endblock %}
+

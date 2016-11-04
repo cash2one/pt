@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+    {% block myhead %}
+        <head profile="http://gmpg.org/xfn/11" >
+            <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+        </head>
+    {% endblock %}
+        {% block title %}
+            <title>对账平台</title>
+        {% endblock %}
+    <style>
+        .well .subnav-warp{
+            display: none;
+            position: absolute;
+            left: -50px;
+            top: 60px;
+            width: 358px;
+            height: 40px;
+            line-height: 40px;
+        }
+        .well .nav > li{
+            position: relative;
+        }
+        .well li.active .subnav-warp{
+            /*display: block;*/
+        }
+        /*.well li.active .subnav-warp {
+        display: block;
+        }*/
+       /*#order_div{display: none;}*/
+        .subnav-warp li.current a{
+            color:red
+        }
+        .pagination {
+            display: block;
+        }
+        .subnav-warp ul li{
+        text-align: center;
+        width: 115px;
+        display: block;
+        margin-left: 9px;
+        background-color: #4b4b4b;
+        border: 1px solid #fff;
+        border-radius: 3px;
+    }
+.subnav-warp ul li a{
+    color:#fff;
+}
+    </style>
+{% block module %}
+        <nav class="navbar navbar-default" style="min-height: 40px;background-color: rgba(139, 0, 0, 0.55)">
+        <div class="container-fluid" style="margin-top: 5px;">
+            <span>请您选择需要查看的应用：</span>
+            <select class="chosen-select" id="global_apps" style="height: 40px">
+{#                <option value="">全部应用</option>#}
+                <script type="application/javascript">
+                    var apps = {_tongji_begin_apps_end_};
+                    for (var i in apps)
+                    {
+                        if(!apps[i][0])
+                            document.write('<option value="{0}">{1}</option>'.format(apps[i][0], apps[i][1]));
+                    }
+                    for (var i in apps)
+                    {
+                        if(apps[i][0])
+                            document.write('<option value="{0}">{1}</option>'.format(apps[i][0], apps[i][1]));
+                    }
+                </script>
+            </select>
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="well sidebar-nav">
+                    <ul class="nav nav-list">
+                        <li class="nav-header"><span class="glyphicon glyphicon-th-large"></span>收支汇总</a></li>
+                        {% if finance_zf_payment_channel_report %}
+                        <li><a href="{% url finance_table %}">支付渠道数据汇总表</a></li>
+                        {% endif %}
+                        {% if finance_zf_product_report %}
+                        <li><a href="{% url pay_summary_by_cp %}">支付数据分业务汇总表</a></li>
+                        {% endif %}
+                        {% if finance_zf_daojia_report %}
+                        <li><a href="{% url pay_summary_by_daojia_cp %}">全托管支付数据分渠道汇总表</a></li>
+                        {% endif %}
+
+
+
+                        <li class="nav-header"><span class="glyphicon glyphicon-filter"></span>运营数据</a></li>
+                        {% if finance_operation_operation_summary %}
+                        <li><a href="{% url daily_operate %}">运营数据汇总报表</a></li>
+                        {% endif %}
+                        {% if finance_operation_daojia_operation_summary %}
+                        <li><a href="{% url daily_operate_daojia %}">全托管运营数据报表</a></li>
+                        {% endif %}
+                        {% if finance_operation_daojia_operation_cost_summary %}
+                        <li><a href="{% url daily_operate_cost %}">全托管营销费用报表</a></li>
+                        {% endif %}
+                        {% if finance_operation_vip_operation_summary %}
+                        <li><a href="{% url daily_operate_vip %}">VIP卡运营数据报表</a></li>
+                        {% endif %}
+
+                        <li class="nav-header"><span class="glyphicon glyphicon-pawn"></span>订单明细</a></li>
+                        {% if finance_detail_abnormal_order_summary %}
+                        <li id="nav_new_users"><a href="{% url except_order_sum %}">异常订单汇总</a></li>
+                        {% endif %}
+                        {% if finance_detail_no_ov_order_detail %}
+                        <li id="nav_active_users"><a href="{% url unpending_order %}">无压单对账</a></li>
+                        {% endif %}
+                        {% if finance_detail_ov_order_detail %}
+                        <li id="nav_start_times"><a href="{% url pending_order %}">有压单对账</a></li>
+                        {% endif %}
+                        {% if finance_detail_daojia_coupon %}
+                        <li id="nav_start_times"><a href="{% url daojia_coupon_detail %}">到家优惠券明细</a></li>
+                        {% endif %}
+                        {% if finance_detail_nr_order_detail %}
+                        <li id="nav_ver_nr"><a href="{% url nr_account_order %}">非匹配订单对账</a></li>
+                        {% endif %}
+                        {% if finance_detail_overtime_self_order_detail %}
+                        <li id="nav_ver_self"><a href="{% url over_month_order %}">自营业务跨时段订单明细</a></li>
+                        {% endif %}
+                        {% if finance_detail_overtime_daojia_order_detail %}
+                        <li id="nav_ver_daojia"><a href="{% url over_month_daojia_order %}">到家业务跨时段订单明细</a></li>
+                        {% endif %}
+
+
+
+                        <li class="nav-header"><span class="glyphicon glyphicon-indent-left"></span>CP事件</a></li>
+                        {% if finance_event_upload_cp_bill %}
+                        <li><a href="{% url upload_cp_bill %}">上传CP对账单</a></li>
+                        {% endif %}
+                        {% if finance_event_upload_cp_bill %}
+                        <li><a href="{% url upload_cp_pay %}">上传支付渠道对账单</a></li>
+                        {% endif %}
+                        {% if finance_event_upload_cp_bill %}
+                        <li><a href="{% url nnk_orders_edit %}">年年卡待处理订单操作</a></li>
+                        {% endif %}
+                        {% if finance_event_download_cp_statment %}
+                        <li><a href="{% url cp_statment %}">下载结算单</a></li>
+                        {% endif %}
+                        {% if finance_event_download_cp_statment %}
+                        <li><a href="{% url batch_cp_statment %}">批量下载结算单(到家业务)</a></li>
+                        {% endif %}
+
+
+
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-10">
+                    <br />
+                    <br />
+                {% block content %}{% endblock %}
+                <a id="scrollUp" href="#" title="返回到顶部"></a>
+            </div>
+        </div>
+    </div>
+   <script type="text/javascript">
+    $("#order_details").mouseover(function(event) {
+      $("#order_div").show();
+    });
+     $("#order_div,#order_details").mouseout(function(event) {
+      $("#order_div").hide();
+    });
+</script>
+{% endblock %}

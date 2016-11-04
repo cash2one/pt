@@ -1,0 +1,622 @@
+{% extends "base.html" %}
+{% load static %}
+{% load pt %}
+{% block title %}新建秒杀活动{% endblock %}
+{% block head %}
+    <style>
+        * {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        .dashhr {
+            margin: 10px 0;
+            border-top: 1px dashed #ccc;;
+        }
+
+        .sendmsg-form label {
+            width: 16%;
+            text-align: right;
+            margin-right: 1%;
+        }
+
+        .sendmsg-form .col-lg-12 label {
+            width: 8%;
+            margin-right: .5%;
+            vertical-align: middle;
+        }
+
+        .sendmsg-form .form-control, .sendmsg-form select {
+            display: inline-block;
+            width: 80%;
+        }
+
+        .sendmsg-form .col-lg-12 .form-control {
+            width: 90%;
+            vertical-align: middle;
+        }
+
+        .sendmsg-form a.addpicbtn {
+            cursor: pointer;
+            font-size: 40px;
+            padding: 10px 22px;
+            border: 2px solid #999;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .citylist {
+            width: 90%;
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        .correctbtn {
+            color: #337ab7;
+            margin-left: 470px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .correctbtn:hover {
+            color: blue;
+            cursor: pointer;
+        }
+
+        #validataDiv {
+            padding-left: 10%;
+        }
+
+        #validataDiv .form-group label {
+            width: 4%;
+            text-align: left;
+        }
+
+        .selected {
+            color: red;
+            font-size: 17px;
+        }
+
+        select[multiple], select[size] {
+            height: 200px;
+        }
+    </style>
+    <link rel="stylesheet" href="{% static 'css/selectImg.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/webuploader.css' %}"/>
+    <link rel="stylesheet" href="{% static 'js/city/zyzn_1.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/imgpicker.css' %}">
+
+    <script type="text/javascript" src="{% static 'js/city/City_data.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/city/areadata.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/switch/js/switchery.min.js' %}"></script>
+{% endblock %}
+{% block content %}
+    <div class="cms-subtitle">
+        <ol class="breadcrumb">
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+            <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+            <li><a href="{% url 'seckills' %}?t={{ t }}&v={{ v }}&c={{ c }}">秒杀活动</a></li>
+            <li class="active">新建秒杀活动</li>
+        </ol>
+    </div>
+    <div id="error-hints">
+    </div>
+    <form class="sendmsg-form" action="{% url 'new_seckill' %}?channel={{ channel }}" method="post"
+          enctype="multipart/form-data">{% csrf_token %}
+        <!-- 定义隐藏字段 -->
+        <div style="display: none;">
+            <label>城市</label>
+            <input name="city" value="" type="hidden" id="citystr"/>
+        </div>
+        <input name="type" value="0" type="hidden" id="type"/>
+        <input name="valid_time" value="" type="hidden" id="valid_time"/>
+        <input name="goods_id" value="" type="hidden" id="goods_id"/>
+        <input name="activity_id" value="" type="hidden" id="activity_id"/>
+        <!-- 定义隐藏字段 end -->
+        <!--   <p class="dashhr"></p> -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>服务名称:</label>
+                    <select class="input-group-lg form-control" name="activity_id_" id="activity_id_" required
+                            maxlength="11" onchange="cc(this[selectedIndex].value);">
+                        <option class="form-control" value=""></option>
+                        {% for og in op_goods_list %}
+                            <option class="form-control" goodsId="{{ og.goodsId }}"
+                                    value="{{ og.activityId }}-{{ og.goodsId }}-{{ og.activityCity }}">{{ og.name }}--{{ og.promotionMsg }}#{{ og.activityBeginDate }}-{{ og.activityEndDate }}</option>
+                        {% endfor %}
+                    </select>
+
+                </div>
+
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label style="width: auto">服务支持的城市:</label><span id="sel-city"></span>
+                </div>
+            </div>
+        </div>
+        <script>
+            function cc(val) {
+                //alert(val);
+                var items = val.split("-");
+//    alert(items[0] + "--" + items[1])
+                document.getElementById("goods_id").value = items[1];
+                document.getElementById("activity_id").value = items[0];
+                document.getElementById("sel-city").innerHTML = items[2];
+                render_city(items[2]);
+            }
+            function render_city(city_str) {
+                var inner_html = '<input type="checkbox" name="cityselect" checked id="check-all" data-city="全部" onclick="select_all()"> 全部 &nbsp;';
+                if (city_str != '全国') {
+                    var citys = city_str.split(',');
+
+                    for (var i = 0; i < citys.length; i++) {
+                        var check_html = '<input type="checkbox" name="cityselect" checked data-city="' + citys[i] + '"> ' + citys[i] + '&nbsp;';
+                        inner_html += check_html;
+                    }
+                } else {
+                    inner_html = '<input type="text" class="form-control" id="select-city" value="不限(全国)" data-value="" onclick="appendCity(this,\'duoxuan\')"/>'
+                }
+
+
+                $('#city-check').html(inner_html)
+            }
+            function select_all() {
+
+                if ($("#check-all:checked").val()) {
+                    $("#city-check input").prop('checked', true)
+                } else {
+                    $("#city-check input").prop('checked', false)
+                }
+            }
+            function get_all() {
+                var city = [];
+
+                $("#city-check input:checked").each(function (index, item) {
+                    if ($(item).attr('data-city') != '全部') {
+                        city.push($(item).attr('data-city'))
+                    }
+
+
+                });
+                return city.join(',')
+            }
+
+        </script>
+        <p class="dashhr"></p>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label>图片：</label>
+                    <a class="addpicbtn image_bcg">+</a>
+                    <input name="image_bcg" value="" id="image_bcg" type="hidden"/>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label>分享缩略图：</label>
+                    <a class="addpicbtn share_thumbnail">+</a>
+                    <input name="share_thumbnail" value="" id="share_thumbnail" type="hidden"/>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>标题:</label>
+                    <input type="text" class="form-control" name="title" id="title" required value="秒杀活动标题"/>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>描述:</label>
+                    <input type="text" class="form-control" name="desc" id="desc" required value="秒杀活动描述"/>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>秒杀价:</label>
+                    <input type="text" class="form-control" name="price_desc" id="price_desc" required value="秒杀价"/>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label>原价:</label>
+                    <input type="text" class="form-control" name="price_sub_desc" id="price_sub_desc"/>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label>运营标签:</label>
+                    <input type="text" class="form-control" name="image_mark" id="image_mark"/>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label>更新提示文案:</label>
+                    <input type="text" class="form-control" name="tips" id="tips"/>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>动作:</label>
+                    <select class="input-group-lg form-control" name="action_id" id="action_id" required maxlength="11">
+                        <option class="form-control" value=""></option>
+                        {% for act in actionsall %}
+                            <option class="form-control" value="{{ act.id }}">{{ act.id }}--{{ act.memo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>分享链接:</label>
+                    <input type="text" class="form-control" name="share_url" id="share_url" required value="分享链接"/>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>分享标题:</label>
+                    <input type="text" class="form-control" name="share_title" id="share_title" required value="分享标题"/>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>分享描述:</label>
+                    <input type="text" class="form-control" name="share_desc" id="share_desc" required value="分享链接"/>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label>秒杀说明地址:</label>
+                    <input type="text" class="form-control" name="seckill_remark_url" id="seckill_remark_url"
+                           value="秒杀说明地址"/>
+                </div>
+            </div>
+        </div>
+        <p class="dashhr"></p>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label>起始时间:</label>
+                    <input type="datetime-local" class="form-control" min="1999-12-31T23:59" max="9999-12-31T23:59"
+                           name="show_start_time" id="show_start_time"/>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label>结束时间:</label>
+                    <input type="datetime-local" class="form-control" min="1999-12-31T23:59" max="9999-12-31T23:59"
+                           name="show_end_time" id="show_end_time"/>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <label><i>*</i>城市：</label>
+                    <div id="city-check" style="position: relative;display: inline-block;width:auto; ">
+                        <input type="checkbox" name="cityselect" data-city="全国" id="check-all" onclick="select_all()">
+                        全部 &nbsp;
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row text-center">
+            <a href="{% url 'seckills' %}?t={{ t }}&v={{ v }}&c={{ c }}"
+               class="btn btn-default col-lg-1 col-lg-offset-4">取消</a>
+            <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="确定"/>
+            <input type="hidden" name="citylst" id="citystr">
+        </div>
+
+        <div id="dialogUpload" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog"
+             aria-labelledby="myLargeModalLabel" style="display: none;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <div class="header">
+                            <input id="searchImg" class="input-sm" type="text" placeholder="请输入关键词搜索"/>
+                            <button class="btn btn-info" id="searchBtn">搜索</button>
+                            <p class="toolbar pull-right">
+                                <button id="usepic" class="btn btn-warning">确认使用</button>
+                                <button type="button" class="btn btn-primary" id="addLocalImg">本地上传</button>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                        aria-hidden="true">×</span></button>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="nav nav-tabs pull-right" role="tablist" id="pic-nav">
+                            <li class="active"><a href="#">广告图片</a></li>
+                            <li><a href="#">大图标</a></li>
+                            <li><a href="#">小图标</a></li>
+                            <li><a href="#">优惠券</a></li>
+                            <li><a href="#">其他</a></li>
+                        </ul>
+                        <div class="tab-content" style="clear:both">
+                            <div class="tab-pane active" id="adspic">
+                                <div id="loading" style="display:none;    position: inherit;    margin: 1.5rem 420px;">
+                                    <img src="{% static 'images/loading.gif' %}"/>
+                                </div>
+                                <div class="imglist">
+
+                                </div>
+                                <div id="pagination"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div>
+
+
+        <div id="UploadModal" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog"
+             aria-labelledby="myLargeModalLabel" style="display: none;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        上传图片到图库<!--<h4 class="modal-title" id="myLargeModalLabel"></h4>-->
+                        <p class="pull-right">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                    aria-hidden="true">×</span></button>
+                            <button class="btn btn-info pull-right" id="useTheImg" style="display: none;">使用该图片</button>
+                        </p>
+
+                        <!--<input type="button" class="btn btn-primary" value="浏览本地文件"/>-->
+                    </div>
+                    <div class="modal-body">
+                        <div id="uploader-demo">
+                            <!--用来存放item-->
+                            <div id="fileList" class="uploader-list"></div>
+                            <div id="filePicker" style="text-align: right"> 选择图片</div>
+                        </div>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div>
+    </form>
+
+    {% verbatim %}
+    <!-- 图片上传&选择组件 -->
+    <div class="imgpicker"></div>
+    {% endverbatim %}
+    <script src="{% static 'js/plupload/plupload.full.min.js' %}"></script>
+    <script src="{% static 'js/cms/imgpicker.js' %}"></script>
+    <script type="text/javascript">
+        $(document).on('click', '.addpicbtn', function() {
+            var $this = $(this);
+            $('#imgpicker').modal();
+            if ($this.hasClass('image_bcg')) {
+                imgpicker.init({
+                    filters: {
+                        max_file_size: '2M'
+                    },
+                    callback: function(url) {
+                        $this.hide().after('<div class="newImg"><img src="' + url + '"><span class="glyphicon glyphicon-remove"></span></div>');
+                        $this.siblings('input[name="image_bcg"]').val(url);
+                    }
+                });
+            } else if ($this.hasClass('share_thumbnail')) {
+                imgpicker.init({
+                    filters: {
+                        max_file_size: '10k'
+                    },
+                    callback: function(url) {
+                        $this.hide().after('<div class="newImg"><img src="' + url + '"><span class="glyphicon glyphicon-remove"></span></div>');
+                        $this.siblings('input[name="share_thumbnail"]').val(url);
+                    }
+                });
+            }
+        });
+
+        $(document).on('click', '.newImg span', function() {
+            $(this).parent(".newImg").siblings("a.addpicbtn").show()
+                .end().siblings("input[type=hidden]").val('')
+                .end().remove();
+        });
+    </script>
+    <script>
+        //alert("OK");
+        setNavBg({{t}});
+
+
+        $("#group_id").change(function () {
+            //alert("OK");
+            chooseCityGroup(this, '{% url 'get_city_from_group_id' %}');
+        });
+
+
+        function stopPropagation(e) { //取消事件冒泡
+            if (e.stopPropagation)
+                e.stopPropagation();
+            else
+                e.cancelBubble = true;
+        }
+
+        $('#multi-select_1,.cp_item_1,.cp_list').bind('click', function (e) { //为#multi-select,#target_channel_id取消事件冒泡
+            stopPropagation(e);
+        });
+
+        $('#multi-select_2,.coupons_item_2,.goods_list').bind('click', function (e) { //为#multi-select,#target_channel_id取消事件冒泡
+            stopPropagation(e);
+        });
+
+
+        $("form").submit(function () {
+
+
+            var citystr = get_city_str();
+            console.log("所选城市为" + citystr);
+            $("#citystr").val(citystr);
+            sendTime();
+            //判断时间
+            var show_start_time = $("#show_start_time").val();
+            var show_end_time = $("#show_end_time").val();
+            if (show_end_time <= show_start_time) {
+                alert("展示结束时间不能小于展示开始时间");
+                return false;
+            }
+
+
+            var actions ={{ actions|safe }};
+            //console.log(actions);
+            var action_val = $("#action_uid").val();
+            var count_times = 0;
+            $.each(actions, function (key, item) {
+                if ((item[0]) == action_val) {
+                    count_times++;
+                }
+            });
+            return true;
+        });
+        function get_city_str() {
+            var city_str = $('#select-city').val();
+            if (!city_str) {
+                city_str = get_all()
+            }
+            if(city_str =='不限(全国)'){
+                city_str = '*'
+            }
+            return city_str
+        }
+        checkForm({{ errors|pt_dumps |safe }});
+
+
+        $("form input").focus(function () {
+            $(this).css("border", "1px solid #ccc");
+        });
+
+
+        function setInPutValue() {
+            {#        console.log("{{ goods_form.initial }}");#}
+            {% for key,value in fields.items %}
+                $("[name='{{ key }}']").val({{ value|safe }});
+            {% endfor %}
+
+            checkDate();
+            var action_str = $("#action_id").val();
+            $("#action_uid").val(action_str);
+            if ($("#action_id").val() == -1) {
+                $(".correctcontent").show();
+            }
+
+            $(".addpicbtn").next("input[type=hidden]").each(function () {
+                if (this.value != '') {
+                    var addbtn = $(this).prev(".addpicbtn");
+                    $('<div  class="newImg"><img src="' + getImgURL(this.value) + '"/><span class="glyphicon glyphicon-remove"></span>           </div>').insertAfter(addbtn);
+                    addbtn.hide();
+                }
+            });
+
+        }
+
+
+        $(window).ready(function () {
+            setInPutValue();
+        });
+    </script>
+    <!-- <script type="text/javascript" src="{% static 'js/cms/selectImg.js' %}"></script> -->
+    <script>
+        //alert("OK");
+        (function () {
+            $(".correctcontent").hide();
+            $("#action_uid").focus(function () {
+                $("#actionselect").show();
+            });
+
+            $("#action_uid").on("input propertychange", function () {
+                var action_str = $(this).val();
+                var action_arr = $("#actionselect a");
+                var act_len = action_arr.length;
+                for (var i = 0; i < act_len; i++) {
+                    var htmlstr = $(action_arr[i]).html();
+                    if (htmlstr.indexOf(action_str) >= 0) {
+                        $(action_arr[i]).show();
+                    } else {
+                        $(action_arr[i]).hide();
+                    }
+                }
+
+            });
+
+            $(".correctbtn").click(function () {
+                $(".correctcontent").show();
+                $(this).hide();
+            });
+
+        })();
+
+        change_act();
+        function change_act() {
+            if ($("#action_type").val() == "0") {
+                $(".change_share").show();
+                $(".change_action").hide();
+            }
+            else {
+                $(".change_share").hide();
+                $(".change_action").show();
+            }
+
+        }
+
+        function requestData(cur_page) {
+            $(".pagelist li").eq(cur_page).css('background', '#34cb95');
+            g_cur_page = cur_page;
+            $.ajax("{% url 'get_images' %}", {
+                type: "get",
+                cache: false,
+                data: {
+                    key: searchkeywords,
+                    cur_page: cur_page,
+                    per_page: g_per_page,
+                    image_category: cur_category
+                },
+                dataType: 'json',
+                beforeSend: function (XMLHttpRequest) {
+                    $("#loading").show();
+
+                },
+                success: function (result) {
+                    //   console.log(result);
+                    var data = result[0];
+                    var num_pages = result[1];
+                    CreateImgList(data);
+                    pagination(num_pages);
+                },
+                error: function (result) {
+                    console.log(result);
+                },
+                complete: function (result) {
+                    $("#loading").hide();
+                    $(".pagelist li").eq(cur_page).css('background', '#34cb95');
+                    if (cur_page > 5) {
+                        $(".pagelist li").eq(cur_page - 5).prevAll().hide();
+                    }
+                }
+
+            })
+        }
+
+
+    </script>
+    <script type="text/javascript" src="{% static 'js/cms/webuploader.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/cms/uploadimg.js' %}"></script>
+
+{% endblock %}

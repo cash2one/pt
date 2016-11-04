@@ -1,0 +1,809 @@
+{% extends "report-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css"/>
+    <script type="text/javascript" src="/static/js/multiselect.js"></script>
+    <script type="text/javascript" src="/static/js/echarts.js"></script>
+    <style type="text/css">
+        .dropdown-menu {
+        {#        width:400px;#}
+        }
+
+        {#     td#}
+        {#        {#}
+        {#            white-space: nowrap;/*不允许td换行*/#}
+        {#        }#}
+    </style>
+{% endblock %}
+{% block title %}交易分析{% endblock %}
+{% block content %}
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <div class="loading_gif"></div>
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control"
+                                   class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>&nbsp;&nbsp;&nbsp;&nbsp;
+    渠道选择：
+    <select id="channel">
+        <option value="0">全部渠道</option>
+        <option value="android">葡萄生活安卓</option>
+        <option value="ios">葡萄生活IOS</option>
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    城市选择：
+    <select id="citys_select">
+        <option value="0" selected>无</option>
+        {% for city in citys %}
+            <option value="{{ city.1 }}">{{ city.1 }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    时间维度：
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="showTimeTable('D')">日</button>
+        <button type="button" class="btn btn-default" onclick="showTimeTable('W')">周</button>
+        <button type="button" class="btn btn-default" onclick="showTimeTable('M')">月</button>
+    </div>&nbsp;&nbsp;&nbsp;&nbsp;
+    <br/>
+    <hr/>
+
+    <table id="data_tables" class=" table-striped table-bordered table-hover data_detail"
+           style="font-size: 12px;">
+        <thead>
+        <tr>
+            <th id="time_col_num" colspan="19">
+                <span id="time_table_title">到家业务分析表</span>
+                <a id="time_export_csv" href="{% url exchange_daojia_order_summary_evemonth_csv %}" class="t_right">
+                    <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                </a>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr id="colname">
+            <td id="time_col_1">日期</td>
+            <td id="time_col_2">订单数</td>
+            <td id="time_col_3">有效订单数</td>
+            <td id="time_col_4">下单用户数</td>
+            <td id="time_col_5">有效用户数</td>
+            <td id="time_col_6">葡萄卡销售金额</td>
+            <td id="time_col_7">VIP储值充入金额</td>
+            <td id="time_col_8">VIP储值送出金额</td>
+            <td id="time_col_9">GMV</td>
+            <td id="time_col_10">成本</td>
+            <td id="time_col_11">订单补贴</td>
+            <td id="time_col_12">VIP补贴</td>
+            <td id="time_col_13">葡萄卡盈利</td>
+            <td id="time_col_14">毛利</td>
+            <td id="time_col_15">日活到成单率</td>
+            <td id="time_col_16">新单比例</td>
+            <td id="time_col_17">跨品类复购率</td>
+            <td id="time_col_18">低价单率</td>
+            <td id="time_col_19">平均每单补贴</td>
+        </tr>
+        </tbody>
+    </table>
+    <span>显示行数：</span>
+    <select onchange="m_updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;" id='paginations'>
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="m_requestData(m_cur_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="m_requestData(m_cur_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <br/>
+    <hr/>
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" name="tab"
+                onclick="setTab(this,'one')">
+            现金状况图
+        </button>
+        <button type="button" class="btn btn-default" name="tab" id="d_two" style="background:#ccc" onclick="setTab(this,'two')">订单趋势</button>
+        <button type="button" class="btn btn-default" name="tab" onclick="setTab(this,'three')">用户趋势</button>
+        <button type="button" class="btn btn-default" name="tab" onclick="setTab(this,'four')">日活到成单率</button>
+        <button type="button" class="btn btn-default" name="tab" onclick="setTab(this,'five')">新单率</button>
+        <button type="button" class="btn btn-default" name="tab" onclick="setTab(this,'six')">跨品类复购率</button>
+        <button type="button" class="btn btn-default" name="tab" onclick="setTab(this,'seven')">低价单率</button>
+        <button type="button" class="btn btn-default" name="tab" onclick="setTab(this,'eight')">平均每单补贴</button>
+        <button type="button" title="选择一天的时候展示 0表示(00:00:00-00:59:59)" class="btn btn-default" name="tab" id="dindan" onclick="setTab(this,'nine')">订单实时趋势图</button>
+    </div>
+    <br/>
+    <table border="1px" class="overview">
+        <tbody>
+        <tr class="chart">
+            <td colspan="5" id="main"></td>
+        </tr>
+        </tbody>
+    </table>
+    <br/>
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="showTable(1)" id="service">服务成交分析</button>
+        <button type="button" class="btn btn-default" onclick="showTable(5)" id="cate">分类成交分析</button>
+        <button type="button" class="btn btn-default" onclick="showTable(2)" style="display:none">CP成交分析</button>
+    </div>&nbsp;&nbsp;&nbsp;&nbsp;
+    <br/>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px;">
+        <thead>
+        <tr>
+            <th id="col_num" colspan="18">
+                <span id="table_title">到家业务分析报表</span>
+                <a id="export_csv" href="{% url exchange_daojia_order_summary_reports_csv %}" class="t_right">
+                    <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                </a>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr id="colname_B">
+            <td id="col_one">分类</td>
+            <td id="col_1">服务商名称</td>
+            <td id="col_2">有效成单数</td>
+            <td id="col_3">有效用户数</td>
+            <td id="col_4">GMV</td>
+            <td id="col_5">用户实付金额</td>
+            <td id="col_6">成本</td>
+            <td id="col_7">订单补贴</td>
+            <td id="col_8">VIP补贴</td>
+            <td id="col_9">葡萄卡盈利</td>
+            <td id="col_10">毛利</td>
+            <td id="col_11">商品平均单价</td>
+            <td id="col_12">新客首单比例</td>
+            <td id="col_13">该CP复购率</td>
+            <td id="col_14">推首单后跨品类复购率</td>
+            <td id="col_15">进行中/完成</td>
+            <td id="col_16">待支付/取消/退款</td>
+            <td id="col_17">超时接单/超时完成</td>
+        </tr>
+        </tbody>
+    </table>
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;" id='pagination'>
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;//每页的显示数
+        var g_data = [];//趋势数据
+        var line_data = [];//趋势数据
+        var g_current_page = 1;//当前页
+        var g_summary_data = [];//实时统计表格数据
+        var show_table_type = 1;//默认显示应用分析表
+        var show_time_table_type = 1;//默认显示分月订单分析表
+        var g_date_control = $("#date_control");
+        var m_per = 30; //每页的显示数
+        var m_data = [];
+        var m_cur_page = 1;
+        var all_page = 0;
+        var tab_type = 'two';
+        var is_loading = 0;
+        var is_loading_enter = 0;
+        var r_start_date = getDateStr("{{ currentdate }}", 0);
+        var r_end_date = getDateStr("{{ currentdate }}", 0);
+
+
+        $(document).ready(function () {
+            $("#colname").siblings().remove();
+            setLeftNav("nav_order_reports");
+            loading.init(".loading_gif", ".row");
+            $('.loading_gif').show()
+            $('#ver').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function (option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#channel').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function (option, checked, select) {
+                    is_loading_enter = 1
+                    is_loading = 0
+                    requestLineData()
+                    m_requestData(m_cur_page);
+                    requestData();
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#citys_select').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 400,
+                filterPlaceholder: "搜索",
+                //includeSelectAllOption: true,
+                enableFiltering: true,
+                nonSelectedText: '无',
+                onChange: function (option, checked, select) {
+                    is_loading_enter = 1
+                    is_loading = 0
+                    requestLineData()
+                    m_requestData(m_cur_page);
+                    requestData(1);
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#order_types').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function (option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+            g_date_control.daterangepicker(
+                    {
+                        locale: {
+                            applyLabel: "确定",
+                            cancelLabel: "取消"
+                        },
+                        format: 'YYYY-MM-DD',
+                        separator: ' 到 ', //前后有空格
+                        startDate: getDateStr("{{ currentdate }}", -6),
+                        endDate: "{{ currentdate }}",
+                        maxDate: getDateStr("{{ currentdate }}", 1)// < maxDate
+                    },
+                    function (start, end, label) {
+                        console.log(start.toISOString(), end.toISOString(), label);
+                    }
+            ).val(getDateStr("{{ currentdate }}", -6) + " 到 {{ currentdate }}");
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function (ev, picker) {
+                is_loading_enter = 1
+                is_loading = 0
+                r_start_date = g_date_control.val().substr(0, 10);
+                r_end_date = g_date_control.val().substr(13);
+                dindan_if_show(r_start_date,r_end_date)
+                requestLineData()
+                requestData();
+                m_requestData(1);
+            });
+            is_loading_enter = 1
+            dindan_if_show(g_date_control.val().substr(0, 10),g_date_control.val().substr(13))
+            requestLineData()
+            requestData();
+            m_requestData(1);
+        });
+
+        function requestData() {
+            //截取出开始日期和结束日期
+            var start_date = r_start_date;
+            var end_date = r_end_date;
+            console.log(start_date,end_date)
+
+            //修改导出文件的href地址
+            modifyCsvHref(start_date, end_date, show_table_type, $("#citys_select").val(), $("#channel").val());
+
+            //修改导出文件的href地址
+            postJSON("{% url get_exchange_daojia_order_summary_table_data %}",
+                    {
+                        start_date: start_date,
+                        end_date: end_date,
+                        ot: $("#order_types").val(),
+                        app: getURLParam("app"),
+                        ver: $("#ver").val(),
+                        channel: $("#channel").val(),
+                        citys_select: $("#citys_select").val(),
+                        show_table_type: show_table_type,
+                        show_time_table_type: show_time_table_type,
+                    },
+                    function (data) {
+                        //字符串转json
+                        g_data = eval(data);
+                        updateDividePage();
+                        updateTable(1);
+                    },
+                     function () {
+                    if (show_table_type == 1){
+
+                                            $("#service").attr('disabled',false);
+                                            }else{
+                                                $("#cate").attr('disabled',false);
+                                            }
+                        is_loading += 1;
+                        if (is_loading == 3 && is_loading_enter == 1){
+                                    $('.loading_gif').hide()
+                                    is_loading_enter = 0
+                                }else if (is_loading != 3 && is_loading_enter == 1) {
+                                    $('.loading_gif').show()
+                                }else{
+                                    $('.loading_gif').hide()
+                                }
+                    }
+            );
+
+            //更新日报表
+            //m_requestData();
+        }
+
+        //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+        function updateTime(delay) {
+            var start_date = getDateStr("{{ currentdate }}", delay);
+            var end_date = "{{ currentdate }}";
+
+            g_date_control.data('daterangepicker').setStartDate(start_date);
+            g_date_control.data('daterangepicker').setEndDate(end_date);
+            g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+            is_loading_enter = 1
+                is_loading = 0
+            requestData()
+            requestLineData()
+            m_requestData(m_cur_page);
+        }
+
+        //切换显示交易分析表格
+        function showTable(table_type) {
+            show_table_type = table_type;
+            $("#colname_B").siblings().remove();
+            switch (show_table_type) {
+                case 1:
+                    $("#service").attr('disabled',true);
+                    $("#cate").attr('disabled',false);
+                    document.getElementById("col_num").colSpan = "18"
+                    document.getElementById("col_1").innerHTML = "服务商名称";
+                    document.getElementById("col_2").innerHTML = "有效订单数";
+                    document.getElementById("col_3").innerHTML = "有效用户数";
+                    document.getElementById("col_4").innerHTML = "GMV";
+                    document.getElementById("col_5").innerHTML = "用户实付金额";
+                    document.getElementById("col_6").innerHTML = "成本";
+                    document.getElementById("col_7").innerHTML = "订单补贴";
+                    document.getElementById("col_8").innerHTML = "VIP补贴";
+                    document.getElementById("col_9").innerHTML = "葡萄卡补贴";
+                    document.getElementById("col_10").innerHTML = "毛利";
+                    document.getElementById("col_11").innerHTML = "商品平均单价";
+                    document.getElementById("col_12").innerHTML = "新客首单比例";
+                    document.getElementById("col_13").innerHTML = "该CP复购率";
+                    document.getElementById("col_14").style.display = "";
+                    document.getElementById("col_15").style.display = "";
+                    document.getElementById("col_16").style.display = "";
+                    document.getElementById("col_17").style.display = "";
+                    document.getElementById("col_14").innerHTML = "推首单后跨品类复购率";
+                    document.getElementById("col_15").innerHTML = "进行中/完成";
+                    document.getElementById("col_16").innerHTML = "待支付/取消/退款";
+                    document.getElementById("col_17").innerHTML = "超时接单/超时完成"
+                    break;
+                case 5:
+                    $("#cate").attr('disabled',true);
+                    $("#service").attr('disabled',false);
+                    document.getElementById("col_num").colSpan = "14"
+                    document.getElementById("col_1").innerHTML = "有效订单数";
+                    document.getElementById("col_2").innerHTML = "有效用户数";
+                    document.getElementById("col_3").innerHTML = "GMV";
+                    document.getElementById("col_4").innerHTML = "用户实付金额";
+                    document.getElementById("col_5").innerHTML = "成本";
+                    document.getElementById("col_6").innerHTML = "订单补贴";
+                    document.getElementById("col_7").innerHTML = "VIP补贴";
+                    document.getElementById("col_8").innerHTML = "葡萄卡补贴";
+                    document.getElementById("col_9").innerHTML = "毛利";
+                    document.getElementById("col_10").innerHTML = "商品平均单价";
+                    document.getElementById("col_11").innerHTML = "新客首单比例";
+                    document.getElementById("col_12").innerHTML = "该CP复购率";
+                    document.getElementById("col_13").innerHTML = "推首单后跨品类复购率";
+                    document.getElementById("col_14").style.display = "None";
+                    document.getElementById("col_15").style.display = "None";
+                    document.getElementById("col_16").style.display = "None";
+                    document.getElementById("col_17").style.display = "None";
+                    break;
+                case 2:
+                    document.getElementById("col_num").colSpan = "10"
+                    document.getElementById("col_11").style.display = "None";
+                    document.getElementById("col_12").style.display = "None";
+                    document.getElementById("col_17").style.display = "None";
+                    document.getElementById("col_18").style.display = "None";
+                    document.getElementById("col_19").style.display = "None";
+                    document.getElementById("col_20").style.display = "None";
+                    document.getElementById("col_21").style.display = "None";
+                    document.getElementById("col_22").style.display = "None";
+                    document.getElementById("col_3").innerHTML = "接入CP数量";
+                    document.getElementById("col_4").innerHTML = "接入商品数量";
+                    document.getElementById("col_5").innerHTML = "覆盖城市";
+                    document.getElementById("col_6").innerHTML = "平均单价";
+                    document.getElementById("col_7").innerHTML = "接单速度（分）";
+                    document.getElementById("col_8").innerHTML = "服务完成速度（分）";
+                    document.getElementById("col_9").innerHTML = "满意度";
+                    document.getElementById("col_10").innerHTML = "详情";
+                    document.getElementById("col_2").style.display = ""
+                    break;
+            }
+            requestData();
+        }
+
+        //切换tab
+        function setTab(a, num) {
+            $('[name=tab]').css({background: "white"});
+            $(a).css({background: "#ccc"});
+            tab_type = num;
+            requestLineData()
+        }
+
+        function requestLineData() {
+            var g_date = [];
+
+            var start_date = g_date_control.val().substr(0, 10);
+            var end_date = g_date_control.val().substr(13);
+            var g_selected = {};//记录不被展示的曲线
+            // 路径配置
+            require.config({
+                paths: {
+                    echarts: '/static/js/'
+                }
+            });
+            // 使用
+            require(
+                    [
+                        'echarts',
+                        'echarts/chart/line'
+                    ],
+                    function (ec) {
+                        // 基于准备好的dom，初始化echarts图表
+                        var myChart = ec.init(document.getElementById('main'));
+
+                        var option = {
+                            tooltip: {
+                                show: true//,
+                                {#                            formatter: function (params, ticket, callback) {#}
+                                {#                                return "【{3}】<br/>{0}~{1}点：{2}".format(#}
+                                {#                                        parseInt(params.dataIndex),#}
+                                {#                                        parseInt(params.dataIndex) + 1,#}
+                                {#                                        params[5],#}
+                                {#                                        params.seriesName);#}
+                                {#                            }#}
+                            },
+                            legend: {
+                                y: 'bottom',
+                                textStyle: {
+                                    fontWeight: "bold"
+                                    //color: "auto"
+                                },
+                                data: [],
+                                selected: g_selected
+                            },
+                            xAxis: [
+                                {
+                                    type: 'category',
+                                    data: ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"],
+                                    splitLine: {
+                                        show: false
+                                    }
+                                }
+                            ],
+                            yAxis: [
+                                {
+                                    type: 'value'
+                                }
+                            ],
+                            series: []
+                        };
+
+                        //通过Ajax获取数据
+                        $.ajax({
+                            type: "post",
+                            //async: false, //同步执行
+                            url: "{% url exchange_daojia_order_summary_linedata %}",
+                            data: {
+
+                                tab_type: tab_type,
+                                start_date: start_date,
+                                end_date: end_date,
+                                ot: $("#order_types").val(),
+                                app: getURLParam("app"),
+                                ver: $("#ver").val(),
+                                channel: $("#channel").val(),
+                                citys_select: $("#citys_select").val(),
+                                show_table_type: show_table_type,
+                                show_time_table_type: show_time_table_type,
+                            },
+                            dataType: "json", //返回数据形式为json
+                            beforeSend: function (XMLHttpRequest) {
+                                //图表显示提示信息
+                                myChart.showLoading({
+                                    text: "图表数据正在努力加载...",
+                                    effect: "bar"
+                                });
+                            },
+                            success: function (result) {
+                                is_loading += 1
+                                if (is_loading == 3 && is_loading_enter == 1){
+                                    $('.loading_gif').hide()
+                                    is_loading_enter = 0
+                                }else if (is_loading != 3 && is_loading_enter == 1) {
+                                    $('.loading_gif').show()
+                                }else{
+                                    $('.loading_gif').hide()
+                                }
+                                if (result) {
+                                    //将返回的category和series对象赋值给options对象内的category和series
+                                    // 因为xAxis是一个数组 这里需要是xAxis[i]的形式
+                                    line_data = result[3];
+                                    option.series = result[0];
+                                    //坐标显示
+                                    $.each(result[0], function (num, item) {
+                                        $.each(item, function (k, v) {
+                                            if (k == "name") {
+                                                g_date.push(v);
+                                            }
+                                        });
+                                    });
+                                    $.each(result[2], function (num, item) {
+                                        g_selected[item] = false;
+                                    });
+                                    option.xAxis[0].data = result[1];//x轴
+                                    option.legend.data = g_date;   //显示的下标
+                                    option.legend.selected = g_selected;//默认不显示
+                                    myChart.setOption(option);
+                                    //updateDividePage();
+                                    //updateTable(1);
+                                }
+                            },
+                            error: function (errorMsg) {
+                                console.log("不好意思，图表请求数据失败啦!");
+                            },
+                            complete: function () {
+                                myChart.hideLoading();
+                            }
+                        });
+
+                        //记录下选中项
+                        var ecConfig = require('echarts/config');
+                        myChart.on(ecConfig.EVENT.LEGEND_SELECTED, function (param) {
+                                    g_selected = param.selected;
+                                }
+                        );
+                    }
+            );
+        }
+
+        //切换显示分时段分析表格
+        function showTimeTable(table_type) {
+            show_time_table_type = table_type;
+            switch (show_time_table_type) {
+                case 'D':
+                    document.getElementById("time_col_1").innerHTML = "日期";
+                    break;
+                case 'W':
+                    document.getElementById("time_col_1").innerHTML = "周期";
+                    break;
+                case 'M':
+                    document.getElementById("time_col_1").innerHTML = "月份";
+                    break;
+            }
+            is_loading_enter = 1
+                is_loading = 0
+            requestLineData()
+            m_requestData(1);
+            requestData();
+        }
+
+        //修改下载订单报表的href链接
+        function modifyCsvHref(start_date, end_date, table_type, citys_select, channel) {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url exchange_daojia_order_summary_reports_csv %}?start_date={0}&end_date={1}&show_time_table_type={2}&citys_select={3}&channel={4}".format(start_date, end_date, table_type, citys_select, channel));
+        }
+        //修改下载上面一个报表的href链接
+        function modifyCsvOne(start_date, end_date, table_type, citys_select, channel) {
+
+            $("#time_export_csv").attr("href", "{% url exchange_daojia_order_summary_evemonth_csv %}?start_date={0}&end_date={1}&show_time_table_type={2}&citys_select={3}&channel={4}".format(start_date, end_date, table_type, citys_select, channel));
+        }
+
+        //更新每页的显示数
+        function updatePer(per) {
+            g_per = per;
+            updateDividePage();
+            updateTable(1);
+        }
+
+        //更新表格第page页的数据
+        function updateTable(page) {
+            var total_page = 1 + parseInt((g_data.length - 1) / g_per);
+            if (page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("#colname_B").siblings().remove();
+            //添加元素
+            for (var i = (page - 1) * g_per; i < g_per * page && i < g_data.length; i++) {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for (var j in g_data[i]) {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for (var i = 1; i <= total_page; i++) {
+                if (i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //按照每页显示数和总数据 更新分页
+        function updateDividePage() {
+            var count = 1 + parseInt((g_data.length - 1) / g_per);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for (var i = count; i >= 1; i--) {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter("#pagination li:first");
+            }
+        }
+
+        function m_requestData(cur) {
+            //截取出开始日期和结束日期
+            var start_date = g_date_control.val().substr(0, 10);
+            var end_date = g_date_control.val().substr(13);
+
+            modifyCsvOne(start_date, end_date, show_table_type, $("#citys_select").val(), $("#channel").val());
+
+            //修改导出文件的href地址
+            postJSON("{% url exchange_daojia_order_summary_evemonth %}",
+                    {
+                        cur_page: cur,
+                        limit_page: m_per,
+                        start_date: start_date,
+                        channel: $("#channel").val(),
+                        citys_select: $("#citys_select").val(),
+                        end_date: end_date,
+                        show_time_table_type: show_time_table_type,
+                    },
+                    function (data) {
+                        //字符串转json
+                        var r_data = eval('(' + data + ')');
+                        console.log(r_data)
+                        if (r_data.code == '-1') {
+                            console.log(r_data.msg)
+                        } else {
+                            m_cur_page = cur;
+                            m_data = r_data.data;
+                            all_page = r_data.page;
+                            m_updateDividePage();
+                            m_updateTable(cur);
+                        }
+                    },
+                     function () {
+                        is_loading += 1;
+                        if (is_loading == 3 && is_loading_enter == 1){
+                                    $('.loading_gif').hide()
+                                    is_loading_enter = 0
+                        }else if (is_loading != 3 && is_loading_enter == 1) {
+                                    $('.loading_gif').show()
+                        }else{
+                                    $('.loading_gif').hide()
+                        }
+                    }
+            );
+        }
+
+
+        //按照每页显示数和总数据 更新分页
+        function m_updateDividePage() {
+            var count = all_page;
+
+            //在添加之前，先把现有元素移除掉
+            $("[m_li_can_remove='yes']").remove();
+            //添加li
+            for (var i = count; i >= 1; i--) {
+                var li = $("<li id='mpage_{0}' m_li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='m_requestData({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter("#paginations li:first");
+            }
+        }
+
+        //更新每页的显示数
+        function m_updatePer(per) {
+            m_per = per;
+            m_requestData(1);
+        }
+
+        //更新表格第page页的数据
+        function m_updateTable(page) {
+            var total_page = all_page;
+            if (page <= 0 || page > total_page)
+                return;
+
+            m_cur_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("#colname").siblings().remove();
+            //添加元素
+            for (var i = 0; i < m_data.length; i++) {
+                var tr = $("<tr m_tr_can_remove='yes'></tr>");
+                for (var j in m_data[i]) {
+                    tr.append($("<td>{0}</td>".format(m_data[i][j])));
+                }
+                $("#data_tables tbody").append(tr);
+            }
+
+            //更新分页框
+            for (var i = 1; i <= total_page; i++) {
+                if (i == page)
+                    $("#mpage_" + i).addClass("active");
+                else
+                    $("#mpage_" + i).removeClass("active");
+            }
+        }
+        function dindan_if_show(st_date,ed_date) {
+            var diff = getDateDiff(st_date,ed_date)
+            console.log(st_date,ed_date)
+            if(diff==1){
+                $('#dindan').attr('disabled', false);
+            }
+            else if (diff != 1 && tab_type=='nine'){
+                $('[name=tab]').css({background: "white"});
+                $('#d_two').css({background: "#ccc"});
+                tab_type = 'two';
+                $('#dindan').attr('disabled', true);
+            }else{
+                 $('#dindan').attr('disabled', true);
+            }
+        }
+
+    </script>
+{% endblock %}

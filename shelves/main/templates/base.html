@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml11.dtd">
+
+<html lang="zh-CN">
+<head profile="http://gmpg.org/xfn/11" >
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="葡萄货架平台">
+    <meta name="description" content="葡萄货架平台">
+{#    <link rel="shortcut icon" type="image/icon" href="/static/img/favicon.png">#}
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/chosen.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/layout.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/daterangepicker.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/shelves/common.css" />
+    <link type="text/css" href="/static/css/jquery-ui-timepicker-addon.css" rel="stylesheet" />
+    <link type="text/css" href="/static/css/jquery-ui-1.8.17.custom.css" rel="stylesheet" />
+
+    <script type="text/javascript" src="/static/js/jquery.js" ></script>
+    <script type="text/javascript" src="/static/js/vue.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.js" ></script>
+    <script type="text/javascript" src="/static/js/shelves/common.js" ></script>
+    <script type="text/javascript" src="/static/js/chosen.js" ></script>
+    <script type="text/javascript" src="/static/js/moment.js" ></script>
+    <script type="text/javascript" src="/static/js/daterangepicker.js" ></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" xmlns="http://www.w3.org/1999/html"/>
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <script type="text/javascript" src="/static/js/jquery-ui-1.10.4.custom.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ui-timepicker-addon.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ui-timepicker-zh-CN.js"></script>
+
+{% block head %}{% endblock %}
+
+<style>
+    .navbar-header ul{
+        padding: 21px 0px;
+        margin: 0;
+        font-size: 16px;
+        margin-left: 105px;
+        width: 100%;
+    }
+    .navbar-header ul li{
+        display: inline-block;
+        padding:  0px 30px;
+    }
+    .navbar-header ul li a{
+        color: #fff;
+    }
+    .form-groups{
+        margin-bottom: 15px;
+        width:100%;
+        text-align:center;
+        position: relative;
+        top: 50%;
+        left: 50%;
+    }
+
+</style>
+</head>
+<body>
+    {% block body %}
+        <div id="container">
+            <nav class="navbar navbar-inverse navbar-fixed-top">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/"><img src="/static/images/logo.png" style="display: inline-block;margin-top: -10px;"/>&nbsp;&nbsp;葡萄货架平台</a>
+                                <ul  class="guide-ul">
+                                    <li class="one"><a href="{% url 'phone_fee_index' %}">话费商品管理</a></li>
+                                    <li class="two"><a href="{% url 'flow_index' %}">流量商品管理</a></li>
+                                    <li class="three"><a href="{% url 'vip_index' %}">VIP管理</a></li>
+                                    <li class="one"><a href="{% url 'putao_card_index' %}">葡萄卡管理</a></li>
+                                    {% if show_boss_url %}
+                                    <li class="one"><a href="{boss_url_}">BOSS平台</a></li>
+                                    {% endif %}
+                                    {% if show_setting_url %}
+                                    <li class="one"><a href="{conf_url_}">配置平台</a></li>
+                                    {% endif %}
+                                </ul>
+                    </div>
+                    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                        <ul class="nav navbar-nav navbar-right">
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                    {{ user.username }}<span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu">
+{#                                    <li><a href="{% url man_index %}"><span class="glyphicon glyphicon-lock"></span>账户管理</a></li>#}
+                                    <li><a href="{% url 'modify_pwd' %}?next=/"><span class="glyphicon glyphicon-lock"></span>修改密码</a></li>
+                                    <li><a href="{% url 'logout_then_login' %}?next=/"><span class="glyphicon glyphicon-off"></span>退出</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <p class="navbar-text navbar-right"><span class="glyphicon glyphicon-user"></span>欢迎您</p>
+                    </div>
+                </div>
+            </nav>
+            {% block module %}
+            {% endblock %}
+        </div>
+    {% endblock %}
+    <div id="footer">
+                <p>
+                    问题反馈：<a href='mailto:lzh@putao.cn,mkh@putao.cn'>lzh@putao.cn,mkh@putao.cn</a>
+                </p>
+                <p>
+                    深圳市葡萄信息技术有限公司 putao.cn 粤ICP备12043670号
+                </p>
+    </div>
+</body>
+</html>

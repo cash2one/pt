@@ -1,0 +1,15 @@
+<style type="text/css">
+    span{
+        font-weight: bold;
+        width: 100px;
+        display:inline-block;
+    }
+</style>
+<h1>渠道关联项</h1><br/>
+{% for obj in objs %}
+    <span>源渠道：</span>{{ obj.channel_id1__text__ }}<br/>
+    <span>目标渠道：</span>{{ obj.channel_id2__text__ }}<br/>
+    <span>关联项：</span>{{ obj.config_items__text__ }}<br/>
+    <br/>
+    <br/>
+{% endfor %}

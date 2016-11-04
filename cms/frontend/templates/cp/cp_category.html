@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}品牌分类列表{% endblock %}
+{% block content %}
+    <style type="text/css">
+        #table td .mblock {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+    </style>
+    <section class="top-sec">
+        <ol class="breadcrumb" id="breadcrumb">
+            <li><a href="{% url 'cp_list' %}">品牌</a></li>
+            <li class="active">品牌分类管理</li>
+        </ol>
+
+        {% if perms.man.config %}
+            <a class="adbtn-new" href="{% url 'new_cp_category' %}"><b
+                    style="font-size:.18rem">＋&nbsp</b>新增品牌分类</a>
+        {% endif %}
+
+    </section>
+    <section class="service-table ">
+        <table id="table">
+            <caption></caption>
+            <thead class="my_thead">
+            <tr>
+                <th>序号</th>
+                <th>分类名</th>
+                <th>排序</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <div id="loading" style="display:none;">
+                <img src="{% static 'images/loading.gif' %}"/>
+            </div>
+            <tbody id="tbody" class="tbody">
+
+            </tbody>
+
+        </table>
+        <div class="no_content"><p>暂无品牌，请新建品牌分类</p></div>
+        <div id="pagination"></div>
+        
+        <script type="text/javascript">
+              var g_per_page = 20;
+              var g_cur_page = 1;
+              $(document).ready(function(){
+                setNavBg("cps");
+                  requestData(1);
+              });
+        function CreateTable(data)
+            {
+             if(data.length > 0){
+             $(".my_thead").show();
+             }
+             if(data.length == 0){
+              $(".no_content").show();
+              $(".my_thead").hide();
+             }
+               var tbody=$("<tbody>");
+               var cellCount = 5;
+               var rowCount = data.length;
+             $("#table tbody").remove();
+             tbody.appendTo($("#table"));
+             for(var i = 0;i < rowCount;i++)
+             {
+                var tr = $("<tr></tr>");
+                    tr.appendTo(table);
+                for(var j = 0;j < cellCount-1;j++)
+                {
+                    var td = $("<td>"+data[i][j]+"</td>");
+                        td.appendTo(tr);
+                }
+
+                 //根据传递参数，显示操作状态，0为可见，1为可编辑
+                 if(data[i][cellCount-1]==1){
+                    var td = $("<td><a href='{% url 'edit_cp_category' %}?id=" + data[i][cellCount] + "' class='edit glyphicon glyphicon-edit'></a><a href='' class='del glyphicon glyphicon-trash' data-toggle='modal' data-target='#myModal-del'  onclick='confirms(" + data[i][cellCount] + ")'></a></td>");
+                 }else if(data[i][cellCount-1]==0){
+                 //不显示编辑状态
+                     var td = $("<td><a class='glyphicon glyphicon-eye-open'></a></td>");
+                 }
+                 //var td = $("<td><a href='{% url 'edit_action' %}?id=" + data[i][cellCount] + "' class='edit glyphicon glyphicon-edit'></a><a href='' class='del glyphicon glyphicon-trash' data-toggle='modal' data-target='#myModal-del'  onclick='confirms(" + data[i][cellCount] + ")'></a></td>");
+                 td.appendTo(tr);
+                }
+
+             $("table").append("</tbody>");
+
+                }
+                  $("input").keydown(function(e){   //按下enter键进行搜索
+                    var e = e || event,
+                                 keycode = e.which || e.keyCode;
+                  if (keycode==13) {
+                  $(".search-btn").trigger("click");
+                             }
+                            });
+               function clearInput(){ //清除input内容
+                         $("#search").val("");
+                             requestData(1);
+                           }
+
+               function requestData(cur_page)
+               {
+                   currentpage = cur_page-1;
+                   g_cur_page = cur_page;
+                   $.ajax("{% url 'search_cp_category' %}",{
+                        type:"get",
+                        cache:false,
+                        data:{
+                        },
+                        beforeSend:function(XMLHttpRequest){
+                              $("#loading").show();
+
+                        },
+                        success:function(result){
+                            var data = eval(result)[0];
+                            var num_pages = eval(result)[1];
+                            CreateTable(data);
+                            if (data.length > 0) {
+                            $(".my_thead").show();
+                            $(".no_content").hide();
+                        }
+                        },
+                        error:function(result){
+                            console.log(result);
+                        },
+                        complete:function(result){
+                              // console.log(result);
+                              $("#loading").hide();
+                            
+                        }
+                  })
+               }
+
+                        function confirms(id){
+                           var del_info = $(event.target).parent().siblings().eq(1).text();
+                           // del_info = "分组名为"+del_info;
+                           console.log(del_info);
+                           $("span.del_info").text(del_info);
+
+                            $(".btn-primary").off("click").one("click",function(event) {
+                              delData(id);
+                            });
+                                           }
+                        function delData(id)
+                        {
+                            $.ajax("{% url 'del_cp_category' %}", {
+                                type: "post",
+                                cache: false,
+                                data: {
+                                    id: id
+                                },
+                                beforeSend: function (XMLHttpRequest) {
+                                   $("#loading").show();
+                                },
+                                success: function (result) {
+                                    if (result == 0) {
+                                        requestData(g_cur_page);
+                                    }
+                                },
+                                error: function (result) {
+                                    console.log(result);
+                                },
+                                complete: function (result) {
+                                   $("#loading").hide();
+                                }
+                            });
+                        }
+
+                  </script>
+    </section>
+
+
+{% endblock %}

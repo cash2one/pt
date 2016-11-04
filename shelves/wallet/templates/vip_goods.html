@@ -1,0 +1,772 @@
+{% extends "vip_base.html" %}
+{% block myhead %}
+{% endblock %}
+{% block title %}话费商品管理{% endblock %}
+{% block content %}
+    <style>
+        .form-group {
+            margin-top: 0px;
+            width: 20%;
+            padding-left: 0%;
+            left: 0%;
+        }
+
+        .li-style {
+            float: left;
+            padding-left: 10px;
+
+        }
+
+        .modal-body > ul > li > input {
+            width: 300px;
+        }
+    </style>
+
+    <div class="col-md-10">
+        <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 30px; margin-bottom:5%">
+            <thead>
+                <tr>
+                    <th id="col_num" colspan="11" style="padding-top:50px;padding-bottom:50px;">
+                        <span id="table_title" style="font-size: 30px;">{{ vip_info.0.2 }}</span>
+                        <a style='cursor:pointer' data-toggle='modal'  class="t_left" onclick="updateVip()">
+                            <span class="glyphicon glyphicon-edit"></span>编辑
+                        </a>
+                        <div style="margin-left:20px;margin-top:20px;">{{ vip_info.0.3}}</div>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    <div class="form-inline">
+        <ul style="float: right">
+            <li class="li-style">
+                <button type="button" class="btn btn-success" id="batch_shelve" onclick="batchEditVendibility(1);">
+                    批量上架
+                </button>
+            </li>
+            <li class="li-style">
+                <button type="button" class="btn btn-info" id="batch_unshelve" onclick="batchEditVendibility(0);">批量下架
+                </button>
+            </li>
+            <li class="li-style">
+                <button type="button" class="btn btn-info" id="add_new_product" data-toggle="modal"
+                        data-target="#mymodal" onclick="beforeEdit(-1)">新增充值卡商品
+                </button>
+            </li>
+        </ul>
+    </div>
+    <br/>
+    <div class="form-inline" style="display:None">
+        话费商品管理显示项：
+        <select id="pf_product_table" multiple="multiple">
+            {% for column in table_columns %}
+                <option value="{{ column.1 }}" {% if column.2 == 1 %}
+                        selected="selected"{% endif %}>{{ column.1 }}</option>
+            {% endfor %}
+        </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    </div>
+    <br/>
+    <div class="modal" id="mymodal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                            class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="modal_title">vip充值卡商品编辑</h4>
+                </div>
+                <div class="modal-body">
+                    <ul>
+                        <li>
+                        <span>
+                            <label>*商品名称:</label>
+                        </span>
+                            <input class="form-control" id="v_goods_name">
+                        </li>
+                        <li id="description">
+                        <span>
+                            <label>描述:</label>
+                        </span>
+                            <input class="form-control" id="v_description">
+                        </li>
+                        <li id="operTags">
+                        <span>
+                            <label>运营标签:</label>
+                        </span>
+                            <input class="form-control" id="v_operTags">
+                        </li>
+
+                        <li id="sale_price">
+                        <span>
+                            <label>*售价:</label>
+                        </span><br/>
+
+                            <input class="form-control" id="v_sale_price" style="margin:0px;display:inline;">元
+                        </li>
+                        <li id="prod_content">
+                        <span>
+                            <label>*面值:</label>
+                        </span><br/>
+
+                            <input class="form-control" id="v_prod_content" style="margin:0px;display:inline;">元
+                        </li>
+                        <li id="start_time">
+                        <span>
+                            <label>*开始时间:</label>
+                        </span>
+                            <input id="v_start_time" type="text" class="form-control ui_timepicker"
+                                   min="1999-12-31T23:59" max="9999-12-31T23:59" name="start_time" required
+                                   placeholder="时间格式：yyyy-mm-dd hh:mm:ss"/>
+                        </li>
+                        <li id="end_time">
+                        <span>
+                            <label>*结束时间:</label>
+                        </span>
+                            <input id="v_end_time" type="text" class="form-control ui_timepicker" min="1999-12-31T23:59"
+                                   max="9999-12-31T23:59" name="start_time" required
+                                   placeholder="时间格式：yyyy-mm-dd hh:mm:ss"/>
+                        </li>
+                        <div class="checkbox" id="display">
+                            <label>
+                                <input type="checkbox" id="v_display">商品名称显示到我的页面-vip卡栏
+                            </label><h5 style="color: seagreen;">&nbsp;&nbsp;&nbsp;提示：只能显示一个商品，若其他商品也勾选，则以最后勾选的为准</h5>
+                        </div>
+                        <div class="checkbox" id="display">
+                            <label>
+                                <input type="checkbox" id="v_isRecommend">商品以引导条方式显示在商品详情页、预约、支付页
+                            </label><h5 style="color: seagreen;">&nbsp;&nbsp;&nbsp;提示：只能显示一个商品，若其他商品也勾选，则以最后勾选的为准</h5>
+                        </div>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="save_order">保存</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    <br/>
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px">
+        <tbody>
+        <tr id="colname">
+            <td></td>
+            <td>状态</td>
+            <td>充值卡编号</td>
+            <td>商品名称</td>
+            <td>售价</td>
+            <td>面值</td>
+            <td>有效期</td>
+            <td>操作</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <br/>
+
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block;margin-bottom: 200px;">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="requestData(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="requestData(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;
+        var num_pages = 1;
+        var g_date_control = $("#date_control");
+        var g_current_page = 1;
+        var g_data = [];
+        var g_period = 1;
+        var g_order_detail = [];
+        var g_order_pos = -1;
+        var vendibility = 0;
+        var is_edit = 0;
+        var v_g_id;
+
+        //特殊筛选项(1-超时接单,2上门确认,3服务回访)
+        var g_special_filter = -1;
+
+
+        $(document).ready(function () {
+            setLeftNav("nav_full_hosting");
+            loading.init(".loading_gif", "#data_table");
+            modifyCsvHref();
+
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>货架商品管理说明</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+
+            $('#pf_product_table').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 400,
+                filterPlaceholder: "搜索",
+                includeSelectAllOption: true,
+                enableFiltering: true,
+                nonSelectedText: '默认全选',
+                onChange: function (option, checked, select) {
+                    showTable()
+                    requestData(1);
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            requestData(1);
+            showTable()
+        });
+
+
+        function updateDividePage() {
+            var count = num_pages;
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for (var i = count; i >= 1; i--) {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='requestData({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+        function updateTable(page) {
+            var total_page = num_pages;
+            if (page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            for (var i = 0; i < g_data.length; i++) {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                tr.append($("<td><input type='checkbox' class='id_sub_check' value='{0}'></td>".format(g_data[i]['cardGoodsId'])));
+                if (g_data[i]['vendibility'] == 1) {
+                    var is_sale = '已上架';
+                    var sale_action = '下架';
+                }
+                else {
+                    var is_sale = '未上架';
+                    var sale_action = '上架';
+                }
+                if (g_data[i]['isTop'] == 1) {
+                    var top_action = '取消置顶';
+                }
+                else {
+                    var top_action = '置顶';
+                }
+                var count = 0
+                tr.append($("<td>{0}</td>".format(i+1+(page-1)*g_per)));
+                tr.append($("<td>{0}</td>".format(is_sale)));
+                tr.append($("<td>{0}</td>".format(g_data[i]['cardGoodsId'])));
+                tr.append($("<td>{0}</td>".format(g_data[i]['goodsName'])));
+                var salePrice = parseFloat(g_data[i]['salePrice'])
+                var sp = salePrice / 100;
+                var realValue = parseFloat(g_data[i]['realValue'])
+                var rv = realValue / 100;
+                tr.append($("<td>{0}元</td>".format(sp)));
+                tr.append($("<td>{0}元</td>".format(rv)));
+                tr.append($("<td>{0}</td>".format(g_data[i]['usefulTime'])));
+                tr.append($("<td>{0}&nbsp;&nbsp;&nbsp;&nbsp;{1}&nbsp;&nbsp;&nbsp;&nbsp;{2}</td>".format(
+                        ("<a style='cursor:pointer' onclick='beforeEdit({1})'>{0}</a>".format("编辑", 'this')),
+                        ("<a style='cursor:pointer' onclick='editTop({1},\"{2}\")'>{0}</a>".format(top_action, g_data[i]['cardGoodsId'], top_action)),
+                        ("<a style='cursor:pointer' onclick='editVendibility({1},{2})'>{0}</a>".format(sale_action, g_data[i]['cardGoodsId'], g_data[i]['vendibility']))
+                )));
+                //console.log(g_data[i]['cardGoodsId'], g_data[i]['vendibility'])
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for (var i = 1; i <= total_page; i++) {
+                if (i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //刷新订单信息
+        function freshOrderDetail(detail_data, row_index) {
+
+            $("[tr_can_remove='yes']").remove();
+
+            for (var i = 0; i < g_data.length; i++) {
+                if (i != row_index) {
+                    var tr = $("<tr tr_can_remove='yes'></tr>");
+                    for (j in g_data[i]) {
+                        if (j == 0) {
+                            tr.append($("<td><input type='checkbox' class='id_sub_check' value='{0}'></td>".format(g_data[i][1])));
+                        }
+                        else if (j == 7) {
+                            tr.append($("<td><a style='cursor:pointer' data-toggle='modal' data-target='#mymodal' onclick='beforeEdit(\"{1}\");'>{0}</a></td>".format(g_data[i][j], g_data[i])));
+                        }
+                        else {
+                            tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                        }
+                    }
+                    $("#data_table tbody").append(tr);
+                }
+                else {
+                    var tr = $("<tr tr_can_remove='yes'></tr>");
+                    for (j in g_data[i]) {
+                        if (j == 0) {
+                            tr.append($("<td><input type='checkbox' class='id_sub_check' value='{0}'></td>".format(g_data[i][1])));
+                        }
+                        else if (j == 7) {
+                            tr.append($("<td><a style='cursor:pointer' data-toggle='modal' data-target='#mymodal' onclick='beforeEdit(\"{1}\");'>{0}</a></td>".format(g_data[i][j], g_data[i])));
+                        }
+                        else {
+                            tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                        }
+                    }
+                    $("#data_table tbody").append(tr);
+                    for (var sub_i = 0; sub_i < detail_data.length; sub_i++) {
+                        var sub_tr = $("<tr tr_can_remove='yes'></tr>");
+                        for (sub_j in detail_data[sub_i]) {
+                            sub_tr.append($("<td style='max-width:150px; table-layout:fixed; word-break:break-all; overflow:hidden;' >{0}</td>".format(detail_data[sub_i][sub_j])));
+                        }
+                        $("#data_table tbody").append(sub_tr);
+                    }
+                }
+            }
+        }
+
+        //更新显示行数
+        function updatePer(per) {
+            g_per = per;
+            requestData(1);
+        }
+
+
+        //上门确认
+        $("#batch_shelve").click(function () {
+            g_special_filter = 2;
+            showTable()
+            requestData(1);
+        });
+
+        //服务回访
+        $("#batch_unshelve").click(function () {
+            g_special_filter = 3;
+            showTable()
+            requestData(1);
+        });
+
+        //新增vip充值卡商品和编辑
+        $("#save_order").click(function () {
+            singlehEdit();
+            requestData(1);
+        });
+
+
+        function requestData(cur_page) {
+            //修改导出文件的href地址
+            modifyCsvHref();
+            if (cur_page <= 0 || cur_page > num_pages)
+                return;
+            postJSON("{% url 'vip_goods_ajax' %}",
+                    {
+                        per_page: g_per,
+                        cur_page: cur_page,
+                        g_special_filter: g_special_filter,
+                        pf_product_table: $("#pf_product_table").val(),
+                    },
+                    function (data) {
+                        //字符串转json
+                        g_data = eval(data)[0];
+
+                        num_pages = eval(data)[1];
+                        updateDividePage();
+                        updateTable(cur_page);
+                        showCheckbox();
+                        g_order_pos = -1;
+                    }
+            );
+        }
+
+        function modifyCsvHref() {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url 'vip_goods_csv' %}?per_page={0}&cur_page={1}".format(g_per, 1));
+        }
+
+        //根据pf_product_table筛选项,调整列表行数，跟列表名
+        function showTable() {
+            var column_selected = $("#pf_product_table option:selected")
+            var column_all = document.getElementById("colname")
+            document.getElementById("col_num").colSpan = column_selected.length
+            $("#colname").children().remove();
+            for (i = 0; i < column_selected.length; i++) {
+                var node = document.createElement("td");
+                if (column_selected[i].value == " ") {
+                    //给ID增加勾选框
+                    var cknode = document.createElement("input");
+                    var textnode = document.createTextNode(column_selected[i].value);
+                    cknode.setAttribute("type", "checkbox");
+                    cknode.setAttribute("id", "selectall_checkbox");
+                    node.appendChild(cknode);
+                    node.appendChild(textnode);
+                    document.getElementById("colname").appendChild(node);
+
+                    //勾选框全选或者取消全选
+                    $("#selectall_checkbox").click(function () {
+                        var ch = document.getElementsByClassName('id_sub_check');
+                        var isCheck = document.getElementById("selectall_checkbox").checked
+                        for (var i = 0; i < ch.length; i++) {
+                            ch[i].checked = isCheck;
+                        }
+                    });
+
+                }
+                else {
+                    var textnode = document.createTextNode(column_selected[i].value);
+                    node.appendChild(textnode);
+                    document.getElementById("colname").appendChild(node);
+                }
+            }
+        }
+
+        // 显示每行的checkbox
+        function showCheckbox() {
+            if (g_special_filter == 1 || g_special_filter == 2 || g_special_filter == 3) {
+                var ch = document.getElementsByClassName('id_sub_check');
+                for (var i = 0; i < ch.length; i++) {
+                    ch[i].style.display = "";
+                }
+            }
+        }
+
+        //编辑话费商品新增编辑界面
+        function beforeEdit(product_info) {
+            //product_info等于-1，为新增商品
+            if (product_info == -1) {
+                //新增可以设定价格,面值
+                document.getElementById("v_sale_price").disabled=false;
+                document.getElementById("v_prod_content").disabled=false;
+
+                document.getElementById("modal_title").innerHTML = "VIP充值卡商品新增";
+                document.getElementById("v_goods_name").value = "";
+                document.getElementById("v_description").value = "";
+                document.getElementById("v_operTags").value = "";
+                document.getElementById("v_sale_price").value = "";
+                document.getElementById("v_prod_content").value = "";
+                document.getElementById("v_start_time").value = "";
+                document.getElementById("v_end_time").value = "";
+                $("#v_display").attr('checked', false);
+                $("#v_isRecommend").attr('checked', false);
+                //$("#description").show();
+                //$("#display").show();
+                vendibility = 0
+                is_edit = 0;
+
+            }
+            else {
+                //编辑不可以设定价格,面值
+                document.getElementById("v_sale_price").disabled=true;
+                document.getElementById("v_prod_content").disabled=true;
+
+                var html_data = $(product_info).parent().prevAll();
+                var data_list = []
+                for (var i = 0; i < 6; i++) {
+                    //console.log(html_data[i].innerHTML);
+                    data_list.unshift(html_data[i].innerHTML)
+                }
+                for (var i = 0; i < g_data.length; i++){
+                    if(data_list[1]==g_data[i]['cardGoodsId']){
+                        data_list=g_data[i]
+                        break;
+                    }
+                }
+                console.log(data_list)
+                var f_list = data_list['usefulTime'].split('至');
+                //console.log(f_list)
+                //var click_list = data_list.concat(f_list);
+                //console.log(click_list)
+                //click_list[3] = click_list[3].substr(0, click_list[3].indexOf('.'))
+                //click_list[3] = parseFloat(click_list[3].replace('元', ''))
+                //click_list[4] = click_list[4].substr(0, click_list[4].indexOf('.'))
+               //click_list[4] = parseFloat(click_list[4].replace('元', ''))
+                //console.log(1111,click_list[3],click_list[4])
+                //console.log(click_list);
+                document.getElementById("modal_title").innerHTML = "VIP充值卡商品编辑";
+                document.getElementById("v_description").value = data_list['operDesc'];
+                document.getElementById("v_operTags").value =data_list["operTags"] ;
+                document.getElementById("v_goods_name").value = data_list['goodsName'];
+                document.getElementById("v_sale_price").value = parseFloat(data_list['salePrice'])/100;
+                document.getElementById("v_prod_content").value = parseFloat(data_list['realValue'])/100;
+                document.getElementById("v_start_time").value = f_list[0];
+                document.getElementById("v_end_time").value = f_list[1];
+                console.log(data_list['displayUserCenter'])
+                if(data_list['displayUserCenter']=='1'){
+                    $("#v_display").prop('checked', true);
+                }else{
+                    $("#v_display").prop('checked', false);
+                }
+                if(data_list['isRecommend']=='1'){
+                    $("#v_isRecommend").prop('checked', true);
+                }else{
+                    $("#v_isRecommend").prop('checked', false);
+                }
+
+                //$("#description").hide();
+                //$("#display").hide();
+                $("#mymodal").modal('show');
+
+                vendibility=data_list['vendibility'];
+                //编辑识别
+                is_edit = 1;
+                //编辑id
+                v_g_id = g_data[i]['cardGoodsId'];
+
+            }
+        }
+
+        //单个更新订单保障状态
+        function singlehEdit(num) {
+            var v_sa_price = document.getElementById("v_sale_price").value;
+            var v_pr_content = document.getElementById("v_prod_content").value;
+            var re = /^[0-9]+.?[0-9]*$/;
+            var sDate = new Date(document.getElementById("v_start_time").value.replace('//-/g', "//"));
+            var eDate = new Date(document.getElementById("v_end_time").value.replace('//-/g', "//"));
+            console.log(v_sa_price_int, v_pr_content_int)
+
+
+            //数据合法性校验
+            if ($("#v_goods_name").val().length == 0) {
+                alert('（必填）商品名称')
+                return
+            }
+            if ($("#v_goods_name").val().length > 16) {
+                alert('商品名称长度不可以超过16个字符')
+                return
+            }
+            if ($("#v_description").val().length > 12) {
+                alert('描述不可以超过12个字符')
+                return
+            }
+            if ($("#v_operTags").val().length > 4) {
+                alert('运营标签不可以超过4个字符')
+                return
+            }
+            if (v_sa_price > 100000 || v_pr_content > 100000 ) {
+                alert('售价或面值不能超过10万元');
+                return
+            }
+            var v_sa_price_int = parseFloat(v_sa_price);
+            var v_pr_content_int = parseFloat(v_pr_content);
+            if (!re.test(v_sa_price) || !re.test(v_pr_content) || v_sa_price_int <= 0 || v_pr_content_int <= 0) {
+                alert('（必填）面值或售价要为正数');
+                return
+            }
+            if (v_pr_content_int < v_sa_price_int) {
+                alert('面值要大于或等于售价');
+                return
+            }
+            if ($("#v_display").prop('checked')) {
+                var v_display_t = 1
+            }
+            else {
+                var v_display_t = 0
+            }
+            if ($("#v_isRecommend").prop('checked')) {
+                var v_isRecommend_t = 1
+            }
+            else {
+                var v_isRecommend_t = 0
+            }
+            if ($("#v_start_time").val() == '' || $("#v_end_time").val() == '') {
+                alert('请填写时间')
+                return
+            }
+            if (sDate > eDate) {
+                alert('结束时间小于开始时间!')
+                return
+            }
+
+
+            //alert($("#v_sale_price").val());
+            //ajax请求批量更新数据
+            postJSON("{% url 'normal_edit_recharge_info' %}",
+                    {
+                        v_goods_name: $("#v_goods_name").val(),
+                        v_description: $("#v_description").val(),
+                        v_operTags: $("#v_operTags").val(),
+                        v_sale_price: $("#v_sale_price").val(),
+                        v_prod_content: $("#v_prod_content").val(),
+                        v_start_time: $("#v_start_time").val(),
+                        v_end_time: $("#v_end_time").val(),
+                        v_display: v_display_t,
+                        v_isRecommend:v_isRecommend_t,
+                        v_vendibility: vendibility,
+                        goodsType: 'RECHARGE',
+                        edit: is_edit,
+                        v_card_g_id: v_g_id,
+                    },
+                    function (data) {
+                        msg = eval('(' + data + ')');
+                        if (msg.ret_code.toString() == '0') {
+                            alert('添加成功');
+                            $("#mymodal").modal('hide');
+                            requestData(1);
+                        }
+                        else {
+                            alert(msg['msg']);
+                        }
+                    }
+            );
+        }
+
+
+        //设置置顶状态
+        function editTop(cardGoodsId, top_action) {
+
+            var setTop = 0;
+            if (top_action == "置顶") {
+                setTop = 1;
+            }
+
+            //ajax请求批量更新数据
+            postJSON("{% url 'edit_top' %}",
+                    {
+                        cardGoodsId: cardGoodsId,
+                        setTop: setTop,
+                    },
+                    function (data) {
+                        msg = eval(data);
+                        //alert(msg);
+                        requestData(1);
+                    }
+            );
+        }
+
+
+        //设置上下架状态
+        function editVendibility(cardGoodsId, sale_action) {
+            if (sale_action == '1') {
+                var sale_confirm = '下架';
+            } else {
+                var sale_confirm = '上架';
+            }
+
+            var r = confirm("你确定 " + sale_confirm + " 吗？");
+            if (r == true) {
+                var setVendibility = 0;
+                if (sale_action == 0) {
+                    setVendibility = 1;
+                }
+
+                //ajax请求批量更新数据
+                postJSON("{% url 'edit_vendibility' %}",
+                        {
+                            cardGoodsId: cardGoodsId,
+                            setVendibility: setVendibility,
+                        },
+                        function (data) {
+                            msg = eval(data);
+                            //alert(msg);
+                            requestData(1);
+                        }
+                );
+            }
+            else {
+                return
+            }
+
+
+        }
+
+
+        //批量更新订单保障状态
+        function batchEditVendibility(sale_action) {
+            var ch = document.getElementsByClassName('id_sub_check');
+            var cardGoodsIds = "";
+            for (var i = 0; i < ch.length; i++) {
+                if (ch[i].checked) {
+                    cardGoodsIds += ch[i].value + ",";
+                }
+            }
+            cardGoodsIds = cardGoodsIds.substring(0, cardGoodsIds.length - 1)
+
+            //ajax请求批量更新数据
+            if (sale_action == '0') {
+                var sale_confirm = '下架';
+            } else {
+                var sale_confirm = '上架';
+            }
+            var r = confirm("是否" + sale_confirm + "选中商品");
+            if (r) {
+                postJSON("{% url 'edit_vendibility' %}",
+                        {
+                            cardGoodsId: cardGoodsIds,
+                            setVendibility: sale_action,
+                        },
+                        function (data) {
+                            msg = eval(data);
+                            //alert(msg);
+                            requestData(1);
+                        }
+                );
+            }
+        }
+
+
+        $(function () {
+            $("#v_end_time").datetimepicker({
+                showSecond: true,
+                timeFormat: 'hh:mm:ss',
+                stepHour: 1,
+                stepMinute: 1,
+                hour: 23,
+                minute: 59,
+                second: 59,
+                stepSecond: 1
+            })
+            $("#v_end_time_t").datetimepicker({
+                showSecond: true,
+                timeFormat: 'hh:mm:ss',
+                stepHour: 1,
+                stepMinute: 1,
+                hour: 23,
+                minute: 59,
+                second: 59,
+                stepSecond: 1
+            })
+            $("#v_start_time").datetimepicker({
+                showSecond: true,
+                timeFormat: 'hh:mm:ss',
+                stepHour: 1,
+                stepMinute: 1,
+                stepSecond: 1
+            })
+            $("#v_start_time_t").datetimepicker({
+                showSecond: true,
+                timeFormat: 'hh:mm:ss',
+                stepHour: 1,
+                stepMinute: 1,
+                stepSecond: 1
+            })
+        })
+
+    </script>
+{% endblock %}

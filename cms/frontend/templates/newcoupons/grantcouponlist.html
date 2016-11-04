@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}优惠券{% endblock %}
+
+{% block head %}
+<style>
+    .my_thead{
+        display: table-header-group;
+    }
+    /*   #table tr td:nth-child(2){
+           text-align: left;
+           padding-left: 20px;
+       }*/
+    #table .mimg{
+        width:100px;
+        height: 100px;
+        margin:10px 0;
+    }
+    #table td .mblock{
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    #table .noContent{
+        height: 200px;
+        font-size: 20px;;
+    }
+    #table .noContent:hover{
+        background: transparent;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<ul class="titlebar">
+    <li ><a href="{% url 'open_activity_channels' %}" >优惠券管理</a></li>
+    <li class="active"> <a href="#">优惠券发放</a></li>
+    <li><a href="{% url 'invite_gift' %}">邀请有礼</a></li>
+</ul>
+<section class="top-sec">
+    {% if perms.man.config %}
+    <a class="btn-new" href="{% url 'grant_coupon'%}"><b style="font-size:.18rem">＋&nbsp</b>新增发放</a>
+    {% endif %}
+
+</section>
+<section class="service-table">
+    <table id="table">
+        <caption></caption>
+        <thead class="my_thead">
+        <tr>
+            <th>发放券名</th>
+            <th>发券数</th>
+            <th>用户数</th>
+            <th>备注</th>
+            <th>发放时间</th>
+            <th>操作人员</th>
+        </tr>
+        </thead>
+        <div id="loading" style="display:none;">
+            <img src="{% static 'images/loading.gif' %}"/>
+        </div>
+        <tbody id="tbody">
+        <tr class="noContent">
+            <td colspan="100%">暂无相关内容</td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="no_content" ><p>未找到相关内容，请重新搜索</p></div>
+    <div id="pagination" ></div>
+    <script src="{% static 'js/cms/initTable.js' %}"></script>
+    <script type="text/javascript">
+        var myTable;
+        $(function(){
+            init();
+            myTable = new tableInit({});
+            myTable.getData();
+        })
+
+        function init(){
+            /*初始化页面*/
+            setNavBg("activity_config");
+        }
+        function requestData(options){
+            $.ajax({
+                url:'/allotted_coupon/list/',
+                type:"get",
+                cache:false,
+                data:{
+                    page: options.curPage,
+                    limit: options.pageSize
+                },
+                beforeSend:function(XMLHttpRequest){
+                    $(".noContent").hide();
+                    $("#"+options.pageContainer).hide();
+                    $("#"+options.loadImgId).show();
+                },
+                success:function(result){
+                    var data = result.coupons,num_pages = result.totalpage;
+                    if(data.length == 0){
+                        $('#'+myTable.default.tbodyId).empty();
+                        $("#"+options.pageContainer).hide();
+                        $(".no_content").show();
+                        $(".my_thead").hide();
+                    }
+                    else{
+                        $(".my_thead").show();
+                        $(".no_content").hide();
+                        myTable.processData(data);
+                        if(num_pages>=2) myTable.pageInit(num_pages);
+                    }
+                },
+                error:function(result){
+                    console.log(result);
+                },
+                complete:function(result){
+                    $("#"+options.loadImgId).hide();
+                    var currentpage = options.curPage-1;
+                    $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                    if(currentpage>5){
+                        $(options.pageSelector).eq(currentpage-5).prevAll().hide();
+                    }
+                }
+            })
+        }
+        function delData(id){
+            $.ajax( {
+                url:'/coupon/?id='+id,
+                type: "DELETE",
+                cache: false,
+                beforeSend: function (XMLHttpRequest) {
+                    $("#loading").show();
+                },
+                success: function (result) {
+                    //console.log(result);
+                    if (result.msg == '删除成功') {
+                        requestData(myTable.default);
+                    }
+                },
+                error: function (result) {
+                    console.log(result);
+                },
+                complete: function (result) {
+                    $("#loading").hide();
+                }
+            });
+        };
+        /*处理后台返回数据*/
+        function dataInit(data){
+            var tbodyId = myTable.default.tbodyId,htmlStr='',trId;
+            if(data.length == 0){
+                $(".noContent").show();
+                return ;
+            }
+            $.each(data,function(i,value){
+                htmlStr+='<tr>'+
+                        '<td>'+value.name+'</td>' +
+                        '<td>'+value.count+'</td>' +
+                        '<td>'+value.user_count+'</td>' +
+                        '<td>'+value.reason+'</td>' +
+                        '<td>'+value.start_time+'</td>' +
+                        '<td>'+value.operator+'</td>' +
+                        '</tr>' ;
+
+                function getName(name){
+                    var nameType='';
+                    switch(name) {
+                        case 'HF':
+                            nameType ='话费';
+                            break;
+                        case 'MOVIE':
+                            nameType ='电影';
+                            break;
+                        case 'FLOW':
+                            nameType ='流量';
+                            break;
+                        case 'SELF':
+                            nameType ='到家';
+                            break;
+                        case 'H5':
+                            nameType ='H5';
+                            break;
+                        case 'GAME':
+                            nameType ='游戏';
+                            break;
+                        case 'QQ':
+                            nameType ='Q币';
+                            break;
+                    }
+                    return nameType;
+                };
+
+            });
+            $('#'+tbodyId).empty().append($(htmlStr));
+        }
+    </script>
+</section>
+{% endblock %}

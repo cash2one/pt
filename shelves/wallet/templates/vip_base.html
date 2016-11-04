@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block module %}
+{% include 'vip_edit_card.html' %}
+    <div class="container-fluid" style="margin-top: 40px;">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="well sidebar-nav">
+                    <ul class="nav nav-list">
+                        <li class="nav-header"><span class="glyphicon glyphicon-pawn"></span>VIP管理</a></li>
+                        <li><a href="{% url 'vip_goods' %}">VIP - 充值卡管理</a></li>
+                        <li><a href="{% url 'vip_redeem_codes' %}">VIP - 兑换卡管理</a></li>
+                    </ul>
+                </div>
+            </div>
+                {% block content %}{% endblock %}
+                <a id="scrollUp" href="#" title="返回到顶部"></a>
+            </div>
+        </div>
+    </div>
+    <script type="application/javascript">
+
+    function updateVip() {
+{#        var v_data = []#}
+
+        //ajax请求批量更新数据
+        postJSON("{% url 'get_vip_info_ajax' %}",
+                {
+                },
+                function (data) {
+                    var v_data = eval(data)[0];
+                    document.getElementById("v_vip_card_title").value = v_data[0][2];
+                    document.getElementById("v_vip_userProtocolUrl").value = v_data[0][1];
+                    document.getElementById("v_vip_descsSimple").value = v_data[0][3];
+                    document.getElementById("v_vip_userStatement").value = v_data[0][5];
+                    trd_cate = v_data[0][0];
+                    console.log(trd_cate)
+                    $('#v_vip_third_category').multiselect('deselectAll', false);
+                    $('#v_vip_third_category').multiselect('updateButtonText');
+                    for (var i = 0; i < trd_cate.length; i++) {
+                        $('option[value="{0}"]'.format(trd_cate[i]), $('#v_vip_third_category')).prop('selected', true);
+                    }
+                    $('#v_vip_third_category').multiselect('refresh');
+                    $('#v_vip_third_category').multiselect('updateButtonText');
+                    updateSecondCategory();
+                    $('#mymodal_vip').modal('show');
+                }
+        );
+    }
+
+    </script>
+
+{% endblock %}

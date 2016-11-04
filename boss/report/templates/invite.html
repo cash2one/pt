@@ -1,0 +1,401 @@
+{% extends "report-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" xmlns="http://www.w3.org/1999/html"/>
+    <script type="text/javascript" src="/static/js/multiselect.js"></script>
+    <style type="text/css">
+        .form-group {
+            margin-top: 0;
+        }
+    </style>
+{% endblock %}
+{% block title %}邀请人{% endblock %}
+{% block content %}
+    <div class="form-inline">
+        <div style="display: none">
+            版本选择：
+            <select id="app_version" multiple="multiple">
+                <!--<option value="">总和</option>-->
+                {% for status in apps_version %}
+                    {% if status != None %}
+                        <option value="{{ status }}" selected="selected">{{ status }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>&nbsp;&nbsp;&nbsp;&nbsp;
+            渠道选择：
+            <select id="app_channel" multiple="multiple">
+                <!--<option value="">总和</option>-->
+                {% for status in apps_channel %}
+                    {% if status != None %}
+                        <option value="{{ status }}" selected="selected">{{ status }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>&nbsp;&nbsp;&nbsp;&nbsp;
+        </div>
+        <div class="form-group">
+            <input type="text" class="form-control" id="search" placeholder="输入要查询的手机号或ptuid" style="width: 300px">
+        </div>
+        <button class="btn btn-success" onclick="requestData(1)">搜索</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <div style="display: none">
+            充值列表显示列设定：
+            <select id="daojia_table" multiple="multiple">
+                <!--<option value="">总和</option>-->
+                {% for column in invite_table %}
+                    <option value="{{ column.1 }}" {% if column.2 == 1 %}
+                            selected="selected"{% endif %}>{{ column.1 }}</option>
+                {% endfor %}
+            </select>&nbsp;&nbsp;&nbsp;&nbsp;
+        </div>
+    </div>
+
+
+    <br/>
+    <br/>
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control"
+                                   class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    <br/>
+    <br/>
+    <div class="loading_gif" style="display: none"></div>
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px">
+        <thead>
+        <tr>
+            <th id="col_num" colspan="24">
+                <span id="table_title">邀请人查询</span>
+                <span id="table_detail" class="glyphicon glyphicon-question-sign" data-toggle="tooltip"
+                      data-placement="right"></span>
+                <a id="export_csv" href="{% url invite_csv %}" class="t_right">
+                    <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                </a>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr id="colname">
+            <td id="col_id">PTUID</td>
+            <td id="col_id">用户手机号</td>
+            <td id="col_id">优惠券ID</td>
+            <td id="col_id">优惠券名称</td>
+            <td id="col_id">面额</td>
+            <td id="col_id">使用限制</td>
+            <td id="col_id">使用说明</td>
+            <td id="col_id">参与活动</td>
+            <td id="col_id">优惠券领取时间</td>
+            <td id="col_id">优惠券截止日期</td>
+            <td id="col_id">优惠券使用时间</td>
+            <td id="col_id">订单号</td>
+            <td id="col_id">优惠券使用商品名称</td>
+        </tr>
+        </tbody>
+    </table>
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block;margin-bottom: 200px;">
+        <ul class="pagination" style="height:0;font-size: 12px;">
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="requestData(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="requestData(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;
+        var num_pages = 1;
+        var g_date_control = $("#date_control");
+        var g_current_page = 1;
+        var g_data = [], g_period = 1,
+                initStartDate = getURLParam("start_date") || (getDateStr("{{ currentdate }}", -6)),
+                initEndDate = getURLParam("end_date") || "{{ currentdate }}";
+        var g_order_detail = []
+        var g_order_pos = -1
+        var who ={{ who|safe }}
+
+        //特殊筛选项(1-超时接单,2上门确认,3服务回访)
+        var g_special_filter = -1;
+
+        $(document).ready(function () {
+            setLeftNav("nav_full_hosting");
+            loading.init(".loading_gif", "#data_table");
+            modifyCsvHref(initStartDate.replace(/-/g, ""), initEndDate.replace(/-/g, ""));
+            if(who == '1'){
+                $("#table_title").val('被邀请人查询');
+                document.title = '被邀请人查询';
+            }
+            $("#table_detail").tooltip({
+                html: true,
+                title: ([
+                    '<div class="tongji_tip">',
+                    '<p><span>订单保障规则</p>',
+                    '<p><span>超时接单：</span>用户下单后，超过20分钟CP未接单</p>',
+                    '<p><span>上门确认：</span>离服务开始时间前2小时的单</p>',
+                    '<p><span>服务回访：</span> A）服务状态变成『服务完成』的订单；B）一个单变成『服务中』后，6小时后还未变成『服务完成』;</p>',
+                    '</div>'
+                ]).join("")
+            });
+
+            $('#cp_name').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                includeSelectAllOption: true,
+                nonSelectedText: '默认全选',
+                onChange: function (option, checked, select) {
+                    requestData(1);
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            $('#app_version').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                includeSelectAllOption: true,
+                nonSelectedText: '默认全选',
+                onChange: function (option, checked, select) {
+                    requestData(1);
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            $('#app_channel').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                includeSelectAllOption: true,
+                nonSelectedText: '默认全选',
+                onChange: function (option, checked, select) {
+                    requestData(1);
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            $('#daojia_table').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 400,
+                filterPlaceholder: "搜索",
+                includeSelectAllOption: true,
+                enableFiltering: true,
+                nonSelectedText: '默认全选',
+                onChange: function (option, checked, select) {
+                    showTable()
+                    requestData(1);
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+
+            g_date_control.daterangepicker(
+                    {
+                        locale: {
+                            applyLabel: "确定",
+                            cancelLabel: "取消"
+                        },
+                        format: 'YYYY-MM-DD',
+                        separator: ' 到 ', //前后有空格
+                        startDate: initStartDate,
+                        endDate: initEndDate,
+                        maxDate: getDateStr(initEndDate, 1)// < maxDate
+                    },
+                    function (start, end, label) {
+                        console.log(start.toISOString(), end.toISOString(), label);
+                    }
+            ).val(initStartDate + " 到 " + initEndDate);
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function (ev, picker) {
+                requestData(1);
+            });
+            requestData(1);
+            showTable()
+        });
+
+        function updateDividePage() {
+            var count = num_pages;
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for (var i = count; i >= 1; i--) {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='requestData({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter(".pagination li:first");
+            }
+        }
+
+        function updateTable(page) {
+            var total_page = num_pages;
+            if (page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("[tr_can_remove='yes']").remove();
+            //添加元素
+            console.log(g_data)
+            for (var i = 0; i < g_data.length; i++) {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for (j in g_data[i]) {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                if(who == '0' && g_data[i][6] != '--'){
+                    tr.append($("<td><a href='/report/invite_detail/?pt_uid={0}'>查看详情</a></td>".format(g_data[i][0])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for (var i = 1; i <= total_page; i++) {
+                if (i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //刷新订单信息
+        function freshOrderDetail(detail_data, row_index) {
+
+            $("[tr_can_remove='yes']").remove();
+
+            for (var i = 0; i < g_data.length; i++) {
+                if (i != row_index) {
+                    var tr = $("<tr tr_can_remove='yes'></tr>");
+                    for (j in g_data[i]) {
+                        tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                    }
+                    $("#data_table tbody").append(tr);
+                }
+                else {
+                    var tr = $("<tr tr_can_remove='yes'></tr>");
+                    for (j in g_data[i]) {
+                        tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                    }
+                    $("#data_table tbody").append(tr);
+                    for (var sub_i = 0; sub_i < detail_data.length; sub_i++) {
+                        var sub_tr = $("<tr tr_can_remove='yes'></tr>");
+                        for (sub_j in detail_data[sub_i]) {
+                            sub_tr.append($("<td style='max-width:150px; table-layout:fixed; word-break:break-all; overflow:hidden;' >{0}</td>".format(detail_data[sub_i][sub_j])));
+                        }
+                        $("#data_table tbody").append(sub_tr);
+                    }
+                }
+            }
+        }
+
+
+        //更新显示行数
+        function updatePer(per) {
+            g_per = per;
+            requestData(1);
+        }
+
+        //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+        function updateTime(delay) {
+            var start_date = getDateStr("{{ currentdate }}", delay);
+            var end_date = "{{ currentdate }}";
+
+            g_date_control.data('daterangepicker').setStartDate(start_date);
+            g_date_control.data('daterangepicker').setEndDate(end_date);
+            g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+            requestData(1);
+        }
+
+        function requestData(cur_page) {
+            var start_date = g_date_control.val().substr(0, 10);
+            var end_date = g_date_control.val().substr(13);
+
+            //修改导出文件的href地址
+            modifyCsvHref(start_date, end_date);
+            if (cur_page <= 0 || cur_page > num_pages)
+                return;
+
+            postJSON("{% url invite_list %}",
+                    JSON.stringify({
+                        "per_page": g_per,
+                        "cur_page": cur_page,
+                        "key": $("#search").val(),
+                        "start_date": start_date,
+                        "end_date": end_date,
+                        "who":'{{ who|safe }}',
+
+                    }),
+                    function (data) {
+                        //字符串转json
+                        if (eval(data).code ==1){
+                            console.log(eval(data).msg);
+                            return
+                        }
+                        g_data = eval(data)[0];
+                        num_pages = eval(data)[1];
+                        updateDividePage();
+                        updateTable(cur_page);
+                        g_order_pos = -1;
+                    }
+            );
+
+
+        }
+
+        function modifyCsvHref(start_date, end_date) {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url invite_csv %}?start_date={0}&end_date={1}&who={2}&key={3}".format(start_date, end_date,who,$("#search").val()));
+        }
+
+        //根据daojia_table筛选项,调整列表行数，跟列表名
+        function showTable() {
+            var column_selected = $("#daojia_table option:selected")
+            var column_all = document.getElementById("colname")
+            document.getElementById("col_num").colSpan = column_selected.length
+            $("#colname").children().remove();
+            for (i = 0; i < column_selected.length; i++) {
+                var node = document.createElement("td");
+                var textnode = document.createTextNode(column_selected[i].value);
+                node.appendChild(textnode);
+                document.getElementById("colname").appendChild(node);
+            }
+        }
+
+    </script>
+{% endblock %}

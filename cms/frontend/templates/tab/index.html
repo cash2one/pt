@@ -1,0 +1,473 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}标签库{% endblock %}
+
+{% block head %}
+<style>
+    /*table必须样式*/
+    label i {
+        color: #ff0000;
+        font-size: 16px;
+        font-style: normal;
+        vertical-align: top;
+        padding: 0;
+    }
+    .modal-dialog {
+        margin-top: 1rem !important;
+    }
+    .my_thead{
+        display: table-header-group;
+    }
+    .img-info {
+        position: relative;
+        display: inline-block;
+        margin-right: 15px;
+    }
+    .img-info img {
+        width: 48px;
+        height: 48px;
+    }
+    .img-info .close {
+        color: red;
+        margin-top: -5px;
+        margin-left: 1px;
+    }
+    .img-info .close:hover {
+        color: red;
+        opacity: 1;
+    }
+    .img-pick {
+        padding: 16px;
+    }
+    /*end*/
+    .color-info {
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
+        margin-right: 10px;
+        display: inline-block;
+        border: 1px solid #ccc;
+        vertical-align: bottom;
+    }
+    /*覆盖pt-cms.css中的样式*/
+    a:focus,
+    a:active,
+    a:hover,
+    a {
+        text-decoration: none;
+    }
+    .modal-body form input[type="text"] {
+        width: 100%;
+    }
+    a.text-warning {
+        color: #a94442 !important;
+    }
+    a.text-info {
+        color: #000 !important;
+    }
+    a.text-success {
+        color: #4cae4c !important;
+    }
+    a.text-default {
+        color: #66cccc !important;
+    }
+</style>
+<link rel="stylesheet" href="{% static 'css/multiple-select.css' %}">
+<link rel="stylesheet" href="{% static 'css/imgpicker.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="service-table">
+    {% verbatim %}
+    <button class="btn btn-primary pull-right" @click="newTab(0)">新增tab</button>
+
+    <!-- 标签管理列表 -->
+    <table>
+        <caption>tab列表：</caption>
+        <thead class="my_thead">
+            <tr>
+                <th>tab名称</th>
+                <th>排序</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="tbody">
+            <tr v-for="list in tabList">
+                <td><div v-text="list.check_name"></div></td>
+                <td>
+                    <span v-text="list.sort"></span>
+                </td>
+                <td>
+                    <div class="btns">
+                        <a href="#" class="text-default" @click.prevent="edit(list)">编辑</a>
+                        <a href="#" class="text-default" @click.prevent="dot(list)">打点</a>
+                        <a href="#" class="text-warning" @click.prevent="deleteDot(list, $index)">删除</a>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+
+     <!-- 添加商品弹窗 -->
+    <div class="modal fade" id="editTab">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">编辑tab</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="col-md-4 col-sm-4 text-right"><i>*</i>tab名称(未选中)：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <input type="text" class="form-control" placeholder="未选中时的标签名称" maxlength="6" v-model="editTab.un_check_name">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="col-md-4 col-sm-4 text-right"><i>*</i>tab名称(选中)：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <input type="text" class="form-control" placeholder="未选中时的标签名称" maxlength="6" v-model="editTab.check_name">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="col-md-4 col-sm-4 text-right"><i>*</i>文字颜色(未选中)：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <span class="color-info" :style="{backgroundColor: editTab.un_check_style}"></span>
+                                        <input type="color" v-model="editTab.un_check_style">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="col-md-4 col-sm-4 text-right"><i>*</i>文字颜色(选中)：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <span class="color-info" :style="{backgroundColor: editTab.check_style}"></span>
+                                        <input type="color" v-model="editTab.check_style">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="col-md-4 col-sm-4 text-right"><i>*</i>图标(未选中)：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <div class="img-info" v-show="editTab.un_check_icon">
+                                            <img :src="editTab.un_check_icon" alt="未选中">
+                                            <span class="close" @click="removeIcon(0)">&times;</span>
+                                        </div>
+                                        <button class="btn btn-bg img-pick" id="fileupload-off" @click.prevent.stop="upload(0)">
+                                            <i class="glyphicon glyphicon-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="col-md-4 col-sm-4 text-right"><i>*</i>图标(选中)：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <div class="img-info" v-show="editTab.check_icon">
+                                            <img :src="editTab.check_icon" alt="未选中">
+                                            <span class="close" @click="removeIcon(1)">&times;</span>
+                                        </div>
+                                        <button class="btn btn-bg img-pick" id="fileupload-on" @click.prevent.stop="upload(1)">
+                                            <i class="glyphicon glyphicon-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="col-md-4 col-sm-4 text-right"><i>*</i>选中动作ID：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <select class="form-control" v-model="editTab.action_id">
+                                            <template v-if="actions.length" v-for="list in actions">
+                                                <option value="{{list[0]}}">{{list[1]}}</option>
+                                            </template>
+                                            <template v-else>
+                                                <option value="" disabled>没有可选择的动作</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="col-md-4 col-sm-4 text-right"><i>*</i>打点key：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <select v-model="editTab.dot_key" class="form-control">
+                                            <option value="VIP_CARD">我的VIP卡</option>
+                                            <option value="INVITE_NEW">邀新有礼</option>
+                                            <option value="TAB_MINE">Tab标签-我的</option>
+                                            <option value="TAB_CATEGORY">Tab标签-分类</option>
+                                            <option value="TAB_HOME">Tab标签-首页</option>
+                                            <option value="PT_CARD_TAB">葡萄卡</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="col-md-4 col-sm-4 text-right"><i>*</i>排序：</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        <input type="text" class="form-control" maxlength="10" v-model="editTab.sort">
+                                    </div>
+                                </div>
+                            </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="updateTab">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片上传&选择组件 -->
+    <div class="imgpicker"></div>
+
+    <!-- 新增辅助组件 -->
+    <div class="helper"></div>
+    {% endverbatim %}
+</section>
+    <script src="{% static 'js/cms/helper.js' %}"></script>
+    <script src="{% static 'js/cms/pager.js' %}"></script>
+    <script src="{% static 'js/plupload/plupload.full.min.js' %}"></script>
+    <script src="{% static 'js/cms/imgpicker.js' %}"></script>
+    <script type="text/javascript">
+        var myTable,
+            is_action_init = false;
+
+        var channel = {{ channel }};
+
+        var vm = new Vue({
+            el: '.service-table',
+            data: {
+                tabList: [],
+                actions: [],
+                editTab: {
+                    un_check_name: '',
+                    check_name: '',
+                    un_check_style: '#000000',
+                    check_style: '#000000',
+                    un_check_icon: '',
+                    check_icon: '',
+                    action_id: '',
+                    dot_key: 'VIP_CARD',
+                    sort: 0,
+                    id: ''
+                }
+            },
+            methods: {
+                newTab: function(n) {
+                    var _this = this;
+                    if (n === 0) {
+                        this.editTab = {
+                            un_check_name: '',
+                            check_name: '',
+                            un_check_style: '#000000',
+                            check_style: '#000000',
+                            un_check_icon: '',
+                            check_icon: '',
+                            action_id: '',
+                            dot_key: 'VIP_CARD',
+                            sort: 0,
+                            id: ''
+                        };
+                    }
+                    if (!is_action_init) {
+                        $.getJSON('/actions/list/').done(function(res) {
+                            is_action_init = true;
+                            res.splice(0, 1);
+                            res.splice(-1, 1);
+                            _this.actions = res;
+                            _this.editTab.action_id = res[0][0];
+                            Vue.nextTick(function() {
+                                $('#editTab').modal();
+                            });
+                        }).fail(function(e) {
+                            helper.alert({
+                                content: '获取所有actions列表失败，请稍后重试~'
+                            });
+                        });
+                    } else {
+                        Vue.nextTick(function() {
+                            $('#editTab').modal();
+                        });
+                    }
+                },
+                edit: function(list) {
+                    this.editTab = list;
+                    this.newTab(1);
+                },
+                dot: function(list) {
+                    helper.confirm({
+                        content: '确定要给『' + list.un_check_name + '』tab打点吗？',
+                        yes: function() {
+                            $.ajax({
+                                url: 'http://api.test.putao.so/scmsface/dot_view/dot',
+                                data: {
+                                    key_param: list.dot_key,
+                                    type: 1
+                                },
+                                type: 'GET',
+                                dataType: 'json',
+                                success: function(res) {
+                                    if (res.code === 0) {
+                                        helper.alert({
+                                            content: '已成功打点'
+                                        });
+                                    } else {
+                                        setTimeout(function() {
+                                            helper.alert({
+                                                content: res.msg
+                                            });
+                                        }, 400);
+                                    }
+                                },
+                                error: function(e) {
+                                    helper.alert({
+                                        content: '打点失败，请稍后重试~'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                },
+                deleteDot: function(list, index) {
+                    var _this = this;
+                    helper.confirm({
+                        content: '确定要删除『' + list.un_check_name + '』吗？',
+                        yes: function() {
+                            helper.loading();
+                            $.ajax({
+                                url: '/tab/?channel=' + channel + '&tid=' + list.id,
+                                type: 'DELETE',
+                                dataType: 'json',
+                                success: function(res) {
+                                    helper.close();
+                                    if (res.code === 0) {
+                                        _this.tabList.splice(index, 1);
+                                    } else {
+                                        setTimeout(function() {
+                                            helper.alert({
+                                                content: res.msg
+                                            });
+                                        }, 400);
+                                    }
+                                },
+                                error: function(e) {
+                                    helper.close();
+                                    helper.alert({
+                                        content: '删除Tab失败，请稍后重试~'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                },
+                updateTab: function(list) {
+                    var _this = this;
+
+                    // check valid
+
+                    helper.loading();
+                    var url = _this.editTab.id ? '/tab/?channel=' + channel + '&tid=' + _this.editTab.id : '/tab/?channel=' + channel;
+                    if (!_this.editTab.id) {
+                        delete _this.editTab.id;
+                    } else {
+                        delete _this.editTab.channel_id;
+                    }
+                    $.ajax({
+                        url: url,
+                        data: JSON.stringify(_this.editTab),
+                        type: _this.editTab.id ? 'PUT' : 'POST',
+                        dataType: 'json',
+                        success: function(res) {
+                            helper.close();
+                            if (res.code === 0) {
+                                $('#editTab').modal('hide');
+                                setTimeout(function() {
+                                    getTabList({
+                                        channel: channel
+                                    });
+                                }, 400);
+                            } else {
+                                setTimeout(function() {
+                                    helper.alert({
+                                        content: res.msg
+                                    });
+                                }, 400);
+                            }
+                        },
+                        error: function(e) {
+                            helper.close();
+                            helper.alert({
+                                content: '修改Tab信息失败，请稍后重试~'
+                            });
+                        }
+                    });
+                },
+                upload: function(n) {
+                    var _this = this;
+                    $('#imgpicker').modal();
+                    imgpicker.init({
+                        filters: {
+                            max_file_size: '50k'
+                        },
+                        callback: function(url) {
+                            if (n === 0) {
+                                _this.editTab.un_check_icon = url;
+                            } else if (n === 1) {
+                                _this.editTab.check_icon = url;
+                            }
+                        }
+                    });
+                },
+                removeIcon: function(n) {
+                    if (n === 0) {
+                        this.editTab.un_check_icon = '';
+                    } else if (n === 1) {
+                        this.editTab.check_icon = '';
+                    }
+                }
+            },
+            ready: function() {
+                /*初始化页面*/
+                var bg = Number(getURLParam('t'));
+                setNavBg(bg);
+                getTabList({
+                    channel: channel
+                });
+            }
+        });
+
+        // 标签组列表
+        function getTabList(options) {
+            helper.loading();
+            $.getJSON('/tab/list/', {
+                channel: options.channel,
+                page: 1,
+                limit: 10
+            }).done(function(data) {
+                vm.$set('tabList', data.tabs);
+                Vue.nextTick(function() {
+                    helper.close();
+                });
+            }).fail(function(e) {
+                helper.close();
+                setTimeout(function() {
+                    helper.alert({
+                        content: '获取tab列表数据失败，请稍后重试~'
+                    });
+                }, 400);
+            });
+        }
+    </script>
+{% endblock %}

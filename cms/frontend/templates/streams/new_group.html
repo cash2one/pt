@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}新建内容流组{% endblock %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block content %}
+
+    <div class="cms-subtitle">
+        <ol class="breadcrumb">
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ text }}</a></li>
+            <li><a href="{% url 'main_index' %}?t={{ t }}">{{ v }}</a></li>
+            <li><a href="{% url 'config_item' %}?t={{ t }}&v={{ v }}&c={{ c }}">{{ c }}</a></li>
+            <li><a href="{% url 'streams' %}?t={{ t }}&v={{ v }}&c={{ c }}">内容流</a></li>
+            <li class="active">新建内容流组</li>
+        </ol>
+    </div>
+
+    <div id="error-hints">
+
+    </div>
+
+
+    <form class="sendmsg-form" action="{% url 'new_streamsgroup' %}?channel={{ channel }}" method="post"
+          enctype="multipart/form-data">{% csrf_token %}
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>类型:</label>
+                    <select class="input-group-lg form-control" name="type" id="type" required maxlength="11">
+                        {#<option class="form-control" value=""></option>#}
+                        {% for type in streams_type %}
+                            <option class="form-control" value="{{ type.0 }}">{{ type.1 }}</option>
+                        {% endfor %}
+                        {#                        <option class="form-control">测试0</option>#}
+                        {#                        <option class="form-control">测试1</option>#}
+                        {#                        <option class="form-control">测试2</option>#}
+                    </select>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>排序:</label>
+                    <input type="number" class="form-control" name="location" id="location" placeholder="请输入小于128的整数"
+                           required max="127" onkeyup="this.value=this.value.replace(/\D/g,'')"
+                           onafterpaste="this.value=this.value.replace(/\D/g,'')"/>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>场景:</label>
+                    <select class="input-group-lg form-control" name="scene_id" id="scene_id" required maxlength="11">
+                        {% for scene in scenes %}
+                            <option class="form-control" value="{{ scene.0 }}">{{ scene.1 }}</option>
+                        {% endfor %}
+                        {#                        <option class="form-control">测试0</option>#}
+                        {#                        <option class="form-control">测试1</option>#}
+                        {#                        <option class="form-control">测试2</option>#}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="row text-center">
+            <a class="btn btn-default col-lg-1 col-lg-offset-4"
+               href="{% url 'streams' %}?t={{ t }}&v={{ v }}&c={{ c }}">取消</a>
+            <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="确定"/>
+        </div>
+    </form>
+
+
+
+    <script type="text/javascript">
+
+        setNavBg({{t}});
+
+
+        checkForm({{ errors|safe }});
+
+
+        $("form input").focus(function () {
+            $(this).css("border", "1px solid #ccc");
+        });
+
+
+        function setInPutValue() {
+            {#        console.log("{{ goods_form.initial }}");#}
+            {#        console.log("a"+"b");#}
+            {% for key,value in fields.items %}
+                $("[name='{{ key }}']").val({{ value|safe }});
+            {% endfor %}
+            {#        console.log("{{ new_service_form.city.value }}")#}
+
+        }
+        window.onload = setInPutValue;
+
+    </script>
+    <script>
+
+    </script>
+{% endblock %}
+

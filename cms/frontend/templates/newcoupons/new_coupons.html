@@ -1,0 +1,915 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}新建优惠券{% endblock %}
+
+{% block head %}
+<style>
+    * {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .dashhr {
+        margin: 10px 0;
+        border-top: 1px dashed #ccc;;
+    }
+
+    .sendmsg-form label {
+        width: 16%;
+        text-align: right;
+        margin-right: 1%;
+    }
+
+    .sendmsg-form .form-control, .sendmsg-form select {
+        display: inline-block;
+        width: 80%;
+    }
+
+    .sendmsg-form .col-lg-12 .form-control {
+        width: 90%;
+        vertical-align: middle;
+    }
+
+    .sendmsg-form a.addpicbtn {
+        cursor: pointer;
+        font-size: 40px;
+        padding: 10px 22px;
+        border: 2px solid #999;
+        color: #999;
+        cursor: pointer;
+    }
+
+    .citylist {
+        width: 90%;
+        display: inline-block;
+        vertical-align: top;
+    }
+
+    .correctbtn {
+        color: #337ab7;
+        margin-left: 470px;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .correctbtn:hover {
+        color: blue;
+        cursor: pointer;
+    }
+
+    #validataDiv {
+        padding-left: 10%;
+    }
+
+    #validataDiv .form-group label {
+        width: 4%;
+        text-align: left;
+    }
+    .rangelist{
+        width: 90%;
+        margin-left: 8.5%;
+        text-align: left;
+    }
+    .rangelist .srvicearea{
+        background: #c0c0c0;
+        border-radius: 5px;
+        padding:10px;
+        margin-bottom:10px;
+    }
+    .rangelist .form-group label{
+        width: auto;
+    }
+    .rangelist select{
+        display: block;
+    }
+    .clone{
+        display: none!important;
+    }
+</style>
+<link rel="stylesheet" href="{% static 'css/selectImg.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/multiple-select.css' %}"/>
+{% endblock %}
+
+{% block content %}
+<ul class="titlebar">
+    <li class="active"><a href="{% url 'open_activity_channels' %}" >优惠券管理</a></li>
+    <li><a href="{% url 'open_coupon_create' %}">优惠券发放</a></li>
+</ul>
+
+<h4 class="back">
+    <a href="{% url 'open_activity_channels' %}"> <i class="glyphicon glyphicon-chevron-left"></i>返回优惠券管理</a>
+</h4>
+
+
+<div id="error-hints">
+
+</div>
+
+<h6 class="warning">
+    <span class="glyphicon glyphicon-exclamation-sign"></span>无审核模块，创建后立即生效，请在创建过程认真核对信息，确保信息准确性，无错别字。
+</h6>
+<form class="sendmsg-form">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i>优惠券类型:</label>
+                <select name="scope" id="scope" class="input-group-lg form-control" >
+                    <!--<option class="form-control" value="">全部</option>-->
+                </select>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i>优惠券名称:</label>
+                <input type="text" class="form-control" name="name" id="name" required maxlength="20" placeholder="展示在客户端"/>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i> 优惠券描述:</label>
+                <textarea class="form-control" name="remark" id="remark" maxlength="200" required placeholder="用于说明优惠券的使用规则"></textarea>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i> 优惠券面额单位:</label>
+                <select name="biz_type" id="biz_type" class="input-group-lg form-control" >
+                    <option class="form-control" value="0">元</option>
+                    <!-- <option class="form-control" value="1">M</option> -->
+                    <!--<option class="form-control" value="2">折扣</option>-->
+                </select>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i>优惠券面额:</label>
+                <input type="number" class="form-control" name="amount"  required placeholder="输入优惠额度"/>
+            </div>
+        </div>
+
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label>消费限额:</label>
+                <input type="number" class="form-control" name="min_consume"  placeholder="消费满XX元可用，请输入数字"/>
+                <p class="remindertext">流量券单位提示文字</p>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label>消费限额描述:</label>
+                <input type="text" class="form-control" name="consume_remark"  placeholder="满XX元可用"/>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i>有效期类型:</label>
+                <select name="effect_type" id="effect_type" class="input-group-lg form-control" >
+                    <option class="form-control" value="0">指定时间范围可用</option>
+                    <option class="form-control" value="1">领取后X天可用</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label><i>*</i>有效天数:</label>
+                <input type="number" class="form-control" name="effect_days" id="effect_days"  placeholder="请输入有效天数"/>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i>起始时间:</label>
+                <input  type="datetime-local" class="form-control" min="1999-12-31T23:59" max="9999-12-31T23:59" name="start_time" id="start_time" />
+            </div>
+        </div>
+
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i> 结束时间</label>
+                <input  type="datetime-local" class="form-control" min="1999-12-31T23:59" max="9999-12-31T23:59" name="end_time" id="end_time" />
+            </div>
+        </div>
+
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i> 用券原因</label>
+                <select name="reason" class="input-group-lg form-control" >
+                    <option value="运营成本">运营成本</option>
+                    <option value="公司福利" selected>公司福利</option>
+                    <option value="用户赔偿">用户赔偿</option>
+                    <option value="其他原因">其他原因</option>
+                </select>
+            </div>
+        </div>
+
+
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i> 是否与活动互斥：</label>
+                <select class="input-group-lg form-control" name="is_mutex" value="" id="is_mutex">
+                    <option class="form-control" value="0">不互斥</option>
+                    <option class="form-control" value="1">互斥</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label><i>*</i> 优惠券成本：</label>
+                <select class="input-group-lg form-control" name="cost_type" value="" id="cost_type">
+                    <option class="form-control" value="2">葡萄成本</option>
+                    <option class="form-control" value="1">CP成本</option>
+                    <option class="form-control" value="3">合作</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label></label>
+                <input type="text" class="form-control"  name="putao_cost" placeholder="葡萄成本">
+            </div>
+            <div class="form-group display_none">
+                <label></label>
+                <input type="text" class="form-control" name="cp_cost" placeholder="CP成本">
+            </div>
+        </div>
+
+        <div class="col-lg-12">
+            <div class="form-group">
+                <label>适用服务范围</label>
+            </div>
+            <div class="rangelist">
+                <div class="srvicearea">
+                    <div class="form-group">
+                        <label>分类:</label>
+                        <label><input type="radio" name="fenlei" checked/>仅选中分类可用</label>
+                        <label><input type="radio" name="fenlei"/>仅选中分类不可用</label>
+                        <select multiple="multiple"  name="category" class=""></select>
+                    </div>
+                    <div class="form-group">
+                        <label>CP:</label>
+                        <label><input type="radio" name="allcps" checked/>仅选中CP可用</label>
+                        <label><input type="radio" name="allcps"/>仅选中CP不可用</label>
+                        <select multiple="multiple"  name="cps" class=""></select>
+                    </div>
+                    <div class="form-group">
+                        <label>服务:</label>
+                        <label><input type="radio" name="allservice" checked/>仅选中服务可用</label>
+                        <label><input type="radio" name="allservice"/>仅选中服务不可用</label>
+                        <select multiple="multiple"  name="servicelist" class=""></select>
+                    </div>
+                    <a class="btn btn-warning delbtn" href="#">删除</a>
+                </div>
+                <div class="srvicearea clone">
+                    <div class="form-group">
+                        <label>分类:</label>
+                        <label><input type="radio" name="" checked/>仅选中分类可用</label>
+                        <label><input type="radio" name=""/>仅选中分类不可用</label>
+                        <select multiple="multiple"  name="" class=""></select>
+                    </div>
+                    <div class="form-group">
+                        <label>CP:</label>
+                        <label><input type="radio" name="" checked/>仅选中CP可用</label>
+                        <label><input type="radio" name=""/>仅选中CP不可用</label>
+                        <select multiple="multiple"  name="" class=""></select>
+                    </div>
+                    <div class="form-group">
+                        <label>服务:</label>
+                        <label><input type="radio" name="" checked/>仅选中服务可用</label>
+                        <label><input type="radio" name=""/>仅选中服务不可用</label>
+                        <select multiple="multiple"  name="" class=""></select>
+                    </div>
+                    <a class="btn btn-warning delbtn" href="#">删除</a>
+                </div>
+                <a class="btn btn-primary addnewrange" href="#">继续添加范围</a>
+            </div>
+
+        </div>
+    </div>
+
+
+
+    <div class="row text-center">
+        <a class="btn btn-default col-lg-1 col-lg-offset-4" href="{% url 'open_activity_channels' %}">取消</a>
+        <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="提交"/>
+    </div>
+
+
+</form>
+<script type="text/javascript" src="{% static 'js/multiple-select.js' %}"></script>
+<script type="text/javascript">
+    var category = ["HF-话费","MOVIE-电影","FLOW-流量","SELF-到家","H5-H5","GAME-游戏","QQ-Q币"],curCId,editFlag= false,databaseObject ={},counter=1;
+    window.onload = function(){
+        setNavBg("activity_config");
+        $.each(category,function(i,ele){
+            var data = ele.split("-");
+            $("#scope").append("<option  class='form-control' value='"+data[0]+"'>"+data[1]+"</option>");
+        });
+
+        if(GetQueryString('id')){
+            curCId = GetQueryString('id');
+            editFlag = true;
+            $("input[name],select[name=scope],select[name=biz_type],select[name=effect_type],[name=cost_type]").each(function(){
+                if($(this).parents('.srvicearea').length==0){
+                    $(this).attr('disabled',true);
+                }
+            });
+            $.get('/coupon/?id='+curCId,function(data){
+                if(data.code==0){
+                    var curCoupon = data.data;
+                    $("#cost_type").val(curCoupon["cost_type"]).change();
+                    for (key in curCoupon){
+                        if($('[name='+key+']').length>0 && key!= 'all_scope'){
+                            if(key=='end_time'||key=='start_time') curCoupon[key]=curCoupon[key].replace(' ','T');
+                            $('[name='+key+']').val(curCoupon[key]);
+                        }else{
+                            if(key == 'all_scope'){
+                                databaseObject = curCoupon[key];
+                            }
+
+                        }
+                    };
+                    bindEvent();
+                    if(curCoupon.biz_type==1){
+                        $("#biz_type").val(1)
+                    };
+                    if(editFlag && databaseObject){
+                        var firstContainer = $(".srvicearea:not(.clone)");
+                        if(!$.isArray(databaseObject) || databaseObject.length==0) {
+                            firstContainer.remove();
+                        }
+                        $.each(databaseObject,function(i,ele){
+                            var resourceContainer = firstContainer;
+                            if(i!==0){
+                                var newRangDom = $(".srvicearea.clone").clone().removeClass('clone');
+                                newRangDom.find(".form-group:first [type='radio']").attr('name','fenlei'+(counter))
+                                        .next('select').attr('name','category'+counter).end()
+                                        .end().find(".form-group:nth-child(2) [type='radio']").attr('name','allcps'+(counter))
+                                        .next('select').attr('name','cps'+counter).end()
+                                        .end().find(".form-group:nth-child(3) [type='radio']").attr('name','allservice'+(counter++))
+                                        .next('select').attr('name','servicelist'+counter).end()
+                                        .end().insertBefore('.rangelist .addnewrange');
+                                resourceContainer = newRangDom;
+                            };
+                            resourceContainer.data("category",JSON.stringify({ goods_cat :ele.goods_cat,goods_cat_x:ele.goods_cat_x}))
+                                    .data("cpselected",JSON.stringify({ cps :ele.cps,cps_x:ele.cps_x}))
+                                    .data("gidselected",JSON.stringify({ gids :ele.gids,gids_x:ele.gids_x}));
+                            getCategory({
+                                parent: resourceContainer
+                            });
+                        });
+
+
+                    }
+
+                }
+            })
+        }else{
+            getCategory({
+                parent:'.srvicearea:not(.clone):first'
+            });
+            bindEvent();
+        };
+
+
+        function bindEvent(){
+            $("#cost_type").change(function(){
+                var textEle = $(this).parents(".col-lg-12").find(".form-group:gt(0)");
+                textEle.addClass('display_none').find("input").val("");
+                if(this.value == 2 ){
+                    textEle.has("[name=putao_cost]").removeClass("display_none")
+                }
+                else if(this.value == 1){
+                    textEle.has("[name=cp_cost]").removeClass("display_none")
+                }
+                else{
+                    textEle.removeClass('display_none');
+                }
+            });
+            $("#biz_type").change(function(){
+                        if(this.value==1) {
+                            $(".remindertext").show();
+                        }
+                        else{
+                            $(".remindertext").hide();
+                        }
+                    }
+            ).change();
+            $("#effect_type").change(function(){
+                if(this.value==1){
+                    $(this).parents(".form-group").next(".form-group").show();
+                    $("#start_time,#end_time").parents(".col-lg-12").hide()
+                }
+                else{
+                    $(this).parents(".form-group").next(".form-group").hide();
+                    $("#start_time,#end_time").parents(".col-lg-12").show();
+                }
+            }).change();
+            $(".rangelist").on("click","[name^=fenlei]",function(){
+                var selectEle = $(this).siblings("select"),selectedCt=[],
+                        parentEle = selectEle.parents(".srvicearea"),
+                        selectedArray = $.makeArray(selectEle.multipleSelect("getSelects")),
+                        selectedStr = selectedArray.length>0?selectedArray.join(','):'';
+                if($(this).index()==2) {
+                    selectedCt=getDiffertSets(transfor2Array(selectEle.find("option")),$.makeArray(selectEle.multipleSelect("getSelects")))
+                    parentEle.data('category',JSON.stringify({
+                        'goods_cat':'',
+                        "goods_cat_x":selectedStr
+                    }));
+                }else{
+                    selectedCt = $.makeArray(selectEle.multipleSelect("getSelects"));
+                    parentEle.data('category',JSON.stringify({
+                        'goods_cat':selectedStr,
+                        "goods_cat_x":''
+                    }))
+                };
+                getAllCp(selectedCt,[],parentEle);
+            }).on("click","[name^=allcps]",function(){
+                var selectEle = $(this).siblings("select"),selectedCps=[],cpids=[],
+                        parentEle = selectEle.parents(".srvicearea"),
+                        context = selectEle.parents(".srvicearea"),
+                        curCpdata = JSON.parse(context.data('cpselected')),
+                        curCategoryEle = selectEle.parents('.srvicearea').find("[name^='category']"),
+                        selectedArray = $.makeArray(selectEle.multipleSelect("getSelects")),
+                        selectedStr = selectedArray.length>0?selectedArray.join(','):'';
+                var curCategory=[];curCategoryEle.find("option").each(function(){ curCategory.push(this.value)});
+                cpids= getCategorys(context,curCategory);
+                if($(this).index()==2) {
+                    selectedCps=getDiffertSets(transfor2Array(selectEle.find("option")),$.makeArray(selectEle.multipleSelect("getSelects")));
+                    parentEle.data('cpselected',JSON.stringify({
+                        'cps':'',
+                        "cps_x":selectedStr
+                    }));
+                    getCurGoods(selectedCps,cpids,context);
+                }
+                else{
+                    selectedCps= $.makeArray(selectEle.multipleSelect("getSelects"));
+                    parentEle.data('cpselected',JSON.stringify({
+                        'cps':selectedStr,
+                        "cps_x":''
+                    }));
+                    getCurGoods(selectedCps,cpids,context);
+                };
+            }).on("click","[name^=allservice]",function(){
+                var selectEle = $(this).siblings("select"),
+                    parentEle = selectEle.parents(".srvicearea"),
+                        selectedArray = $.makeArray(selectEle.multipleSelect("getSelects")),
+                selectedStr = selectedArray.length>0?selectedArray.join(','):'';
+                if($(this).index()==2) {
+                    parentEle.data('gidselected',JSON.stringify({
+                        'gids':'',
+                        "gids_x":selectedStr
+                    }));
+                }else{
+                    parentEle.data('gidselected',JSON.stringify({
+                        'gids':selectedStr,
+                        "gids_x":''
+                    }))
+                };
+            })
+            $(".rangelist").on("click","a.delbtn",function(e){
+                e.preventDefault();
+                $(this).parents('.srvicearea').remove();
+            });
+            $("#scope").change(function(){
+                if(this.value!='SELF'){
+                    $("#is_mutex,#cost_type,.rangelist").parents(".col-lg-12").hide();
+                    if(this.value == 'FLOW'){
+                        $("#biz_type").append("<option class='form-control' value='1'>M</option>");
+                    }
+                }
+                else{
+                    $("#is_mutex,#cost_type,.rangelist").parents(".col-lg-12").show();
+                }
+            }).change();
+            $(".addnewrange").click(function(e){
+                e.preventDefault();
+                var newRangDom = $(".srvicearea.clone").clone().removeClass('clone');
+                newRangDom.find(".form-group:first [type='radio']").attr('name','fenlei'+(counter))
+                        .next('select').attr('name','category'+counter).end()
+                        .end().find(".form-group:nth-child(2) [type='radio']").attr('name','allcps'+(counter))
+                        .next('select').attr('name','cps'+counter).end()
+                        .end().find(".form-group:nth-child(3) [type='radio']").attr('name','allservice'+(counter++))
+                        .next('select').attr('name','servicelist'+counter).end()
+                        .end().insertBefore('.rangelist .addnewrange');
+                getCategory({
+                    parent:newRangDom
+                })
+            })
+
+        }
+    }
+
+
+
+    function getCategory(options){
+        /*
+        options ={
+            parent //祖先元素
+        }
+        */
+        var parentEle = $((options && options.parent) ? options.parent:('.srvicearea:first')),
+                categoryDom = parentEle.find('[name^=category]').empty(),
+                checkelement = 'fenlei';
+        $.get('/category/list/',function(data){
+            if(!$.isArray(data)) {
+                categoryDom.multipleSelect('refresh');
+                return;
+            }
+            var idArray=[];
+            if(!data || data.length==0) return;
+            $.each(data,function(i,ele){
+                categoryDom.append("<option value='"+ele.id+"'>"+ele.name+"</option>");
+            });
+            var totalArray = [];
+            categoryDom.find("option").each(function(){
+                totalArray.push($(this).val());
+            })
+            categoryDom.multipleSelect({
+                filter: true,
+                width: '100%',
+                selectAll: false,
+                onClick: function(view){
+                    var selectedArray = categoryDom.multipleSelect("getSelects");
+                    checkindex = parentEle.find("[name^='"+checkelement+"']:checked").index();
+                    if(checkindex == 2){
+                        //当前为弃用项
+                        var totalArray =[];
+                        categoryDom.find("option").each(function(){
+                            totalArray.push(this.value);
+                        });
+                        idArray=getDiffertSets(totalArray,selectedArray);
+                        parentEle.data('category',JSON.stringify({
+                            'goods_cat':'',
+                            "goods_cat_x":selectedArray.join(',')
+                        }))
+                    }
+                    else{
+                        //当前为选中项
+                        idArray = selectedArray;
+                        parentEle.data('category',JSON.stringify({
+                            'goods_cat':selectedArray.join(','),
+                            "goods_cat_x":''
+                        }))
+                    };
+                    getAllCp(idArray,'',parentEle);
+                }
+            });
+            if(curCId&&editFlag){
+                var dataSource = JSON.parse(parentEle.data("category")),
+                        cpsarray = dataSource.goods_cat;
+                idArray = getArray(cpsarray);
+                if(dataSource.goods_cat_x&&dataSource.goods_cat_x.length>0){
+                    cpsarray = dataSource.goods_cat_x;
+                    parentEle.find("[name^='fenlei']").eq(1).click();
+                    idArray = getDiffertSets(totalArray,getArray(cpsarray))
+                };
+                categoryDom.multipleSelect("setSelects", getArray(cpsarray));
+                getAllCp(idArray,'',parentEle);
+            };
+
+        })
+    }
+
+
+    function getAllCp(cpids,selectId,context){
+        window.sessionStorage.setItem("cpids", cpids);
+        var curSelect = context.find("[name^='cps']").empty(),idArray=[],
+                curCategoryEle = curSelect.parents('.srvicearea').find("[name^='category']");
+        var curCategory=[];curCategoryEle.find("option").each(function(){ curCategory.push(this.value)});
+        $.post("/cps/list/",JSON.stringify({cat_ids: "("+cpids.join(',')+")"}),function(data){
+            if(!$.isArray(data)){
+                curSelect.multipleSelect('refresh');
+                return;
+            }
+            $.each(data,function(i,ele){
+                if(ele&&ele.name){
+                    curSelect.append("<option value='"+ele.id+"'>"+ele.name+"</option>");
+                }
+            });
+            var totalArray = [];
+            curSelect.find("option").each(function(){
+                totalArray.push($(this).val());
+            });
+            curSelect.multipleSelect({
+                selectAll: false,
+                width: '100%',
+                onClick: function(view){
+                    var selectedArray = curSelect.multipleSelect("getSelects");
+                    checkindex = context.find("[name^='allcps']").filter(":checked").index();
+                    if(checkindex == 2){
+                        //当前为弃用项
+                        var totalArray =[];
+                        curSelect.find("option").each(function(){
+                            totalArray.push(this.value);
+                        });
+                        idArray=getDiffertSets(totalArray,selectedArray);
+                        context.data('cpselected',JSON.stringify({
+                            'cps':'',
+                            "cps_x":selectedArray.join(',')
+                        }))
+                    }
+                    else{
+                        //当前为选中项
+                        idArray = selectedArray;
+                        context.data('cpselected',JSON.stringify({
+                            'cps':selectedArray.join(','),
+                            "cps_x":''
+                        }))
+                    };
+                    var cpids = window.sessionStorage.getItem("cpids");
+                    var cpIdArr = [];
+                    if (cpids) {
+                        cpIdArr = cpids.split(',');
+                    };
+                    getCurGoods(idArray,getCategorys(context,curCategory),context);
+                }
+            });
+            if(curCId&&editFlag){
+
+                var dataSource = JSON.parse(context.data("cpselected")),
+                        cpsarray = dataSource.cps;
+                idArray = getArray(cpsarray);
+                if(dataSource.cps_x&&dataSource.cps_x.length>0){
+                    cpsarray = dataSource.cps_x;
+                    context.find("[name^='allcps']").eq(1).click();
+                    idArray = getDiffertSets(totalArray,getArray(cpsarray))
+                };
+                curSelect.multipleSelect("setSelects", getArray(cpsarray));
+                getCurGoods(idArray,getCategorys(context,curCategory),context);
+            };
+
+        });
+    };
+    function getCurGoods(idArray,cpids,context){
+        var curSelect = context.find("[name^='servicelist']").empty();
+        $.post('/goods/list/',JSON.stringify({cids: idArray,cat_ids:cpids}),function(data){
+            if(!$.isArray(data)){
+                curSelect.multipleSelect('refresh');
+                return;
+            }
+            $.each(data,function(i,ele){
+                curSelect.append("<option value='"+ele.cid+"'>"+ele.name+"</option>");
+            });
+            curSelect.multipleSelect({
+                width: '100%',
+                selectAll: false,
+                onClick:function(view){
+                    var idArray=[],selectedArray = curSelect.multipleSelect("getSelects");
+                    checkindex = context.find("[name^='allservice']").filter(":checked").index();
+                    if(checkindex == 2){
+                        //当前为弃用项
+                        var totalArray =[];
+                        curSelect.find("option").each(function(){
+                            totalArray.push(this.value);
+                        });
+                        idArray=getDiffertSets(totalArray,selectedArray);
+                        context.data('gidselected',JSON.stringify({
+                            'gids':'',
+                            "gids_x":selectedArray.join(',')
+                        }))
+                    }
+                    else{
+                        //当前为选中项
+                        idArray = selectedArray;
+                        context.data('gidselected',JSON.stringify({
+                            'gids':selectedArray.join(','),
+                            "gids_x":''
+                        }))
+                    };
+                }
+            });
+            if(curCId&&editFlag){
+
+                var dataSource = JSON.parse(context.data("gidselected")),
+                     cpsarray = dataSource.gids;
+                if(dataSource.gids_x&&dataSource.gids_x.length>0){
+                    cpsarray = dataSource.gids_x;
+                    context.find("[name^='allservice']").eq(1).click();
+                }
+                curSelect.multipleSelect("setSelects", getArray(cpsarray))
+            };
+        })
+     }
+
+
+
+    $("form").submit(function (e) {
+        e.preventDefault();
+        var starttime=document.getElementById("start_time").value,endtime=document.getElementById("end_time").value;
+        var _effect_type = $('#effect_type').val();
+        if (_effect_type == 0) { // 时间范围
+            $("#effect_days").val('');
+            if (!starttime) {
+                $("#error-hints").html('开始时间不能为空').show();
+                return false;
+            } else if (!endtime) {
+                $("#error-hints").html('结束时间不能为空').show();
+                return false;
+            }
+            if(new Date(starttime) - new Date(endtime) > 0){
+                $("#error-hints").html('开始时间不能大于结束时间').show();
+                return false;
+            };
+            if(new Date(endtime.replace(/T/g, ' ')) - new Date() < 0) {
+                $("#error-hints").html('结束时间不能小于当前时间').show();
+                return false;
+            };
+        } else if (_effect_type == 1) { // 天数
+            if (!$("#effect_days").val()) {
+                $("#error-hints").html('有效天数必填且不能为0').show();
+                return false;
+            }
+        }
+        var cost_type = $("#cost_type"),
+                textEle = cost_type.parents(".col-lg-12").find(".form-group:gt(0)"),
+                cost_flag = false;
+
+        var putao_cost = textEle.has("[name=putao_cost]").find("input").val(),
+            cp_cost = textEle.has("[name=cp_cost]").find("input").val(),
+            amout_ost = $('[name="amount"]').val();
+        switch (cost_type.val())
+        {
+            case '1':
+                if(cp_cost==''){
+                    $("#error-hints").html('CP成本不能为空').show();
+                    cost_flag=true;
+                } else if (amout_ost - cp_cost != 0) {
+                    $("#error-hints").html('CP成本应等于优惠券面额').show();
+                    cost_flag=true;
+                }
+                break;
+            case '2':
+                if(putao_cost==''){
+                    $("#error-hints").html('葡萄成本不能为空').show();
+                    cost_flag=true;
+                } else if (amout_ost - putao_cost != 0) {
+                    $("#error-hints").html('葡萄成本应等于优惠券面额').show();
+                    cost_flag=true;
+                }
+                break;
+            case '3':
+                if(putao_cost==''|| cp_cost==''){
+                    $("#error-hints").html('葡萄成本和CP成本不能为空').show();
+                    cost_flag=true;
+                } else if (amout_ost - cp_cost != putao_cost) {
+                    $("#error-hints").html('葡萄成本与CP成本的总和应等于优惠券面额').show();
+                    cost_flag=true;
+                }
+                break;
+            default:
+                break;
+        }
+        if(($("#scope").val()=='SELF')&&cost_flag) {return false}
+        else{$("#error-hints").empty().hide()};
+        var textEle = $(this).parents(".col-lg-12").find(".form-group:gt(0)");
+        textEle.addClass('display_none').find("input").val("");
+        if(this.value == 2 ){
+            textEle.has("[name=putao_cost]").removeClass("display_none")
+        }
+        else if(this.value == 1){
+            textEle.has("[name=cp_cost]").removeClass("display_none")
+        }
+        else{
+            textEle.removeClass('display_none');
+        }
+        if(curCId&&editFlag){
+            $.ajax({
+                url:'/coupon/?id='+curCId,
+                type:'PUT',
+                data:JSON.stringify(getJsonParamter($("form").serializeArray())),
+                beforeSend:function(){
+                    $("#error-hints").html('').hide();
+                },
+                success:function(result){
+                if(result.code == 0){
+                    window.location.href = '{% url "open_activity_channels" %}'
+                }else{
+                    $("#error-hints").html(result.msg).show();
+                }
+            }
+        })
+        }else{
+            $("#error-hints").html('').hide();
+            $.post('/coupon/',JSON.stringify(getJsonParamter($("form").serializeArray())),function(result){
+                if(result.code == 0){
+                    window.location.href = '{% url "open_activity_channels" %}'
+                }else{
+                    $("#error-hints").html(result.msg).show()
+                }
+            });
+        }
+
+        function getJsonParamter(array){
+            var o ={},formelement =['scope','name','remark','biz_type','amount','min_consume','consume_remark','effect_type','effect_days','start_time','end_time','is_mutex','cost_type','putao_cost','cp_cost', 'reason'],rangelist=[];
+            $.each(formelement, function(index, item, array) {
+                var $el = $('[name="' + item + '"]');
+                if ($el.length) {
+                    o[item] = $el.val() || '';
+                }
+            });
+            if($("#effect_type").val()==1){
+                o["start_time"] = null;
+                o["end_time"] = null;
+            }
+            if($("#scope").val()=='SELF'){
+                $(".srvicearea:not(.clone)").each(function(){
+                    var curEle = $(this);
+                    var fenleiIndex = curEle.find("[name^='fenlei']:checked").index();
+                    var allcpsIndex = curEle.find("[name^='allcps']:checked").index();
+                    var allserviceIndex = curEle.find("[name^='allservice']:checked").index();
+                    var categoryData = JSON.parse(curEle.data('category')||'{"goods_cat":"","goods_cat_x":""}');
+                    var cpData = JSON.parse(curEle.data('cpselected')||'{"cps":"","cps_x":""}');
+                    var goodsData = JSON.parse(curEle.data('gidselected')||'{"gids":"","gids_x":""}');
+                    if (fenleiIndex == 2) {
+                        if (categoryData.goods_cat) {
+                            categoryData.goods_cat_x = categoryData.goods_cat;
+                            categoryData.goods_cat = "";
+                        }
+                    } else {
+                        if (categoryData.goods_cat_x) {
+                            categoryData.goods_cat = categoryData.goods_cat_x;
+                            categoryData.goods_cat_x = "";
+                        }
+                    }
+                    curEle.data("category",JSON.stringify(categoryData));
+                    if (allcpsIndex == 2) {
+                        if (cpData.cps) {
+                            cpData.cps_x = cpData.cps;
+                            cpData.cps = "";
+                        }
+                    } else {
+                        if (cpData.cps_x) {
+                            cpData.cps = cpData.cps_x;
+                            cpData.cps_x = "";
+                        }
+                    }
+                    curEle.data("cpselected",JSON.stringify(cpData));
+                    if (allserviceIndex == 2) {
+                        if (goodsData.gids) {
+                            goodsData.gids_x = goodsData.gids;
+                            goodsData.gids = "";
+                        }
+                    } else {
+                        if (goodsData.gids_x) {
+                            goodsData.gids = goodsData.gids_x;
+                            goodsData.gids_x = "";
+                        }
+                    }
+                    curEle.data("gidselected",JSON.stringify(goodsData));
+                    var  rangeOne = $.extend({},JSON.parse(curEle.data('category')||'{"goods_cat":"","goods_cat_x":""}'),JSON.parse(curEle.data('cpselected')||'{"cps":"","cps_x":""}'),JSON.parse(curEle.data('gidselected')||'{"gids":"","gids_x":""}'));
+                    rangelist.push(rangeOne);
+                });
+                o.all_scope = rangelist;
+            }
+
+            return o;
+        }
+    });
+    checkForm({{ errors|safe }});
+
+
+   $("form input").focus(function () {
+        $(this).css("border", "1px solid #ccc");
+    });
+
+
+    function GetQueryString(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+        var r = window.location.search.substr(1).match(reg);  //获取url中"?"符后的字符串并正则匹配
+        var context = "";
+        if (r != null)
+            context = r[2];
+        reg = null;
+        r = null;
+        return context == null || context == "" || context == "undefined" ? "" : context;
+    }
+
+    function getDiffertSets(setA,setB){
+        var returnArray =[],cstr = setB.join('&&');
+        $.each(setA,function(i,ele){
+            if(cstr.indexOf(ele)<0) returnArray.push(ele);
+        })
+        return returnArray;
+    }
+    function getCategorys(parentEle,totalArray){
+        var dataSource = JSON.parse(parentEle.data("category")),
+            cpsarray = dataSource.goods_cat,
+                idArray = getArray(cpsarray);
+        if(dataSource.goods_cat_x&&dataSource.goods_cat_x.length>0){
+            cpsarray = dataSource.goods_cat_x;
+            idArray = getDiffertSets(totalArray,getArray(cpsarray))
+        };
+        return idArray;
+    }
+    function getArray(str){
+        if(!str) return [];
+        return str.toString().split(',');
+    }
+    function transfor2Array(ele){
+        var mArray =[];
+        if(ele && ele.length>0){
+            $.each(ele,function(i,element){
+                mArray.push(element.value);
+            })
+        }
+        return mArray;
+    }
+</script>
+{% endblock %}
+

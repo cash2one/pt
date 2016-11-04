@@ -1,0 +1,702 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}帐号管理{% endblock %}
+{% block content %}
+<script type="text/javascript" src="{% static 'js/jquery.validate.js' %}"></script>
+<section class="top-sec ">
+    <span style="font-size:18px;font-weight:bold;">帐号管理</span>
+</section>
+<section class="acount-management">
+
+    <div class="users user-admin">
+        <div class="admin">管理员
+            {% if user.is_superuser %}
+            <div class="admin-btn">
+                <a href="javascript:void(0)"><div class="btn-admin-add" data-toggle="modal"
+                data-target="#myModal-add-admin" ><b style="font-size:.18rem;margin-left:-.26rem">＋&nbsp</b>添加成员</div></a>
+                <a href="javascript:void(0)"><div class="btn-edit-admin" ><b style="font-size:.14rem;margin-left:-.26rem" class="glyphicon glyphicon-edit"></b>&nbsp编辑成员</div></a>
+                <a href="javascript:void(0)"><div class="btn-admin-del" ><b style="font-size:.12rem;font-weight:900;">一&nbsp</b>删除</div></a>
+                <a href="javascript:void(0)"><div class="admin-del-confirm" data-toggle="modal"
+                data-target="#myModal-delete-staff" style="display:none;">确认删除</div></a>
+                <a href="javascript:void(0)"><div class="admin-btn-cancel" style="display:none;" onClick="reload()">取消</div></a>
+            </div>
+            {% endif %}
+        </div>
+        <div class="cms_admin_name">
+        {% for staff in staffs %}
+        <span class="pt-staff-name pt-user-name" value="{{ staff.0 }}">{{ staff.0 }}{% if staff.1 %}<b class="star-mark">★</b>{% endif %}</span>
+        {% endfor %}
+        </div>
+    </div>
+
+    <div id="loading" style="display:none;">
+        <img src="{% static 'images/loading.gif' %}"/>
+    </div>
+    <div class="users user-operator">
+        <div class="operator">运营人员
+            <div class="admin-btn">
+                <a href="javascript:void(0)"><div class="btn-operator-add" data-toggle="modal"
+                data-target="#myModal-add-operator" ><b style="font-size:.18rem;margin-left:-.26rem">＋&nbsp</b>添加成员</div></a>
+                <a href="javascript:void(0)"><div class="btn-edit-operator"><b style="font-size:.14rem;margin-left:-.26rem" class="glyphicon glyphicon-edit"></b>&nbsp编辑成员</div></a>
+                <a href="javascript:void(0)"><div class="btn-operator-del" ><b style="font-size:.12rem;font-weight:900;">一&nbsp</b>删除</div></a>
+                <a href="javascript:void(0)"><div class="operator-del-confirm" data-toggle="modal"
+                data-target="#myModal-delete-operator" style="display:none;">确认删除</div></a>
+                <a href="javascript:void(0)"><div class="operator-btn-cancel" style="display:none;" onClick="reload()">取消</div></a>
+            </div>
+        </div>
+        <div class="cms_operator_name">
+        {% for operator in operators %}
+        <span class="pt-opearter-name pt-user-name" value="{{ operator.0 }}">{{ operator.0 }}</span>
+        {% endfor %}
+        </div>
+    </div>
+    <!-- <div class="users"></div> -->
+    <!-- 添加管理员 -->
+    <div class="modal fade" id="myModal-add-admin" tabindex="-1" role="dialog"
+        aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: 480px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                    data-dismiss="modal" aria-hidden="true">
+                    &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel" >
+                    <div class="icon_add"><img src="{% static 'images/add.png' %}"></div>
+                    添加管理员
+                    </h4>
+                </div>
+                <form class="form-horizontal" >
+                    <div class="modal-body pt-add-info">
+                        <p><span class="pt-area">帐号：</span><input class="admin_count" maxlength="256" name="username" placeholder="请设置帐号" type="text" required="required" /></p>
+                        <p class="pt-user-error" style="color:red;display:none;padding-left:85px;">用户名重复，请重新输入</p>
+                        <p><span class="pt-area">密码：</span><input class="admin_pwd" maxlength="256" name="password" placeholder="请设置密码" type="password" required="required" /></p>
+                        <p><span style="margin-right:.08rem">确认密码：</span><input class="admin_pwd2"   style="width:74%;" maxlength="256" name="password_confirm" placeholder="请确认密码" type="password" required="required" /></p>
+                        <p><span class="pt-area">邮箱：</span><input class="admin_email" maxlength="256" name="email" placeholder="请设置邮箱" type="email" required="required" /></p>
+                        <p><span class="pt-area">权限：</span>
+                        <label for="pt_checkbox1">
+                            <input type="checkbox" name="check" value="{{ check }}" id="pt_checkbox1" class="admin-check" checked="checked">审核权限
+                        </label>
+                        <label for="pt_checkbox2">
+                            <input type="checkbox" name="operate" value="{{ config }}" id="pt_checkbox2" class="admin-config" checked="checked">配置权限
+                        </label>
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default"
+                        data-dismiss="modal">取消
+                        </button>
+                        <button type="button" class="btn btn-primary cms_admin_btn"  onclick="new_staff()">
+                        确定
+                        </button>
+                    </div>
+                </form>
+            </div><!-- /.modal-content
+            </div><!-- /.modal -->
+        </div>
+    </div>
+    <!-- end -->
+    <!-- 编辑管理员 -->
+    <div class="modal fade" id="myModal-edit-admin" tabindex="-1" role="dialog"
+        aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: 480px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                    data-dismiss="modal" aria-hidden="true">
+                    &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel" >
+                    <div class="icon_add"><img src="{% static 'images/edit1.png' %}"></div>
+                    编辑管理员
+                    </h4>
+                </div>
+                <form class="form-horizontal1" >
+                    <div class="modal-body pt-add-info">
+                        <p><span class="pt-area">帐号：</span><input class="edit_admin_count" maxlength="256" name="username" placeholder="请设置帐号" type="text" required="required" /></p>
+                        <p class="pt-user-error" style="color:red;display:none;padding-left:85px;">用户名重复，请重新输入</p>
+                        <p><span class="pt-area">密码：</span><input class="edit_admin_pwd" maxlength="256" name="password" placeholder="请设置密码" type="password" required="required" /></p>
+                        <p><span style="margin-right:.08rem">确认密码：</span><input class="edit_admin_pwd2"  style="width:74%;" maxlength="256" name="password_confirm" placeholder="请确认密码" type="password" required="required" /></p>
+                        <p><span class="pt-area">邮箱：</span><input class="edit_admin_email" maxlength="256" name="email" placeholder="请设置邮箱" type="email" required="required" /></p>
+                        <p><span class="pt-area">权限：</span>
+                        <label for="pt_checkbox3">
+                            <input type="checkbox" name="check" value="{{ check }}" id="pt_checkbox3" class="edit_admin-check">审核权限
+                        </label>
+                        <label for="pt_checkbox4">
+                            <input type="checkbox" name="operate" value="{{ config }}" id="pt_checkbox4" class="edit_admin-config">配置权限
+                        </label>
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default"
+                        data-dismiss="modal">取消
+                        </button>
+                        <button type="button" class="btn btn-primary edit_admin_btn" >
+                        确定
+                        </button>
+                    </div>
+                </form>
+            </div><!-- /.modal-content
+            </div><!-- /.modal -->
+        </div>
+    </div>
+    <!-- end -->
+    <!-- 添加运营人员 -->
+    <div class="modal fade" id="myModal-add-operator" tabindex="-1" role="dialog"
+        aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: 480px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                    data-dismiss="modal" aria-hidden="true">
+                    &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel" >
+                    <div class="icon_add"><img src="{% static 'images/add.png' %}"></div>
+                    添加运营人员
+                    </h4>
+                </div>
+                <form class="form-horizontal2" >
+                    <div class="modal-body pt-add-info">
+                        {% csrf_token %}
+                        <p><span class="pt-area">帐号：</span><input class="operator_count" maxlength="256" name="username" placeholder="请设置帐号" type="text" required="required" /></p>
+                        <p class="pt-user-error" style="color:red;display:none;padding-left:85px;">用户名重复，请重新输入</p>
+                        <p><span class="pt-area">密码：</span><input class="operator_pwd" maxlength="256" name="password" placeholder="请输入密码" type="password" required="required" /></p>
+                        <p><span style="margin-right:.08rem">确认密码：</span><input class="operator_pwd2"  style="width:74%;" maxlength="256" name="password_confirm" placeholder="请确认密码" type="password" required="required" /></p>
+                        <p><span class="pt-area">邮箱：</span><input class="operator_email" maxlength="256" name="email" placeholder="请设置邮箱" type="email" required="required" /></p>
+                        <p><span class="pt-area">权限：</span>
+                        <label for="pt_checkbox5">
+                            <input type="checkbox" name="check" value="{{ config }}" id="pt_checkbox5" class="config_competence" checked="checked">配置权限
+                        </label>
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default"
+                        data-dismiss="modal">取消
+                        </button>
+                        <button type="button" class="btn btn-primary cms_opeartor_btn" onclick="new_operator()" >
+                        确定
+                        </button>
+                    </div>
+                </form>
+            </div><!-- /.modal-content
+            </div><!-- /.modal -->
+        </div>
+    </div>
+    <!-- end -->
+    <!-- 编辑运营人员 -->
+    <div class="modal fade" id="myModal-edit-operator" tabindex="-1" role="dialog"
+        aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: 480px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                    data-dismiss="modal" aria-hidden="true">
+                    &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel" >
+                    <div class="icon_add"><img src="{% static 'images/edit1.png' %}"></div>
+                    编辑运营人员
+                    </h4>
+                </div>
+                <form class="form-horizontal" >
+                    <div class="modal-body pt-add-info">
+                        {% csrf_token %}
+                        <p><span class="pt-area">帐号：</span><input class="edit_operator_count" maxlength="256" name="username" placeholder="请设置帐号" type="text" required="required" /></p>
+                        <p class="pt-user-error" style="color:red;display:none;padding-left:85px;">用户名重复，请重新输入</p>
+                        <p><span class="pt-area">密码：</span><input class="edit_operator_pwd" maxlength="256" name="password" placeholder="请设置密码" type="password" required="required" /></p>
+                        <p><span style="margin-right:.08rem">确认密码：</span><input class="edit_operator_pwd2" maxlength="256" name="password_confirm" style="width:74%;"placeholder="请确认密码" type="password" required="required" /></p>
+                        <p><span class="pt-area">邮箱：</span><input class="edit_operator_email" maxlength="256" name="email" placeholder="请设置邮箱" type="email" required="required" /></p>
+                        <p><span class="pt-area">权限：</span>
+                        <label for="pt_checkbox6">
+                            <input type="checkbox" name="check" value="{{ config }}" id="pt_checkbox6" class="edit_config_competence">配置权限
+                        </label>
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default"
+                        data-dismiss="modal">取消
+                        </button>
+                        <button type="button" class="btn btn-primary"  >
+                        确定
+                        </button>
+                    </div>
+                </form>
+            </div><!-- /.modal-content
+            </div><!-- /.modal -->
+        </div>
+    </div>
+    <!-- end -->
+    <!-- 删除管理员帐号 -->
+    <div class="modal fade" id="myModal-delete-staff" tabindex="-1" role="dialog"
+        aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: 480px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                    data-dismiss="modal" aria-hidden="true">
+                    &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                    <div class="delete_icon"><img src="{% static 'images/delete.png' %}"></div>删除管理员帐号
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <p class='del-tips' style="text-align:center">请勾选要删除的管理员帐号</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                    data-dismiss="modal" onclick="reload()">取消
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="delete_staffs()">
+                    确定
+                    </button>
+                </div>
+            </div><!-- /.modal-content
+            </div><!-- /.modal -->
+        </div>
+    </div>
+    <!-- 删除运营人员帐号 -->
+    <div class="modal fade" id="myModal-delete-operator" tabindex="-1" role="dialog"
+        aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: 480px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                    data-dismiss="modal" aria-hidden="true">
+                    &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                    <div class="delete_icon"><img src="{% static 'images/delete.png' %}"></div>删除运营人员帐号
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <p class='del-tips' style="text-align:center">请勾选要删除的运营人员帐号</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                    data-dismiss="modal" onclick="reload()">取消
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="delete_operators()">
+                    确定
+                    </button>
+                </div>
+            </div><!-- /.modal-content
+            </div><!-- /.modal -->
+        </div>
+    </div>
+   
+</section>
+<script type="text/javascript">
+//jquery.valitate.js插件，定义规则与错误提示
+    var user_datas = {{ user_datas|safe }};
+           $(".form-horizontal").validate({
+            rules: {
+                username: "required",
+                email: {
+                    required: true,
+                    email: true
+                },
+                password: {
+                    required: true,
+                    minlength: 6
+                },
+                password_confirm: {
+                    required: true,
+                    minlength: 6,
+                    equalTo: ".admin_pwd"
+                }
+            },
+            messages: {
+                username: "请输入帐号名",
+                email: {
+                    required: "请输入Email地址",
+                    email: "请输入正确的email地址"
+                },
+                password: {
+                    required: "请输入密码",
+                    minlength: "密码不能小于6个字 符"
+                },
+                password_confirm: {
+                    required: "请输入确认密码",
+                    minlength: "确认密码不能小于6个字符",
+                    equalTo: "两次输入密码不一致"
+                }
+            }
+        });
+           $(".cms_admin_btn").click(function() {
+               if ($(".form-horizontal").valid()) {
+                console.log("success")
+                   // $(".cms-new-staff").prop('onclick', 'new_staff()');
+               }
+           });
+
+          $(".form-horizontal2").validate({
+            rules: {
+                username: "required",
+                email: {
+                    required: true,
+                    email: true
+                },
+                password: {
+                    required: true,
+                    minlength: 6
+                },
+                password_confirm: {
+                    required: true,
+                    minlength: 6,
+                    equalTo: ".operator_pwd"
+                }
+            },
+            messages: {
+                username: "请输入帐号名",
+                email: {
+                    required: "请输入Email地址",
+                    email: "请输入正确的email地址"
+                },
+                password: {
+                    required: "请输入密码",
+                    minlength: "密码不能小6个字 符"
+                },
+                password_confirm: {
+                    required: "请输入确认密码",
+                    minlength: "确认密码不能小于6个字符",
+                    equalTo: "两次输入密码不一致"
+                }
+            }
+        });
+           $(".cms_opeartor_btn").click(function() {
+               if ($(".form-horizontal2").valid()) {
+                console.log("success");
+                   // $(".cms-new-staff").prop('onclick', 'new_staff()');
+               }
+           });
+       
+    // });
+    // 操作按钮显示与隐藏
+$(document).ready(function() {
+    $('.cms_admin_name .pt-user-name:nth-child(1)').removeClass('pt-user-name');
+    $(".btn-edit-admin").click(function(event) {
+        $(".acount-management .cms_admin_name span:nth-child(1)").css('cursor', 'not-allowed');{
+}
+        $(".user-admin .pt-user-name").attr({
+            "data-toggle": "modal",
+            "data-target": "#myModal-edit-admin"
+        });
+        $(".user-operator span").attr({
+            "data-toggle": "",
+            "data-target": ""
+        });
+        $(".btn-admin-add,.btn-admin-del,.operator-btn-cancel,.btn-edit-admin").hide();
+        $(".admin-btn-cancel,.btn-operator-add,.btn-operator-del").show();
+    });
+    $(".btn-edit-operator").click(function(event) {
+        $(".user-operator span").attr({
+            "data-toggle": "modal",
+            "data-target": "#myModal-edit-operator"
+        });
+        $(".user-admin span").attr({
+            "data-toggle": "",
+            "data-target": ""
+        });
+        $(".btn-operator-add,.btn-operator-del,.admin-btn-cancel,.btn-edit-operator").hide();
+        $(".operator-btn-cancel,.btn-admin-del,.btn-admin-add").show();
+    });
+    });
+    $(".btn-admin-del").on('click', function(event) {
+        $(".btn-admin-add,.btn-edit-admin,.btn-admin-del,.operator-btn-cancel,.operator-del-confirm").hide();
+        $(".admin-btn-cancel,.btn-operator-add,.admin-del-confirm,.btn-operator-del,.btn-edit-operator").show();
+        $(".pt-opearter-name,.pt-staff-name").off("click");
+        $(".pt-staff-name:nth-child(1)").css('cursor', 'not-allowed');
+        $(".pt-staff-name:nth-child(1):before").css('cursor', 'not-allowed');
+        
+    select();
+    });
+    $(".btn-operator-del").on('click', function(event) {
+        $(".btn-operator-add,.btn-edit-operator,.btn-operator-del,.admin-btn-cancel,.admin-del-confirm").hide();
+        $(".operator-btn-cancel,.btn-admin-add,.operator-del-confirm,.btn-admin-del,.btn-edit-admin").show();
+        $(".pt-opearter-name,.pt-staff-name").off("click");
+    select();
+    });
+
+$(".pt-staff-name").on('click', function(event) {
+    var username = $(this).text();//获取当前点击元素的用户名
+    for (var i = 0; i < user_datas.length; i++) {
+        if (user_datas[i]["username"] == username) {//通过用户名匹配到其他信息
+            // console.log(user_datas[i]);
+            var email = user_datas[i]["email"];
+            var p1 = user_datas[i]["auth"].config;//获取配置权限的id
+            var p2 = user_datas[i]["auth"].check;
+            var admin_user_id =  user_datas[i]["id"];
+            if (isNaN(p1)) {       
+                $(".edit_admin-config").attr('checked', false);
+                $(".edit_admin-config").prop('checked', false);
+            }
+            else{
+                $(".edit_admin-config").attr('checked', true);
+                $(".edit_admin-config").prop('checked', true);
+            }
+            if (isNaN(p2)) {
+                $(".edit_admin-check").attr('checked', false);
+                $(".edit_admin-check").prop('checked', false);
+            }
+            else{
+                $(".edit_admin-check").attr('checked', true);
+                $(".edit_admin-check").prop('checked', true);
+            }
+            $(".edit_admin_count").attr('value', username);
+            $(".edit_admin_count").prop('value', username);
+            $(".edit_admin_email").attr('value', email);
+            $(".edit_admin_email").prop('value', email);
+            // $(this).prop('id', admin_user_id);
+            $(".btn-primary").attr("onclick", "edit_staff("+admin_user_id+")");
+        }
+    }
+});
+$(".pt-opearter-name").on('click', function(event) {
+    var username = $(this).text();
+    for (var i = 0; i < user_datas.length; i++) {
+        if (user_datas[i]["username"] == username) {
+            // console.log(user_datas[i]);
+            var email = user_datas[i]["email"];
+            var p3 = user_datas[i]["auth"].config;
+            // console.log(p3);
+            var admin_user_id = user_datas[i]["id"]
+            if (isNaN(p3)) {
+                $(".edit_config_competence").attr('checked', false);
+                $(".edit_config_competence").prop('checked', false);
+            } else {
+                $(".edit_config_competence").attr('checked', true);
+                $(".edit_config_competence").prop('checked', true);
+            }
+            $(".edit_operator_count").attr('value', username);
+            $(".edit_operator_count").prop('value', username);
+            $(".edit_operator_email").attr('value', email);
+            $(".edit_operator_email").prop('value', email);
+            $(".btn-primary").attr("onclick", "edit_operator(" + admin_user_id + ")");
+        }
+    }
+});
+// 删除选择特效函数
+    var cms_user_ids = [];//用户ID数组包括管理员与运营人员
+function select() {
+    $(".pt-user-name").on('click',function(event) { 
+            var username = $(this).text();
+            $(".del-tips").text("确定删除已勾选的帐号吗？");
+            $(this).toggleClass('selected');
+            if ($('.pt-user-name').hasClass('selected')) {
+                for (var i = 1; i < user_datas.length; i++) {
+                    if (user_datas[i]["username"] == username) {
+                        // console.log(user_datas[i]);
+                        var cms_user_id = user_datas[i]["id"];//获取用户名id
+                        mypush(cms_user_ids, cms_user_id);//将用户Id存入入cms_user_ids数组
+                        // console.log(cms_user_ids);
+                    }
+                }
+            }
+    });
+}
+   // 删除管理员函数
+function delete_staffs() {
+    var ids = JSON.stringify(cms_user_ids); 
+    console.log(ids);
+        $.ajax("{% url 'delete_staffs' %}", {
+            type: "post",
+            cache: false,
+            data: {
+                ids:ids
+            },
+            success: function(data) {
+                if (data == 0) {
+                    window.location.reload();
+                }
+            },
+            error: function(data) {
+                console.log("errors is" + data);
+            }
+        })
+    }
+    function delete_operators() {
+    var ids = JSON.stringify(cms_user_ids); 
+    console.log(ids);
+        $.ajax("{% url 'delete_operators' %}", {
+            type: "post",
+            cache: false,
+            data: {
+                ids:ids
+            },
+            success: function(data) {
+                if (data == 0) {
+                    window.location.reload();
+                }
+            },
+            error: function(data) {
+                console.log("errors is" + data);
+            }
+        })
+    }
+    //用户名重复提示隐藏
+    $("body").click(function(event) {
+       $(".pt-user-error").hide(); 
+    });
+    
+    function new_staff(){
+    var permissions= [];
+        $("input[class='admin-check']:checked").each(function(){
+        permission = $(this).val();
+        mypush(permissions, permission);
+         });
+    $("input[class='admin-config']:checked").each(function(){
+        permission = $(this).val();
+        mypush(permissions, permission); 
+        // console.log(JSON.stringify(permissions));
+    });
+    
+    var username = $(".admin_count").val();
+    var password = $(".admin_pwd").val();
+    var email = $(".admin_email").val();
+    var permissions = JSON.stringify(permissions);
+    // console.log(permissions);
+    $.ajax("{% url 'new_staff' %}",{
+        type:"post",
+        cache:false,
+        data:{
+                username:username,
+                password:password,
+                email:email,
+                is_staff:1,
+                permissions:permissions
+            },
+        success:function(data){
+            if(data == 0)
+            {
+                window.location.reload();
+            }
+            else if(data == "username")
+            {
+              $(".pt-user-error").show(); 
+            }
+        },
+        error:function(data){
+            console.log("errors is"+data);
+        }
+    })
+    }
+    function new_operator(){
+    var permissions= [];
+     $("input[class='config_competence']:checked").each(function(){
+        permission = $(this).val();
+        mypush(permissions, permission);
+    }) ;
+    var username = $(".operator_count").val();
+    var password = $(".operator_pwd").val();
+    var email = $(".operator_email").val();
+    var permissions = JSON.stringify(permissions);
+    $.ajax("{% url 'new_operator' %}",{
+        type:"post",
+        cache:false,
+        data:{
+                username:username,
+                password:password,
+                email:email,
+                is_staff:0,
+                permissions:permissions
+            },
+        success:function(data){
+            if(data == 0)
+            {
+                window.location.reload();
+            }
+            else if(data == "username")
+            {
+              $(".pt-user-error").show(); 
+            }
+        },
+        error:function(data){
+            console.log("errors is"+data);
+        }
+    })
+    }
+
+    
+    function edit_staff(id) {
+        var permissions= [];
+    $("input[class='edit_admin-check']:checked").each(function(){
+        permission = $(this).val();
+        mypush(permissions, permission);
+         });
+    $("input[class='edit_admin-config']:checked").each(function(){
+        permission = $(this).val();
+        mypush(permissions, permission); 
+        console.log(JSON.stringify(permissions));
+    });
+        var permissions = JSON.stringify(permissions);
+        var username = $(".edit_admin_count").val();
+        var password = $(".edit_admin_pwd").val();
+        var email = $(".edit_admin_email").val();
+        var is_staff = 1;
+        // var id = $(this).attr("id");
+        // alert(id);
+        $.ajax(" {% url 'edit_staff' %}", {
+            type: "post",
+            cache: false,
+            data: {
+                username: username,
+                password: password,
+                email: email,
+                is_staff: 1,
+                id: id,
+                permissions: permissions
+            },
+            success: function(data) {
+                if (data == 0) {
+                    window.location.reload();
+                }
+            },
+            error: function(data) {
+                console.log("errors is" + data);
+            }
+        })
+    }
+    function edit_operator(id) {
+        var permissions = [];
+       $("input[class='edit_config_competence']:checked").each(function() {
+            permission = $(this).val();
+            mypush(permissions, permission);
+            console.log(JSON.stringify(permissions));
+        });
+        var permissions = JSON.stringify(permissions);
+        var username = $(".edit_operator_count").val();
+        var password = $(".edit_operator_pwd").val();
+        var email = $(".edit_operator_email").val();
+        var is_staff = 0;
+        $.ajax("{% url 'edit_operator' %}", {
+            type: "post",
+            cache: false,
+            data: {
+                username: username,
+                password: password,
+                email: email,
+                is_staff: 0,
+                id: id,
+                permissions: permissions
+            },
+            success: function(data) {
+                if (data == 0) {
+                    window.location.reload();
+                }
+            },
+            error: function(data) {
+                console.log("errors is" + data);
+            }
+        })
+    }
+    // loading效果
+         $(document).ajaxStart(function() {
+             $("#loading").css("display", "block");
+         });
+         $(document).ajaxComplete(function() {
+             $("#loading").css("display", "none");
+         });
+</script>
+{% endblock %}

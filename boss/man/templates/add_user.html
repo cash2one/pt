@@ -1,0 +1,306 @@
+{% extends "man-base.html" %}
+{% block title %}添加账户{% endblock %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css"/>
+    <script type="text/javascript" src="/static/js/multiselect.js"></script>
+    <style type="text/css">
+    </style>
+{% endblock %}
+{% block content %}
+    {% if errors %}
+        <div class="alert alert-danger alert-dismissible fade in" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                    aria-hidden="true">×</span></button>
+            <p>{{ errors }}</p>
+        </div>
+    {% endif %}
+    <form class="form-horizontal" method="post">
+        {% csrf_token %}
+        <fieldset>
+            <legend>添加账户</legend>
+            <div class="form-group">
+                <label for="user_name" class="col-sm-2 control-label">账号</label>
+                <div class="col-sm-3">
+                    <input style="display:none"><!-- for disable autocomplete on chrome -->
+                    <input type="text" class="form-control" id="username" name="username" placeholder="必填项"
+                           autocomplete="off">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="user_name" class="col-sm-2 control-label">密码</label>
+                <div class="col-sm-3">
+                    <input style="display:none"><!-- for disable autocomplete on chrome -->
+                    <input type="password" class="form-control" id="password" name="password" placeholder="必填项"
+                           autocomplete="off">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="module_auth" class="col-sm-2 control-label">分组</label>
+                <div class="col-sm-3">
+                    <select id="group" name="group">
+                        <option value="">无</option>
+                        {% for group in groups %}
+                            <option value="{{ group.1 }}">{{ group.0 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="module_auth" class="col-sm-2 control-label">账号管理开关</label>
+                <div class="col-sm-3">
+                    <input type="checkbox" id="staff_on" name="staff_on">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="module_auth" class="col-sm-2 control-label">用户模块开关</label>
+                <div class="col-sm-3">
+                    <input type="checkbox" id="user_on" name="user_on">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="module_auth" class="col-sm-2 control-label">业务模块查看权限</label>
+                <div class="col-sm-3">
+                    <select id="module" multiple="multiple" name="module">
+                        <optgroup label="对账管理">
+                            {% for module in modules %}
+                                {#                                {% if module.1 == "收支汇总" or module.1 == "运营汇总" or module.1 == "异常订单汇总" or module.1 == "CP事件" %}#}
+                                {% if module.2 == '对账管理' %}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="对账模块 - 收支汇总">
+                            {% for module in modules %}
+                                {% if module.2 == '对账模块 - 收支汇总' %}
+                                    {#                                {% if module.1 == "支付渠道数据汇总表" or module.1 == "支付数据分业务汇总表" or module.1 == "全托管支付数据分渠道汇总表" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="对账模块 - 运营数据">
+                            {% for module in modules %}
+                                {% if module.2 == '对账模块 - 运营数据' %}
+                                    {#                                {% if module.1 == "运营数据汇总报表" or module.1 == "全托管运营数据报表" or module.1 == "全托管营销费用报表" or module.1 == "VIP卡运营数据报表" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="对账模块 - 订单明细">
+                            {% for module in modules %}
+                                {% if module.2 == '对账模块 - 订单明细' %}
+                                    {#                                {% if module.1 == "异常订单汇总表" or module.1 == "无压单对账" or module.1 == "有压单对账" or module.1 == "非匹配订单对账" or module.1 == "自营业务跨时段订单明细" or module.1 == "到家业务跨时段订单明细" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="对账模块 - CP事件">
+                            {% for module in modules %}
+                                {% if module.2 == '对账模块 - CP事件' %}
+                                    {#                                {% if module.1 == "上传对账单(cp)" or module.1 == "上传对账单(pay)" or module.1 == "下载结算单" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="业务统计 - 交易分析">
+                            {% for module in modules %}
+                                {% if module.2 == '业务统计 - 交易分析' %}
+                                    {#                                {% if module.1 == "地推人员管理" or module.1 == "交易分析交易概况" or module.1 == "交易分析实时统计" or module.1 == "交易分析自营业务分析" or module.1 == "交易分析到家业务分析" or module.1 == "交易分析活动分析" or module.1 == "交易分析用户分析" or module.1 == "交易分析到家服务质量" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="业务统计 - 业务数据报表">
+                            {% for module in modules %}
+                                {% if module.2 == '业务统计 - 业务数据报表' %}
+                                    {#                                {% if module.1 == "订单日报表" or module.1 == "订单汇总报表" or module.1 == "订单多CP报表" or module.1 == "失败订单报表" or module.1 == "营销费用报表" or module.1 == "订单实时报表" or module.1 == "电影汇总报表" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="业务统计 - 服务质量追踪">
+                            {% for module in modules %}
+                                {% if module.2 == '业务统计 - 服务质量追踪' %}
+                                    {#                                {% if module.1 == "充话费" or module.1 == "充流量" or module.1 == "游戏充值" or module.1 == "电影票" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="业务统计 - 用户交易报表">
+                            {% for module in modules %}
+                                {% if module.2 == '业务统计 - 用户交易报表' %}
+                                    {#                                {% if module.1 == "业务情况" or module.1 == "用券情况" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="业务统计 - 订单状态追踪">
+                            {% for module in modules %}
+                                {% if module.2 == '业务统计 - 订单状态追踪' %}
+                                    {#                                {% if module.1 == "全托管业务" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="业务统计 - 商品统计">
+                            {% for module in modules %}
+                                {% if module.2 == '业务统计 - 商品统计' %}
+                                    {#                                {% if module.1 == "商品统计" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+
+                        <optgroup label="业务统计 - 邀请有礼统计">
+                            {% for module in modules %}
+                                {% if module.2 == '业务统计 - 邀请有礼统计' %}
+                                    {#                                {% if module.1 == "邀请有礼" or module.1 == "被邀请人" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="订单管理 - 订单查询">
+                            {% for module in modules %}
+                                {% if module.2 == '订单管理 - 订单查询' %}
+                                    {#                                {% if module.1 == "充值业务订单查询" or module.1 == "电影业务订单查询" or module.1 == "到家业务订单查询" or module.1 == "VIP卡业务订单查询" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="订单管理 - 优惠券查询">
+                            {% for module in modules %}
+                                {% if module.2 == '订单管理 - 优惠券查询' %}
+                                    {#                                {% if  module.1 == "订单优惠券查询" %}#}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="货架平台">
+                            {% for module in modules %}
+                                {% if module.2 == '货架平台' %}
+                                    <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="显示各平台url">
+                                {% for module in modules %}
+                                    {% if module.2 == '显示各平台url' %}
+                                        <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                        </optgroup>
+                        <optgroup label="配置平台">
+                                {% for module in modules %}
+                                    {% if module.2 == '配置平台' %}
+                                        <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                        </optgroup>
+                        <optgroup label="CMS平台">
+                                {% for module in modules %}
+                                    {% if module.2 == 'CMS平台' %}
+                                        <option value="{{ module.0 }}">{{ module.1 }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="module_auth" class="col-sm-2 control-label">业务应用查看权限</label>
+                <div class="col-sm-3">
+                    <select id="app" multiple="multiple" name="app">
+                        {% for app in apps %}
+                            <option value="{{ app.0 }}">{{ app.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="module_auth" class="col-sm-2 control-label">支付账户查看权限</label>
+                <div class="col-sm-3">
+                    <select id="zf" multiple="multiple" name="zf">
+                        {% for zf in zfs %}
+                            <option value="{{ zf.0 }}">{{ zf.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-5"> <!--col-sm-offset-1 -->
+                    <button type="submit" class="btn btn-success btn-block">添加</button>
+                </div>
+            </div>
+        </fieldset>
+    </form>
+    <script type="application/javascript">
+        $(document).ready(function () {
+            setLeftNav("nav_add_user");
+            $('#group').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                includeSelectAllOption: true,
+                //selectAllText: '全部选择',
+                onChange: function (option, checked, select) {
+                    updateModuleApp();
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#module').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                includeSelectAllOption: true,
+                //selectAllText: '全部选择',
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+            $('#app').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                includeSelectAllOption: true,
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#zf').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                includeSelectAllOption: true,
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+        });
+
+        function updateModuleApp() {
+            var module = $("#module");
+            var app = $("#app");
+
+            postJSON("{% url change_group %}",
+                    {
+                        group: $("#group").val()
+                    },
+                    function (data) {
+                        document.getElementById("staff_on").checked = eval(data)[0];
+                        document.getElementById("user_on").checked = eval(data)[1];
+                        module.multiselect('deselectAll', false);
+                        app.multiselect('deselectAll', false);
+                        {#                        zf.multiselect('deselectAll', false);#}
+                        module.multiselect('select', eval(data)[2]);
+                        app.multiselect('select', eval(data)[3]);
+                        {#                        zf.multiselect('select', eval(data)[4]);#}
+                    });
+        }
+    </script>
+{% endblock %}

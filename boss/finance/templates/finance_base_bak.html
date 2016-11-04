@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+    {% block myhead %}
+        <head profile="http://gmpg.org/xfn/11" >
+            <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+        </head>
+    {% endblock %}
+        {% block title %}
+            <title>对账平台</title>
+        {% endblock %}
+    <style>
+        .well .subnav-warp{
+            display: none;
+            position: absolute;
+            left: -50px;
+            top: 60px;
+            width: 358px;
+            height: 40px;
+            line-height: 40px;
+        }
+        .well .nav > li{
+            position: relative;
+        }
+        .well li.active .subnav-warp{
+            /*display: block;*/
+        }
+        /*.well li.active .subnav-warp {
+        display: block;
+        }*/
+       /*#order_div{display: none;}*/
+        .subnav-warp li.current a{
+            color:red
+        }
+        .pagination {
+            display: block;
+        }
+        .subnav-warp ul li{
+        text-align: center;
+        width: 115px;
+        display: block;
+        margin-left: 9px;
+        background-color: #4b4b4b;
+        border: 1px solid #fff;
+        border-radius: 3px;
+    }
+.subnav-warp ul li a{
+    color:#fff;
+}
+    </style>
+
+
+{% block body %}
+    <body>
+<div id="container">
+    
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="headerTitle">
+        <a class="navbar-brand" href="/"><img src="/static/img/logo.png" style="display: inline-block;margin-top: -10px;width:45px;height:45px;" />&nbsp;&nbsp;葡萄对账平台</a>
+        
+    </div>
+        <div class="container-fluid" style="display:inline-block;">
+            <div class="well sidebar-nav  pull-left">
+                <ul class="nav nav-pills" style="display:inline-block;line-height:60px;">
+                    {% if finance_sum %}
+                    <li class=""><!--<span class="glyphicon glyphicon-list-alt"></span>-->
+                        <a href="{% url finance_table %}">
+                            <span>收支汇总</span>
+                            <i class="glyphicon"></i>
+                        </a>
+                        <div class="subnav-warp">
+                            <ul>
+                                <li id="finance_table"><a href="{% url finance_table %}">收支汇总表</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    {% endif %}
+
+                    {% if daily_sum %}
+                    <li class="">
+                        <a href="{% url daily_operate %}">
+                            <span>运营数据汇总报表</span>
+                            <i class="glyphicon"></i>
+                        </a>
+                        <div class="subnav-warp">
+                            <ul>
+                                <li id="operation_table"><a href="{% url daily_operate %}">运营数据汇总报表</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    {% endif %}
+
+                    {% if except_order_sum %}
+                    <li class="" id="order_details"><!--<span class="glyphicon glyphicon-list-alt"></span>-->
+                        <a href="{% url except_order_sum %}">
+                            <span>订单明细</span>
+                            <i class="glyphicon"></i>
+                        </a>
+                        <div class="subnav-warp" id="order_div">
+                            <ul>
+                                <li id="except_order_sum"><a href="{% url except_order_sum %}">异常订单汇总</a></li>
+                                <li id="finance_reports"><a href="{% url unpending_order %}">无压单对账</a></li>
+                                <li id="pending_reports"><a href="{% url pending_order %}">有压单对账</a></li>
+                                <li id="nr_account_reports"><a href="{% url nr_account_order %}">非匹配订单对账</a></li>
+                                <li id="over_month_order"><a href="{% url over_month_order %}">跨月订单明细</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    {% endif %}
+
+                    {% if cp_event %}
+                    <li class="">
+                        <a href="{% url upload_cp_bill %}">
+                            <span>CP事件</span>
+                            <i class="glyphicon"></i>
+                        </a>
+                        <div class="subnav-warp">
+                            <ul>
+                                <li id="upload_cp_bill"><a href="{% url upload_cp_bill %}">上传CP账单</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    {% endif %}
+
+                </ul>
+            </div>
+
+            <div class="pt-user-area" style="display:inline-block;position:absolute;right:10px;">
+                <ul class="nav navbar-nav navbar-right" style="margin-top: 18px;">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                            {_tongji_begin_user_end_}<span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="{% url modify_pwd %}?next={_tongji_begin_lasturl_end_}"><span class="glyphicon glyphicon-lock"></span>修改密码</a></li>
+                            {#                                    <li><a href="{% url logout_then_login %}?next={_tongji_begin_lasturl_end_}"><span class="glyphicon glyphicon-off"></span>退出</a></li>#}
+                            <li><a href="{% url logout_then_login %}?next=/"><span class="glyphicon glyphicon-off"></span>退出</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <p class="navbar-text navbar-right" style="line-height:60px;"><span class="glyphicon glyphicon-user"></span>欢迎您</p>
+            </div>
+        </div>
+    </nav>
+    
+    <nav class="navbar navbar-default" style="min-height: 40px;line-height:50px;">
+        <div class="container-fluid" style="margin-top: 5px;">
+            <span style="color:###;">请您选择需要查看的应用：</span>
+            <select class="chosen-select" id="global_apps" style="height: 40px">
+                <option value="">全部应用</option>
+                <script type="application/javascript">
+                    var apps = {_tongji_begin_apps_end_};
+                    for (var i in apps)
+                    {
+                        if(!apps[i][0])
+                            document.write('<option value="{0}">{1}</option>'.format(apps[i][0], apps[i][1]));
+                    }
+                    for (var i in apps)
+                    {
+                        if(apps[i][0])
+                            document.write('<option value="{0}">{1}</option>'.format(apps[i][0], apps[i][1]));
+                    }
+                </script>
+            </select>
+        </div>
+    </nav>
+    <!--    {% block module %}
+        {% endblock %}-->
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                {% block content %}{% endblock %}
+                <a id="scrollUp" href="#" title="返回到顶部"></a>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="footer">
+    <p>
+        问题反馈：<a href='mailto:lzh@putao.cn,mkh@putao.cn'>lzh@putao.cn,pz@putao.cn</a>
+    </p>
+    <p>
+        深圳市葡萄信息技术有限公司 putao.cn 粤ICP备12043670号
+    </p>
+</div>
+<script type="text/javascript">
+    $("#order_details").mouseover(function(event) {
+      $("#order_div").show();
+    });
+     $("#order_div,#order_details").mouseout(function(event) {
+      $("#order_div").hide();
+    });
+</script>
+</body>
+{% endblock %}
+</html>

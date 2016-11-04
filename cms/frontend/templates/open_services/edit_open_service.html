@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+{% block title %}编辑开放服务{% endblock %}
+
+{% block head %}
+    <style>
+        *{
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        .dashhr{
+            margin: 10px 0;
+            border-top: 1px dashed #ccc;;
+        }
+        .sendmsg-form label{
+            width:16%;
+            text-align: right;
+            margin-right: 1%;
+        }
+        .sendmsg-form .col-lg-12 label{
+            width:8%;
+            margin-right: .5%;
+        }
+        .sendmsg-form .form-control,.sendmsg-form select{
+            display: inline-block;
+            width:80%;
+        }
+        .sendmsg-form .col-lg-12 .form-control{
+            width:90%;
+        }
+        .sendmsg-form a.addpicbtn{
+            cursor:pointer;
+            font-size: 40px;
+            padding: 10px 22px;
+            border: 2px solid #999;
+            color: #999;
+        }
+        .citylist{
+            width: 90%;
+            display: inline-block;
+            vertical-align: top;
+        }
+        .width1in8{
+            width:12.28888%;
+            display: inline-block;
+        }
+        .correctbtn{
+            color: #337ab7;
+            margin-left: 470px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .correctbtn:hover{
+            color:blue;
+            cursor: pointer;
+        }
+        .row label.autolabel{
+            width:auto;
+            text-align: left;
+        }
+
+    </style>
+    <link rel="stylesheet" href="/static/css/selectImg.css"/>
+    <link rel="stylesheet" href='/static/css/webuploader.css'/>
+{% endblock %}
+
+{% block content %}
+    <div class="cms-subtitle">
+        <ol class="breadcrumb">
+            <li><a href="{% url 'open_services_list' %}?v={{ v }}&c={{ c }}">开放服务</a></li>
+            <li class="active">编辑开放服务</li>
+        </ol>
+    </div>
+
+    <div id="error-hints">
+
+    </div>
+    <form class="sendmsg-form" action="{% url 'open_services_edit' %}?channel={{ channel }}&id={{ id }}" method="post" enctype="multipart/form-data">{% csrf_token %}
+        <div style="display: none;">
+            <label>城市</label>
+            <input name="city" value="" type="hidden" id="citystr"/>
+        </div>
+        <div class="row" style="margin-bottom:16px;">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label style="margin-left: -16px;margin-right: 21px;"><i>*</i>显示图标:</label>
+                    <a class="addpicbtn">+</a>
+                    <input name="icon" id="small_icon_url" value="" type="hidden"/>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>Action名称:</label>
+                    <select class="form-control" name="action" id="action">
+                        <option value="" selected></option>
+                        {% for action in actions %}
+                         <option value="{{ action.0 }}" >{{ action.1 }}({{ action.0 }})</option>
+                        {% endfor %} 
+                    </select>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label style="margin-left: -8px;margin-right: 13px;"><i>*</i>显示名称：</label>
+                    <input class="form-control" name="show_name" value=""/>
+                </div>
+            </div>
+        </div>
+        
+         <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label style="margin-left: -32px;margin-right: 36px;">城市：</label>
+                    <select class="input-group-lg form-control" name="city" value="" id="cityselect_id">
+                        <option class="form-control" value="0">不限（全国）</option>
+                        <option class="form-control" value="1">选择其他城市</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="city-selection" style="display: none">
+
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="form-group city-wrap">
+                        <label></label>
+
+                        <div class="city-spec"></div>
+                        <div class="citylist">
+                            <div class="list-group">
+                                <!--                <div class="width1in8">
+                                                    <div class="col-lg-10 list-group-item list-inline">
+                                                        <input type="checkbox"/>
+                                                        全国
+                                                    </div>
+                                                </div>
+                                                <div class="width1in8">
+                                                    <div class="col-lg-10 list-group-item list-inline">
+                                                        <input type="checkbox"/>
+                                                        广东省
+                                                    </div>
+                                                </div>-->
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--the end of the cityselection-->
+
+        <div class="row" style="margin-left:-35px;">
+                <input type="hidden" name="distribute" id="distribute" value="0">
+                <div class="col-lg-12">
+                    <div class="form-group city-wrap">
+                            <label>分发条件</label>
+                            <div class="radio_label" style="margin-left:100px;">
+                             <div class="radio pt-a-radio1">
+                                <label>
+                                    <input type="radio" name="Radios" 
+                                    value="" checked>无条件&nbsp&nbsp&nbsp
+                                </label>
+                            </div>
+                            <div class="radio pt-a-radio2">
+                                <label>
+                                    <input type="radio" name="Radios"   value="">
+                                    时间条件
+                                </label>
+                            </div>
+                            <div class="radio pt-a-radio3">
+                                <label>
+                                    <input type="radio" name="Radios"   value="">
+                                    地域条件
+                                </label>
+                            </div>
+                    </div>
+                </div>
+            </div>
+         </div>
+        <div class="row text-center">
+            <a class="btn btn-default col-lg-1 col-lg-offset-4" href="{% url 'open_services_list' %}?v={{ v }}&c={{ c }}">取消</a>
+            <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="确定"/>
+        </div>
+
+        <div id="dialogUpload" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog"
+             aria-labelledby="myLargeModalLabel" style="display: none;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <div class="header">
+                            <input id="searchImg" class="input-sm" type="text" placeholder="请输入关键词搜索"/>
+                            <button class="btn btn-info" id="searchBtn">搜索</button>
+                            <p class="toolbar pull-right">
+                                <button id="usepic" class="btn btn-warning">确认使用</button>
+                                <button type="button" class="btn btn-primary" id="addLocalImg">本地上传</button>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                        aria-hidden="true">×</span></button>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="nav nav-tabs pull-right" role="tablist" id="pic-nav">
+                            <li class="active"><a href="#">广告图片</a></li>
+                            <li><a href="#">大图标</a></li>
+                            <li><a href="#">小图标</a></li>
+                            <li><a href="#">优惠券</a></li>
+                            <li><a href="#">其他</a></li>
+                        </ul>
+                        <div class="tab-content" style="clear:both">
+                            <div class="tab-pane active" id="adspic">
+                                <div id="loading" style="display:none;    position: inherit;    margin: 1.5rem 420px;">
+                                    <img src='/static/images/loading.gif'/>
+                                </div>
+                                <div class="imglist">
+
+                                </div>
+                                <div id="pagination"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
+        </div>
+
+
+        <div id="UploadModal" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog"
+             aria-labelledby="myLargeModalLabel" style="display: none;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        上传图片到图库<!--<h4 class="modal-title" id="myLargeModalLabel"></h4>-->
+                        <p class="pull-right">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                    aria-hidden="true">×</span></button>
+                            <button class="btn btn-info pull-right" id="useTheImg" style="display: none;">使用该图片</button>
+                        </p>
+
+                        <!--<input type="button" class="btn btn-primary" value="浏览本地文件"/>-->
+                    </div>
+                    <div class="modal-body">
+                        <div id="uploader-demo">
+                            <!--用来存放item-->
+                            <div id="fileList" class="uploader-list"></div>
+                            <div id="filePicker" style="text-align: right"> 选择图片</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
+        </div>
+
+
+    </form>
+    <script type="text/javascript" src="../../../static/js/cms/addCityList.js"></script>
+    <script type="text/javascript">
+        $(".pt-a-radio1").click(function(event) {
+           $("#distribute").prop('value', '0');
+        });
+         $(".pt-a-radio2").click(function(event) {
+           $("#distribute").prop('value', '1');
+        });
+          $(".pt-a-radio3").click(function(event) {
+           $("#distribute").prop('value', '2');
+        });
+        setNavBg("open_service");
+        var g_cities =
+        {{ cities|safe }} ||{};
+
+
+        //选中城市分组后，将数据填充到对应的城市列表
+
+        $("#group_id").change(function () {
+            chooseCityGroup(this, '{% url 'get_city_from_group_id' %}');
+        });
+
+
+        $("form").submit(function () {
+            var citystr = "";
+            var city_idex = $("#cityselect_id").find("option:selected").val();
+            //判断选择的是不限（全国），还是其它城市
+            if (city_idex == 0) {
+                citystr += '*';
+            } else if (city_idex == 1) {
+                var ckd = $(".citydetailist input[type='checkbox']");
+                var ckd_city = $(".list-group-item input[type='checkbox']");
+                var ckd_city_len = ckd_city.length;
+                var ckd_len = ckd.length;
+                for (var j = 0; j < ckd_city_len; j++) {
+                    if (ckd_city[j].checked && ($(ckd_city[j]).val() == "全国")) {
+                        citystr += '*,';
+                    }
+                    if (ckd_city[j].checked && ( $(ckd_city[j]).val() == "上海" || $(ckd_city[j]).val() == "重庆" || $(ckd_city[j]).val() == "天津" || $(ckd_city[j]).val() == "北京")) {
+                        citystr += $(ckd_city[j]).val() + ',';
+                    }
+                }
+                for (var i = 0; i < ckd_len; i++) {
+                    if (ckd[i].checked) {
+                        citystr += $(ckd[i]).val() + ',';
+                    }
+                }
+                citystr = citystr.substring(0, citystr.length - 1);
+            }
+
+            $("#citystr").val(citystr);
+            console.log("所选城市为" + citystr);
+            sendTime();
+
+
+            var actions ={{ actions|safe }};
+            console.log(actions);
+            var action_val = $("#action_uid").val();
+            var count_times = 0;
+            $.each(actions, function (key, item) {
+                if ((item[0]) == action_val) {
+                    count_times++;
+                }
+            });
+
+            if (count_times <= 0) {
+                var errorstr = '<ul><li>动作 ： 请选择下拉框内的可选动作。</li></ul>';
+                $("#error-hints").html(errorstr).show();
+                $("#action_uid").css("border", "1px solid #D9534F");
+                return false;
+            } else {
+                return true;
+            }
+
+        });
+        checkForm({{ errors|safe }});
+
+
+        $("form input").focus(function () {
+            $(this).css("border", "1px solid #ccc");
+        });
+
+
+        function setInPutValue() {
+            {#        console.log("{{ goods_form.initial }}");#}
+            {#        console.log("a"+"b");#}
+            {% for key,value in fields.items %}
+                $("[name='{{ key }}']").val({{ value|safe }});
+            {% endfor %}
+            {#        console.log("{{ new_service_form.city.value }}")#}
+           
+            if ($("#action_id").val() == -1) {
+                $(".correctcontent").show();
+            }
+            $(".addpicbtn").next("input[type=hidden]").each(function(){
+                if(this.value != ''){
+                    var addbtn = $(this).prev(".addpicbtn");
+                    $('<div  class="newImg"><img src="'+getImgURL(this.value)+'"/><span class="glyphicon glyphicon-remove"></span>           </div>').insertAfter(addbtn);
+                    addbtn.hide();
+                }
+            });
+            cityDrop();
+            returnCityValue();
+        }
+        window.onload = setInPutValue;
+
+    </script>
+    <script type="text/javascript" src="/static/js/cms/selectImg.js"></script>
+    <script>
+        (function () {
+            $(".correctcontent").hide();
+            $("#action_uid").focus(function () {
+                $("#actionselect").show();
+            });
+
+
+            $("#action_uid").on("input propertychange", function () {
+                var action_str = $(this).val();
+                var action_arr = $("#actionselect a");
+                var act_len = action_arr.length;
+                for (var i = 0; i < act_len; i++) {
+                    var htmlstr = $(action_arr[i]).html();
+                    if (htmlstr.indexOf(action_str) >= 0) {
+                        $(action_arr[i]).show();
+                    } else {
+                        $(action_arr[i]).hide();
+                    }
+                }
+            });
+            $(".correctbtn").click(function () {
+                $(".correctcontent").show();
+                $(this).hide();
+            });
+
+        })();
+
+
+        selectCity();
+
+
+        function requestData(cur_page) {
+            g_cur_page = cur_page;
+            $.ajax("{% url 'get_images' %}", {
+                type: "get",
+                cache: false,
+                data: {
+                    key: searchkeywords,
+                    cur_page: cur_page,
+                    per_page: g_per_page,
+                    image_category: cur_category
+                },
+                dataType: 'json',
+                beforeSend: function (XMLHttpRequest) {
+                    $("#loading").show();
+
+                },
+                success: function (result) {
+                    //   console.log(result);
+                    var data = result[0];
+                    var num_pages = result[1];
+                    CreateImgList(data);
+                    pagination(num_pages);
+                },
+                error: function (result) {
+                    console.log(result);
+                },
+                complete: function (result) {
+                    $("#loading").hide();
+                }
+
+            })
+        }
+
+    </script>
+    <script type="text/javascript" src="../../../static/js/cms/webuploader.min.js"></script>
+    <script type="text/javascript" src="../../../static/js/cms/uploadimg.js"></script>
+
+{% endblock %}

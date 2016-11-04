@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}优惠券{% endblock %}
+
+{% block head %}
+<style>
+    .my_thead{
+        display: table-header-group;
+    }
+    /*   #table tr td:nth-child(2){
+           text-align: left;
+           padding-left: 20px;
+       }*/
+    #table .mimg{
+        width:100px;
+        height: 100px;
+        margin:10px 0;
+    }
+    #table td .mblock{
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    #table .noContent{
+        height: 200px;
+        font-size: 20px;;
+    }
+    #table .noContent:hover{
+        background: transparent;
+    }
+    table th{
+        border: 1px solid #aaa;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<ul class="titlebar">
+    <li class="active"><a href="#" >优惠券管理</a></li>
+    <li><a href="{% url 'open_coupon_create' %}">优惠券发放</a></li>
+    <li><a href="{% url 'invite_gift' %}">邀请有礼</a></li>
+</ul>
+<section class="top-sec">
+     <span>
+     <input type="search" name="keywords" value="" placeholder="请输入关键词搜索" id="search" ><span class="search_pic" ><img src="{% static 'images/sousuo.png' %}"></span>
+            <span  class="clearInput"><a href="javascript:void(0)">×</a></span>
+         <select class="category">
+             <option value="">全部</option>
+         </select>
+         <a href="javascript:void(0)" class="search_val">
+             <span class="search-btn">搜索</span>
+         </a>
+     </span>
+
+    {% if perms.man.config %}
+    <a id="showCouponModal" class="btn-new" href="#"><b style="font-size:.18rem">＋&nbsp</b>下载券码</a>
+    <a class="btn-new" href="{% url 'newedit_coupon'%}"><b style="font-size:.18rem">＋&nbsp</b>添加优惠券</a>
+    <a class="btn-new" href="{% url 'genarate_code'%}"><b style="font-size:.18rem">＋&nbsp</b>生成券码</a>
+    {% endif %}
+
+</section>
+<section class="service-table">
+    <table id="table">
+        <caption></caption>
+        <thead class="my_thead">
+        <tr>
+            <th>优惠券ID</th>
+            <th>优惠券名称</th>
+            <th>优惠券类型</th>
+            <!--<th>面额</th>-->
+            <th>大小（流量）</th>
+            <th>有效时间</th>
+            <th>消费限制</th>
+            <!--<th>发放状态</th>-->
+            <th>使用情况</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <div id="loading" style="display:none;">
+            <img src="{% static 'images/loading.gif' %}"/>
+        </div>
+        <tbody id="tbody">
+        <tr class="noContent">
+            <td colspan="100%">暂无相关内容</td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="no_content" ><p>未找到相关内容，请重新搜索</p></div>
+    <div id="pagination" ></div>
+    <div class="modal fade" id="downloadcoupon" tabindex="-1" role="dialog"
+         aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: 980px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="">
+                        优惠券列表
+                    </h4>
+                </div>
+                <div class="modal-body" style="text-align:center;">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                            data-dismiss="modal">取消
+                    </button>
+                   <!-- <button type="button" class="btn btn-primary btn-default" data-dismiss="modal">
+                        确定
+                    </button>-->
+                </div>
+            </div><!-- /.modal-content
+                    </div><!-- /.modal -->
+        </div>
+    </div>
+    <script src="{% static 'js/cms/initTable.js' %}"></script>
+    <script type="text/javascript">
+        var myTable,category = ["HF-话费","MOVIE-电影","FLOW-流量","SELF-到家","H5-H5","GAME-游戏","QQ-Q币"];
+        $(function(){
+            $.each(category,function(i,ele){
+                var data = ele.split("-");
+                $(".top-sec .category").append("<option value='"+data[0]+"'>"+data[1]+"</option>");
+            });
+            init();
+            myTable = new tableInit({});
+            myTable.getData();
+            myTable.searchInit();
+        })
+
+        function init(){
+            /*初始化页面*/
+            setNavBg("activity_config");
+        };
+        $("#showCouponModal").click(function(e){
+            e.preventDefault();
+            $.get('/codes/list/',function(data){
+                var htmlStr = '';
+                if(!$.isArray(data) || data.length == 0) {
+                    htmlStr='暂无优惠券信息'
+                }
+                else{
+                    htmlStr +='<table><tr>' +
+                            '<th>创建时间</th>' +
+                            '<th>可兑换优惠券ID</th>' +
+                            '<th>券码批次</th>' +
+                            '<th>下载</th>' +
+                            '</tr>';
+                    $.each(data,function(i,ele){
+                        htmlStr+='<tr data-id="'+ele.id+'">' +
+                                '<td>'+ele.c_time+'</td>' +
+                                '<td>'+ele.name.toString()+'</td>' +
+                                '<td>'+ele.id+'</td>' +
+                                '<td><a href="/codes/down/?cid='+ele.id+'">下载券码</a></td>' +
+                                '</tr>'
+                    })
+                    htmlStr+='</table>';
+                }
+
+                $("#downloadcoupon").find(".modal-body").html(htmlStr)
+                        .end().modal("show");
+            });
+        });
+        function requestData(options){
+            $.ajax({
+                url:'/coupon/list/',
+                type:"get",
+                cache:false,
+                data:{
+                    wd: $("#"+options.keyword).val(),
+                    scope: $(".top-sec .category").val(),
+                    page: options.curPage,
+                    limit: options.pageSize
+                },
+                beforeSend:function(XMLHttpRequest){
+                    $(".noContent").hide();
+                    $("#"+options.pageContainer).hide();
+                    $("#"+options.loadImgId).show();
+                },
+                success:function(result){
+                    var data = result.coupons,num_pages = result.totalpage;
+                    if(data.length == 0){
+                        $('#'+myTable.default.tbodyId).empty();
+                        $("#"+options.pageContainer).hide();
+                        $(".no_content").show();
+                        $(".my_thead").hide();
+                    }
+                    else{
+                        $(".my_thead").show();
+                        $(".no_content").hide();
+                        myTable.processData(data);
+                        if(num_pages>=2) myTable.pageInit(num_pages);
+                    }
+                },
+                error:function(result){
+                    console.log(result);
+                },
+                complete:function(result){
+                    $("#"+options.loadImgId).hide();
+                    var currentpage = options.curPage-1;
+                    $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                    if(currentpage>5){
+                        $(options.pageSelector).eq(currentpage-5).prevAll().hide();
+                    }
+                }
+            })
+        }
+        function delData(id){
+            $.ajax( {
+                url:'/coupon/?id='+id,
+                type: "DELETE",
+                cache: false,
+                success: function (result) {
+                    //console.log(result);
+                    if (result.msg == '删除成功') {
+                        requestData(myTable.default);
+                    }
+                },
+                error: function (result) {
+                    console.log(result);
+                }
+
+            });
+        };
+        /*处理后台返回数据*/
+        function dataInit(data){
+            var tbodyId = myTable.default.tbodyId,htmlStr='',trId;
+            if(data.length == 0){
+                $(".noContent").show();
+                return ;
+            }
+            $.each(data,function(i,value){
+                trId = value.id;
+                var types= (value.biz_type == 1)?'M':'元';
+                htmlStr+='<tr data-id='+trId+'>';
+                htmlStr +='<td>'+value.id+'</td>' +
+                        '<td>'+value.name+'</td>' +
+                        '<td>'+getName(value.scope)+'</td>' +
+                        /*'<td>'+value.amount+'</td>' +*/
+                        '<td>'+value.amount+types+'</td>' +
+                        '<td>'+value.start_time+'-'+value.end_time+'</td>' +
+                        '<td>'+(value.min_consume?value.min_consume:'-')+'</td>' +
+                        /*'<td>'+'发放状态'+'</td>' +*/
+                        '<td>'+value.used_count+'/'+value.coupon_count+'</td>' ;
+
+                htmlStr += '<td><span class="glyphicon glyphicon-edit" aria-hidden="true" style="cursor: pointer"></span></td></tr>';
+                /*删掉delete按钮前的版本
+                htmlStr += '<td><span class="glyphicon glyphicon-edit" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span><span class="glyphicon glyphicon-trash" aria-hidden="true" style="cursor: pointer"></span></td></tr>';
+                */
+                function getName(name){
+                    var nameType='';
+                    switch(name) {
+                        case '':
+                            nameType ='全部';
+                            break;
+                        case 'HF':
+                            nameType ='话费';
+                            break;
+                        case 'MOVIE':
+                            nameType ='电影';
+                            break;
+                        case 'FLOW':
+                            nameType ='流量';
+                            break;
+                        case 'SELF':
+                            nameType ='到家';
+                            break;
+                        case 'H5':
+                            nameType ='H5';
+                            break;
+                        case 'GAME':
+                            nameType ='游戏';
+                            break;
+                        case 'QQ':
+                            nameType ='Q币';
+                            break;
+                    }
+                    return nameType;
+                };
+
+            });
+            $('#'+tbodyId).empty().append($(htmlStr)).on("click",'.glyphicon-edit',function(e){
+                window.location.href = "{% url 'newedit_coupon'%}"+'?id='+$(this).parents('tr').data("id")
+
+            }).on("click",'.glyphicon-trash',function(e){
+                var tr = $(this).parents("tr"),
+                        id = tr.data("id"),
+                        mtext = tr.find("td").eq(1).text();
+                $("#myModal-del").find(".del_info").text(mtext)
+                        .end().find(".btn-primary").on("click",function(){
+                            delData(id);
+                        }).end().modal("show");
+                //return false;
+            })
+            /*为二级分类添加+号*/
+            $('#'+tbodyId) .find("tr.level2").each(function(){
+                $(this).find("td:nth-child(2)").prepend('<span class="glyphicon glyphicon-minus" style="margin:0 5px 0 20px;" aria-hidden="true"></span>');
+            });
+        }
+        $.ajaxSetup({
+            beforeSend: function (XMLHttpRequest) {
+                $("#loading").show();
+            },
+            complete: function (result) {
+                $("#loading").hide();
+            },
+        })
+    </script>
+</section>
+{% endblock %}

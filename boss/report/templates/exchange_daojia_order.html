@@ -1,0 +1,646 @@
+{% extends "report-base.html" %}
+{% block myhead %}
+    <link rel="stylesheet" type="text/css" href="/static/css/multiselect.css" />
+    <script type="text/javascript" src="/static/js/multiselect.js" ></script>
+    <script type="text/javascript" src="/static/js/echarts.js" ></script>
+    <style type="text/css">
+    .dropdown-menu{
+{#        width:400px;#}
+    }
+{#     td#}
+{#        {#}
+{#            white-space: nowrap;/*不允许td换行*/#}
+{#        }#}
+    </style>
+{% endblock %}
+{% block title %}交易分析{% endblock %}
+{% block content %}
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="updateTime(-6)">过去7天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-29)">过去30天</button>
+        <button type="button" class="btn btn-default" onclick="updateTime(-89)">过去90天</button>
+    </div>
+    <div style="display: inline-table;vertical-align: middle;">
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="input-prepend input-group">
+                            <span class="add-on input-group-addon">
+                                <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>自选范围
+                            </span>
+                            <input type="text" style="width: 200px;" name="date_control" id="date_control" class="form-control" readonly/>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>&nbsp;&nbsp;&nbsp;&nbsp;
+    版本选择：
+    <select id="ver">
+        <option value="">全部版本</option>
+        {% for ver in vers %}
+            <option value="{{ ver }}">{{ ver }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    渠道选择：
+    <select id="channel">
+        <option value="">全部渠道</option>
+        {% for channel in channels %}
+            <option value="{{ channel }}">{{ channel }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    订单种类选择：
+    <select id="order_types">
+        <option value="">总和</option>
+        {% for product in products %}
+            <option value="{{ product.0 }}">{{ product.1 }}</option>
+        {% endfor %}
+    </select>&nbsp;&nbsp;&nbsp;&nbsp;
+    城市选择：
+    <select id="citys_select" >
+        <option value="0" selected>无</option>
+        {% for city in citys %}
+            <option value="{{ city.1 }}" >{{ city.1 }}</option>
+        {% endfor %}
+    </select>
+    <br />
+    <br />
+    <table id="data_table2" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px">
+        <thead>
+            <tr>
+                <th colspan="7">
+                    <span id="table_title2">到家业务概况</span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>日期</td>
+                <td>新增订单</td>
+                <td>新增真实订单</td>
+                <td>新增订单流水</td>
+                <td>下单人数</td>
+                <td>投诉订单数</td>
+                <td>累计订单数</td>
+            </tr>
+            <tr>
+                <td>今日</td>
+                <td>{{ summary.0.1 }}</td>
+                <td>{{ summary.0.2 }}</td>
+                <td>{{ summary.0.3 }}</td>
+                <td>{{ summary.0.4 }}</td>
+                <td>{{ summary.0.5 }}</td>
+                <td>{{ summary.0.6 }}</td>
+            </tr>
+            <tr>
+                <td>昨日</td>
+                <td>{{ summary.1.1 }}</td>
+                <td>{{ summary.1.2 }}</td>
+                <td>{{ summary.1.3 }}</td>
+                <td>{{ summary.1.4 }}</td>
+                <td>{{ summary.1.5 }}</td>
+                <td>{{ summary.1.6 }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <br />
+    <br />
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="showTable(1)">服务成交分析</button>
+        <button type="button" class="btn btn-default" onclick="showTable(5)">分类成交分析</button>
+        <button type="button" class="btn btn-default" onclick="showTable(2)">CP成交分析</button>
+    </div>&nbsp;&nbsp;&nbsp;&nbsp;
+    <br />
+    <br />
+    <table id="data_table" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px;" >
+        <thead>
+            <tr>
+                <th id="col_num" colspan="18">
+                    <span id="table_title">到家业务分析报表</span>
+                    <a id="export_csv" href="{% url exchange_daojia_order_reports_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="colname">
+                <td id="col_one">分类</td>
+                <td id="col_2" >服务商名称</td>
+                <td id="col_3" >订单总量</td>
+                <td id="col_4" >订单销售金额</td>
+                <td id="col_18" >订单实付金额</td>
+                <td id="col_19" >订单实付均价(客单价)</td>
+                <td id="col_5" >交易用户数</td>
+                <td id="col_17" >新用户数</td>
+                <td id="col_20" >新客占比(首购率)</td>
+                <td id="col_21" >老客占比(复购率)</td>
+                <td id="col_22" >取消占比</td>
+                <td id="col_6" >测试订单数</td>
+                <td id="col_7" >待接单 / 待支付订单</td>
+                <td id="col_8" >取消 / 退款订单</td>
+                <td id="col_9">进行中订单</td>
+                <td id="col_10" >完成订单</td>
+                <td id="col_11" >投诉订单</td>
+                <td id="col_12" >操作</td>
+            </tr>
+        </tbody>
+    </table>
+    <span>显示行数：</span>
+    <select onchange="updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;" id = 'pagination'>
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="updateTable(g_current_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="updateTable(g_current_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <hr/>
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="showTimeTable(1)">月度分析</button>
+        <button type="button" class="btn btn-default" onclick="showTimeTable(2)">日度分析</button>
+    </div>&nbsp;&nbsp;&nbsp;&nbsp;
+    <br/>
+    <br/>
+    <table id="data_tables" class=" table-striped table-bordered table-hover data_detail" style="font-size: 12px;display: ;" >
+        <thead>
+            <tr>
+                <th id="time_col_num" colspan="8">
+                    <span id="time_table_title">到家业务每月分析报表</span>
+                    <a id="time_export_csv" href="{% url exchange_daojia_order_evemonth_csv %}" class="t_right">
+                        <span class="glyphicon glyphicon-download-alt"></span>导出csv文件
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="colnames">
+                <td id="time_col_1">年</td>
+                <td id="time_col_2" >月</td>
+                <td id="time_col_3" >总订单量</td>
+                <td id="time_col_4" >总下单用户</td>
+                <td id="time_col_5" >客单价</td>
+                <td id="time_col_6" >首单率</td>
+                <td id="time_col_7" >复购订单率</td>
+                <td id="time_col_8" >新用户复购率</td>
+            </tr>
+        </tbody>
+    </table>
+    <span>显示行数：</span>
+    <select onchange="m_updatePer(this.value)" style="font-size: 12px;height: 30px;margin-right:30px;border-color:#ccc">
+        <option>30</option>
+        <option>90</option>
+        <option>150</option>
+    </select>
+    <nav style="display: inline-block">
+        <ul class="pagination" style="height:0;font-size: 12px;" id = 'paginations'>
+            <li>
+                <a href="javascript:void(0);" aria-label="Previous" onclick="m_requestData(m_cur_page - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!--分页框-->
+            <li>
+                <a href="javascript:void(0);" aria-label="Next" onclick="m_requestData(m_cur_page + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <script type="application/javascript">
+        //本文件一些全局变量
+        var g_per = 30;//每页的显示数
+        var g_data = [];//趋势数据
+        var g_current_page = 1;//当前页
+        var g_summary_data = [] ;//实时统计表格数据
+        var show_table_type = 1;//默认显示应用分析表
+        var show_time_table_type = 1;//默认显示分月订单分析表
+        var g_date_control = $("#date_control");
+        var m_per = 30; //每页的显示数
+        var m_data = [];
+        var m_cur_page = 1;
+        var all_page = 0;
+
+
+        $(document).ready(function() {
+            $("#colname").siblings().remove();
+            setLeftNav("nav_order_reports");
+            loading.init(".loading_gif", "#data_table");
+            $('#ver').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function (option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#channel').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function (option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#citys_select').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 400,
+                filterPlaceholder: "搜索",
+                //includeSelectAllOption: true,
+                enableFiltering: true,
+                nonSelectedText: '无',
+                onChange: function(option, checked, select) {
+                    requestData(1);
+                },
+                onDropdownHide: function(event) {
+                    $(".multiselect-clear-filter").click();
+                }
+            });
+            $('#order_types').multiselect({
+                disableIfEmpty: true,
+                maxHeight: 200,
+                filterPlaceholder: "搜索",
+                enableFiltering: true,
+                onChange: function (option, checked, select) {
+                    requestData();
+                },
+                onDropdownHide: function (event) {
+                    $(".multiselect-clear-filter").click();
+                }
+
+            });
+            g_date_control.daterangepicker(
+                {
+                    locale:
+                    {
+                        applyLabel: "确定",
+                        cancelLabel: "取消"
+                    },
+                    format: 'YYYY-MM-DD',
+                    separator: ' 到 ', //前后有空格
+                    startDate: getDateStr("{{ currentdate }}", -0),
+                    endDate: "{{ currentdate }}",
+                    maxDate: getDateStr("{{ currentdate }}", 1)// < maxDate
+                },
+                function(start, end, label)
+                {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                }
+            ).val(getDateStr("{{ currentdate }}", -0) + " 到 {{ currentdate }}");
+
+            //点击apply触发事件
+            g_date_control.on('apply.daterangepicker', function(ev, picker){
+                requestData();
+            });
+
+            requestData();
+            m_requestData(1);
+        });
+
+        function requestData()
+        {
+            //截取出开始日期和结束日期
+            var start_date = g_date_control.val().substr(0,10);
+            var end_date = g_date_control.val().substr(13);
+
+            //修改导出文件的href地址
+            modifyCsvHref(start_date, end_date, show_table_type);
+
+            //修改导出文件的href地址
+            postJSON("{% url get_exchange_daojia_order_table_data %}",
+                {
+                    start_date: start_date,
+                    end_date: end_date,
+                    ot: $("#order_types").val(),
+                    app: getURLParam("app"),
+                    ver: $("#ver").val(),
+                    channel: $("#channel").val(),
+                    citys_select: $("#citys_select").val(),
+                    show_table_type:show_table_type
+                },
+                function(data)
+                {
+                    //字符串转json
+                    g_data = eval(data);
+                    updateDividePage();
+                    updateTable(1);
+                }
+            );
+
+            //更新日报表
+            m_requestData();
+        }
+
+        //更新时间，点击了"过去7天"、"过去30天"、"过去90天"
+        function updateTime(delay)
+        {
+            var start_date = getDateStr("{{ currentdate }}", delay);
+            var end_date = "{{ currentdate }}";
+
+            g_date_control.data('daterangepicker').setStartDate(start_date);
+            g_date_control.data('daterangepicker').setEndDate(end_date);
+            g_date_control.val("{0} 到 {1}".format(start_date, end_date));
+            requestData()
+        }
+
+        //切换显示交易分析表格
+        function showTable(table_type)
+        {
+            show_table_type = table_type;
+            switch(show_table_type)
+            {
+               case 1:
+                      document.getElementById("col_num").colSpan="18"
+                      document.getElementById("col_3").innerHTML = "订单总量";
+                      document.getElementById("col_4").innerHTML = "订单销售金额";
+                      document.getElementById("col_18").innerHTML = "订单实付金额";
+                      document.getElementById("col_19").innerHTML = "订单实付均价(客单价)";
+                      document.getElementById("col_5").innerHTML = "交易用户数";
+                      document.getElementById("col_6").innerHTML = "测试订单数";
+                      document.getElementById("col_7").innerHTML = "待接单 / 待支付订单";
+                      document.getElementById("col_8").innerHTML = "取消 / 退款订单";
+                      document.getElementById("col_9").innerHTML = "进行中订单";
+                      document.getElementById("col_10").innerHTML = "完成订单";
+                      document.getElementById("col_11").innerHTML = "投诉订单";
+                      document.getElementById("col_12").innerHTML = "操作";
+                      document.getElementById("col_17").innerHTML = "新用户数";
+                      document.getElementById("col_20").innerHTML = "新客占比(首购率)";
+                      document.getElementById("col_21").innerHTML = "老客占比(复购率)";
+                      document.getElementById("col_22").innerHTML = "取消占比";
+                      document.getElementById("col_2").style.display = ""
+                      document.getElementById("col_11").style.display = ""
+                      document.getElementById("col_12").style.display = ""
+                      document.getElementById("col_17").style.display = ""
+                      document.getElementById("col_18").style.display = ""
+                      document.getElementById("col_19").style.display = ""
+                      document.getElementById("col_20").style.display = ""
+                      document.getElementById("col_21").style.display = ""
+                      document.getElementById("col_22").style.display = ""
+                      break;
+               case 5:
+                      document.getElementById("col_num").colSpan="13    "
+                      document.getElementById("col_3").innerHTML = "订单总量";
+                      document.getElementById("col_4").innerHTML = "订单销售金额";
+                      document.getElementById("col_18").innerHTML = "订单实付金额";
+                      document.getElementById("col_5").innerHTML = "交易用户数";
+                      document.getElementById("col_6").innerHTML = "测试订单数";
+                      document.getElementById("col_7").innerHTML = "待接单 / 待支付订单";
+                      document.getElementById("col_8").innerHTML = "取消 / 退款订单";
+                      document.getElementById("col_9").innerHTML = "进行中订单";
+                      document.getElementById("col_10").innerHTML = "完成订单";
+                      document.getElementById("col_11").innerHTML = "投诉订单";
+                      document.getElementById("col_12").innerHTML = "操作";
+                      document.getElementById("col_17").innerHTML = "新用户数";
+                      document.getElementById("col_2").style.display = "None"
+                      document.getElementById("col_11").style.display = ""
+                      document.getElementById("col_12").style.display = ""
+                      document.getElementById("col_17").style.display = ""
+                      document.getElementById("col_18").style.display = ""
+                      document.getElementById("col_19").style.display = "None"
+                      document.getElementById("col_20").style.display = "None"
+                      document.getElementById("col_21").style.display = "None"
+                      document.getElementById("col_22").style.display = "None"
+                      break;
+               case 2:
+                      document.getElementById("col_num").colSpan="10"
+                      document.getElementById("col_11").style.display = "None";
+                      document.getElementById("col_12").style.display = "None";
+                      document.getElementById("col_17").style.display = "None";
+                      document.getElementById("col_18").style.display = "None";
+                      document.getElementById("col_19").style.display = "None";
+                      document.getElementById("col_20").style.display = "None";
+                      document.getElementById("col_21").style.display = "None";
+                      document.getElementById("col_22").style.display = "None";
+                      document.getElementById("col_3").innerHTML = "接入CP数量";
+                      document.getElementById("col_4").innerHTML = "接入商品数量";
+                      document.getElementById("col_5").innerHTML = "覆盖城市";
+                      document.getElementById("col_6").innerHTML = "平均单价";
+                      document.getElementById("col_7").innerHTML = "接单速度（分）";
+                      document.getElementById("col_8").innerHTML = "服务完成速度（分）";
+                      document.getElementById("col_9").innerHTML = "满意度";
+                      document.getElementById("col_10").innerHTML = "详情";
+                      document.getElementById("col_2").style.display = ""
+                      break;
+            }
+             requestData();
+        }
+
+        //切换显示分时段分析表格
+        function showTimeTable(table_type)
+        {
+            show_time_table_type = table_type;
+            switch(show_time_table_type)
+            {
+               case 1:
+                      document.getElementById("time_col_num").colSpan="8";
+                      document.getElementById("time_col_1").innerHTML = "年";
+                      document.getElementById("time_col_2").innerHTML = "月";
+                      document.getElementById("time_col_3").innerHTML = "总订单量";
+                      document.getElementById("time_col_4").innerHTML = "总下单用户";
+                      document.getElementById("time_col_5").innerHTML = "客单价";
+                      document.getElementById("time_col_6").innerHTML = "首单率";
+                      document.getElementById("time_col_7").innerHTML = "复购订单率";
+                      document.getElementById("time_col_8").innerHTML = "新用户复购率";
+                      document.getElementById("time_col_1").style.display = ""
+                      document.getElementById("time_col_2").style.display = ""
+                      document.getElementById("time_col_3").style.display = ""
+                      document.getElementById("time_col_4").style.display = ""
+                      document.getElementById("time_col_5").style.display = ""
+                      document.getElementById("time_col_6").style.display = ""
+                      document.getElementById("time_col_7").style.display = ""
+                      document.getElementById("time_col_8").style.display = ""
+                      break;
+               case 2:
+                      document.getElementById("time_col_num").colSpan="6";
+                      document.getElementById("time_col_7").style.display = "None"
+                      document.getElementById("time_col_8").style.display = "None"
+                      document.getElementById("time_col_1").innerHTML = "日期";
+                      document.getElementById("time_col_2").innerHTML = "总订单量";
+                      document.getElementById("time_col_3").innerHTML = "总下单用户";
+                      document.getElementById("time_col_4").innerHTML = "客单价";
+                      document.getElementById("time_col_5").innerHTML = "首单率";
+                      document.getElementById("time_col_6").innerHTML = "复购订单率";
+                      break;
+            }
+            m_requestData();
+        }
+
+        //修改下载订单报表的href链接
+        function modifyCsvHref(start_date, end_date, table_type)
+        {
+            //修改导出文件的href地址
+            $("#export_csv").attr("href", "{% url exchange_daojia_order_reports_csv %}?start_date={0}&end_date={1}&table_type={2}".
+                format(start_date, end_date, table_type));
+        }
+
+        //更新每页的显示数
+        function updatePer(per)
+        {
+            g_per = per;
+            updateDividePage();
+            updateTable(1);
+        }
+
+        //更新表格第page页的数据
+        function updateTable(page)
+        {
+            var total_page = 1 + parseInt((g_data.length - 1) / g_per);
+            if(page <= 0 || page > total_page)
+                return;
+
+            g_current_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("#colname").siblings().remove();
+            //添加元素
+            for(var i = (page - 1) * g_per; i < g_per * page && i < g_data.length; i++)
+            {
+                var tr = $("<tr tr_can_remove='yes'></tr>");
+                for(var j in g_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(g_data[i][j])));
+                }
+                $("#data_table tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#page_" + i).addClass("active");
+                else
+                    $("#page_" + i).removeClass("active");
+            }
+        }
+
+        //按照每页显示数和总数据 更新分页
+        function updateDividePage()
+        {
+            var count = 1 + parseInt((g_data.length - 1) / g_per);
+
+            //在添加之前，先把现有元素移除掉
+            $("[li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='page_{0}' li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='updateTable({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter("#pagination li:first");
+            }
+        }
+
+        function m_requestData(cur)
+        {
+            //截取出开始日期和结束日期
+            var start_date = g_date_control.val().substr(0,10);
+            var end_date = g_date_control.val().substr(13);
+
+            //修改导出文件的href地址
+            postJSON("{% url exchange_daojia_order_evemonth %}",
+                {
+                    cur_page: cur,
+                    limit_page: m_per,
+                    start_date: start_date,
+                    end_date: end_date,
+                    show_time_table_type: show_time_table_type,
+                },
+                function(data)
+                {
+                    //字符串转json
+                    var r_data = eval('('+data+')');
+                    console.log(r_data)
+                    if(r_data.code =='-1'){
+                        console.log(r_data.msg)
+                    }else{
+                        m_cur_page = cur;
+                        m_data = r_data.data;
+                        all_page = r_data.page;
+                        m_updateDividePage();
+                        m_updateTable(cur);
+                    }
+                }
+            );
+        }
+
+
+
+        //按照每页显示数和总数据 更新分页
+        function m_updateDividePage()
+        {
+            var count = all_page;
+
+            //在添加之前，先把现有元素移除掉
+            $("[m_li_can_remove='yes']").remove();
+            //添加li
+            for(var i = count; i >= 1; i--)
+            {
+                var li = $("<li id='mpage_{0}' m_li_can_remove='yes'></li>".format(i));
+                var a = $("<a href='javascript:void(0);' onclick='m_requestData({0})'>{0}</a>".format(i));
+                li.append(a);
+                li.insertAfter("#paginations li:first");
+            }
+        }
+
+    //更新每页的显示数
+        function m_updatePer(per)
+        {
+            m_per = per;
+            m_requestData(1);
+        }
+
+        //更新表格第page页的数据
+        function m_updateTable(page)
+        {
+            var total_page = all_page;
+            if(page <= 0 || page > total_page)
+                return;
+
+            m_cur_page = page;
+            //在添加之前，先把现有元素移除掉
+            $("#colnames").siblings().remove();
+            //添加元素
+            for(var i = 0; i  < m_data.length; i++)
+            {
+                var tr = $("<tr m_tr_can_remove='yes'></tr>");
+                for(var j in m_data[i])
+                {
+                    tr.append($("<td>{0}</td>".format(m_data[i][j])));
+                }
+                $("#data_tables tbody").append(tr);
+            }
+
+            //更新分页框
+            for(var i = 1; i <= total_page; i++)
+            {
+                if(i == page)
+                    $("#mpage_" + i).addClass("active");
+                else
+                    $("#mpage_" + i).removeClass("active");
+            }
+        }
+
+    </script>
+{% endblock %}

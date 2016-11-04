@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}编辑城市分组{% endblock %}
+
+{% block head %}
+    <style>
+        *{
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        .dashhr{
+            margin: 10px 0;
+            border-top: 1px dashed #ccc;;
+        }
+        .sendmsg-form label{
+            width:16%;
+            text-align: right;
+            margin-right: 1%;
+        }
+        .sendmsg-form .col-lg-12 label{
+            width:8%;
+            margin-right: .5%;
+        }
+        .sendmsg-form .form-control,.sendmsg-form select{
+            display: inline-block;
+            width:80%;
+        }
+        .sendmsg-form .col-lg-12 .form-control{
+            width:90%;
+        }
+        .sendmsg-form a.addpicbtn{
+            cursor:pointer;
+            font-size: 40px;
+            padding: 10px 22px;
+            border: 2px solid #999;
+            color: #999;
+        }
+        .citylist{
+            width: 90%;
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        .correctbtn{
+            color: #337ab7;
+            margin-left: 470px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .correctbtn:hover{
+            color:blue;
+            cursor: pointer;
+        }
+        #validataDiv{
+            padding-left:10%;
+        }
+        #validataDiv .form-group label{
+            width:4%;
+            text-align: left;
+        }
+
+
+
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="cms-subtitle">
+        <ol class="breadcrumb">
+            <li><a href="{% url 'city_groups' %}">城市分组</a></li>
+            <li class="active">编辑城市分组</li>
+        </ol>
+    </div>
+    <div id="error-hints">
+
+
+    </div>
+
+    <form class="sendmsg-form" action="{% url 'edit_city_group'%}?id={{ id }}" method="post" enctype="multipart/form-data">{% csrf_token %}
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    <label><i>*</i>分组名:</label>
+                    <input type="text" class="form-control" name="name" value="" required/>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-group">
+                  <label>描述：</label>
+                   <input type="text" class="form-control" name="remark" value=""/>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="prov-city">
+            <div class="col-lg-12">
+                <div class="form-group city-wrap">
+                    <label><i>*</i>城市：</label>
+                    <input type="hidden" name="city" id="citystr">
+                    <div class="city-spec"></div>
+                    <div class="citylist">
+                        <div class="list-group">
+            <!--                <div class="width1in8">
+                                <div class="col-lg-10 list-group-item list-inline">
+                                    <input type="checkbox"/>
+                                    全国
+                                </div>
+                            </div>
+                            <div class="width1in8">
+                                <div class="col-lg-10 list-group-item list-inline">
+                                    <input type="checkbox"/>
+                                    广东省
+                                </div>
+                            </div>-->
+
+                        </div>
+                   </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row text-center">
+            <a class="btn btn-default col-lg-1 col-lg-offset-4" href="{% url 'city_groups' %}">取消</a>
+            <input type="submit" class="btn btn-success col-lg-1 col-lg-offset-1" value="确定"/>
+
+        </div>
+    </form>
+    <script type="text/javascript" src="{% static 'js/cms/addcitygroup.js' %}"></script>
+    <script type="text/javascript">
+    $(document).ready(function() {
+         setNavBg("city_groups");
+    });
+        var g_cities= {{ cities|safe }} || {};
+        g_markcities = {{ markcities|safe }} || {};
+        $("form").submit(function(){
+            var citystr="";
+            var ckd=$(".citydetailist input[type='checkbox']");
+            var ckd_city=$(".list-group-item input[type='checkbox']");
+            var ckd_city_len=ckd_city.length;
+            var ckd_len=ckd.length;
+            for(var j=0;j< ckd_city_len; j++){
+                if(ckd_city[j].checked && ( $(ckd_city[j]).val()=="上海" || $(ckd_city[j]).val()=="重庆" || $(ckd_city[j]).val()=="天津" || $(ckd_city[j]).val()=="北京")) {
+                    citystr+=$(ckd_city[j]).val()+',';
+                }
+            }
+            for(var i=0;i<ckd_len;i++){
+                if(ckd[i].checked){
+                    citystr+=$(ckd[i]).val()+',';
+                }
+            }
+            citystr=citystr.substring(0,citystr.length-1);
+
+            $("#citystr").val(citystr);
+            console.log( $("#citystr").val());
+        });
+
+
+        checkForm({{ errors|safe }});
+
+
+        $("form input").focus(function(){
+            $(this).css("border","1px solid #ccc");
+        });
+
+
+        
+
+        </script>
+    <script type="text/javascript">
+        function setInPutValue(){
+{#        console.log("{{ goods_form.initial }}");#}
+        {% for key,value in fields.items %}
+            $("input[name='{{ key }}']").val({{ value|safe }});
+        {% endfor %}
+        putCitygroup();
+        clickReaction();
+    }
+    window.onload=setInPutValue;
+</script>
+
+
+{% endblock %}

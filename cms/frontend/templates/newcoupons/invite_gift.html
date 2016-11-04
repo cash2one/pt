@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}邀请有礼{% endblock %}
+
+{% block head %}
+<style>
+    .my_thead{
+        display: table-header-group;
+    }
+    /*   #table tr td:nth-child(2){
+           text-align: left;
+           padding-left: 20px;
+       }*/
+    #table .mimg{
+        width:100px;
+        height: 100px;
+        margin:10px 0;
+    }
+    #table td .mblock{
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    #table .noContent{
+        height: 200px;
+        font-size: 20px;;
+    }
+    #table .noContent:hover{
+        background: transparent;
+    }
+    table th{
+        border: 1px solid #aaa;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<ul class="titlebar">
+    <li ><a href="{% url 'open_activity_channels' %}" >优惠券管理</a></li>
+    <li > <a href="{% url 'open_coupon_create' %}">优惠券发放</a></li>
+    <li class="active"> <a href="#">邀请有礼</a></li>
+</ul>
+<section class="top-sec">
+    <a class="btn-new" href="{% url 'new_invite'%}"><b style="font-size:.18rem">＋&nbsp</b>添加活动</a>
+
+</section>
+<section class="service-table">
+    <table id="table">
+        <caption></caption>
+        <thead class="my_thead">
+        <tr>
+            <th>序号</th>
+            <th>ID</th>
+            <th>活动名称</th>
+            <th>描述</th>
+            <th>邀请人奖励</th>
+            <th>被邀人奖励</th>
+            <th>我的页引导语</th>
+            <th>有效期</th>
+{#            <th>参与次数</th>#}
+{#            <th>活动时间</th>#}
+{#            <th>点击多少次出券</th>#}
+{#            <th>是否给分享人券</th>#}
+            <th>状态</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <div id="loading" style="display:none;">
+            <img src="{% static 'images/loading.gif' %}"/>
+        </div>
+        <tbody id="tbody">
+        <tr class="noContent">
+            <td colspan="100%">暂无相关内容</td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="no_content" ><p>未找到相关内容，请重新搜索</p></div>
+    <div id="pagination" ></div>
+    <div class="modal fade" id="downloadcoupon" tabindex="-1" role="dialog"
+         aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" style="width: 980px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="">
+                        优惠券列表
+                    </h4>
+                </div>
+                <div class="modal-body" style="text-align:center;">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default"
+                            data-dismiss="modal">取消
+                    </button>
+                   <!-- <button type="button" class="btn btn-primary btn-default" data-dismiss="modal">
+                        确定
+                    </button>-->
+                </div>
+            </div><!-- /.modal-content
+                    </div><!-- /.modal -->
+        </div>
+    </div>
+    <script src="{% static 'js/cms/initTable.js' %}"></script>
+    <script type="text/javascript">
+        var myTable,category = ["HF-话费","MOVIE-电影","FLOW-流量","SELF-到家","H5-H5","GAME-游戏","QQ-Q币"];
+        var limit= 12
+        var curPage_m=0
+        $(function(){
+            $.each(category,function(i,ele){
+                var data = ele.split("-");
+                $(".top-sec .category").append("<option value='"+data[0]+"'>"+data[1]+"</option>");
+            });
+            init();
+            myTable = new tableInit({});
+            myTable.getData();
+            myTable.searchInit();
+        })
+
+        function init(){
+            /*初始化页面*/
+            setNavBg("activity_config");
+        };
+        $("#showCouponModal").click(function(e){
+            e.preventDefault();
+            $.get('/codes/list/',function(data){
+                var htmlStr = '';
+                if(!$.isArray(data) || data.length == 0) {
+                    htmlStr='暂无优惠券信息'
+                }
+                else{
+                    htmlStr +='<table><tr>' +
+                            '<th>创建时间</th>' +
+                            '<th>可兑换优惠券名</th>' +
+                            '<th>券码批次</th>' +
+                            '<th>下载</th>' +
+                            '</tr>';
+                    $.each(data,function(i,ele){
+                        htmlStr+='<tr data-id="'+ele.id+'">' +
+                                '<td>'+ele.c_time+'</td>' +
+                                '<td>'+ele.name.toString()+'</td>' +
+                                '<td>'+ele.id+'</td>' +
+                                '<td><a href="/codes/down/?cid='+ele.id+'">下载券码</a></td>' +
+                                '</tr>'
+                    })
+                    htmlStr+='</table>';
+                }
+
+                $("#downloadcoupon").find(".modal-body").html(htmlStr)
+                        .end().modal("show");
+            });
+        });
+        function requestData(options){
+            curPage_m = options.curPage;
+            $.ajax({
+                url:"{% url 'invite_gift_api' %}",
+                type:"get",
+                cache:false,
+                data:{
+                    wd: $("#"+options.keyword).val(),
+                    scope: $(".top-sec .category").val(),
+                    page: options.curPage,
+                    limit: limit
+                },
+                beforeSend:function(XMLHttpRequest){
+                    $(".noContent").hide();
+                    $("#"+options.pageContainer).hide();
+                    $("#"+options.loadImgId).show();
+                },
+                success:function(result){
+                    var data = result.sharegift,num_pages = result.totalpage;
+
+                    if(data.length == 0){
+                        $('#'+myTable.default.tbodyId).empty();
+                        $("#"+options.pageContainer).hide();
+                        $(".no_content").show();
+                        $(".my_thead").hide();
+                    }
+                    else{
+                        $(".my_thead").show();
+                        $(".no_content").hide();
+                        myTable.processData(data);
+                        if(num_pages>=2) myTable.pageInit(num_pages);
+                    }
+                },
+                error:function(result){
+                    console.log(result);
+                },
+                complete:function(result){
+                    $("#"+options.loadImgId).hide();
+                    var currentpage = options.curPage-1;
+                    $(options.pageSelector).eq(currentpage).css('background', '#34cb95');
+                    if(currentpage>5){
+                        $(options.pageSelector).eq(currentpage-5).prevAll().hide();
+                    }
+                }
+            })
+        }
+        function UpDownData(id){
+            $.ajax( {
+                url:'/invite_gift_api/updown/?id='+id,
+                type: "PUT",
+                cache: false,
+                success: function (result) {
+                    //console.log(result);
+                    if (result.code == 0) {
+                        requestData(myTable.default);
+                    }
+                },
+                error: function (result) {
+                    console.log(result);
+                }
+
+            });
+        };
+
+        function DownData(id){
+            $.ajax( {
+                url:'/invite_gift_api/down/?id='+id,
+                type: "PUT",
+                cache: false,
+                success: function (result) {
+                    //console.log(result);
+                    if (result.code == 0) {
+                        requestData(myTable.default);
+                    }
+                },
+                error: function (result) {
+                    console.log(result);
+                }
+
+            });
+        };
+
+        /*处理后台返回数据*/
+        function dataInit(data){
+            //console.log(data)
+            var tbodyId = myTable.default.tbodyId,htmlStr='',trId;
+            if(data.length == 0){
+                $(".noContent").show();
+                return ;
+            }
+            var num=0;
+            $.each(data,function(i,value){
+                var sharehtml = '';
+                if (value.v_share_coupons.length == 0){
+
+                sharehtml +='<span>每奖励1人奖:'+value.share_coupons+'<br/>';
+                }
+                else{
+                    sharehtml +='<span>每奖励1人奖:'+value.v_share_coupons+'<br/>';
+                }
+                for(var j in value.award){
+                    //console.log(value.award)
+                    if (value.award[j].cids.length>0){
+
+                    sharehtml +='当邀请'+value.award[j].number+'奖:'+value.award[j].cids+'<br/>';
+                    }
+                    else{
+                        sharehtml +='当邀请'+value.award[j].number+'奖:'+value.award[j].vip_charge+'<br/>';
+                    }
+                }
+                var stat = ''
+                if (value.v_cids_b.length==0){
+                    stat = '<td>领券:'+value.cids_b
+                }
+                else{
+                    stat = '<td>领券:'+value.v_cids_b
+                }
+                var vst=''
+                if (value.v_cids_a.length==0){
+                    vst = '<br/>之后:'+value.cids_a+'</td>'
+                }else{
+                    vst = '<br/>之后:'+value.v_cids_a+'</td>'
+                }
+
+                //邀请人券
+                num+=1;
+                trId = value.id;
+                var is_user= User(value.is_user);
+                htmlStr+='<tr data-id='+trId+'>';
+                htmlStr +='<td>'+eval(num+(curPage_m-1)*limit)+'</td>' +
+                        '<td>'+trId+'</td>' +
+                        '<td>'+value.name+'</td>' +
+                        '<td>'+value.description+'</td>' +
+                        '<td align="left">'+sharehtml+'</td>' +
+                        stat+vst +
+                        '<td>'+value.ye+'</td>' +
+                        '<td>'+value.start_time+'  -'+'<br/>'+value.end_time+'</td>' +
+                        '<td>'+is_user+'</td>' ;
+
+                if (is_user=='已下架'){
+                    htmlStr += '<td><span class="glyphicon glyphicon-edit" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span><span onclick="UpDownData('+trId+')" aria-hidden="true" style="cursor: pointer;color: green;">上架</span></td></tr>';
+
+                }else{
+                    htmlStr += '<td><span class="glyphicon glyphicon-edit" aria-hidden="true" style="margin-right:10px;cursor: pointer"></span><span onclick="DownData('+trId+')" aria-hidden="true" style="cursor: pointer;color: orange;">下架</span></td></tr>';
+
+                }
+
+                function User(name){
+                    var nameType='';
+                    switch(name) {
+                        case 0:
+                            nameType ='已下架';
+                            break;
+                        case 1:
+                            nameType ='已上架';
+                            break;
+                    }
+                    return nameType;
+                };
+
+            });
+            $('#'+tbodyId).empty().append($(htmlStr)).on("click",'.glyphicon-edit',function(e){
+                window.location.href = "{% url 'new_invite'%}"+'?id='+$(this).parents('tr').data("id")
+
+            }).on("click",'.upup',function(e){
+                var tr = $(this).parents("tr"),
+                        id = tr.data("id"),
+                        mtext = tr.find("td").eq(1).text();
+                //console.log(id)
+                //UpDownData(id)
+                //return false;
+            })
+            /*为二级分类添加+号*/
+            $('#'+tbodyId) .find("tr.level2").each(function(){
+                $(this).find("td:nth-child(2)").prepend('<span class="glyphicon glyphicon-minus" style="margin:0 5px 0 20px;" aria-hidden="true"></span>');
+            });
+        }
+        $.ajaxSetup({
+            beforeSend: function (XMLHttpRequest) {
+                $("#loading").show();
+            },
+            complete: function (result) {
+                $("#loading").hide();
+            },
+        })
+    </script>
+</section>
+{% endblock %}

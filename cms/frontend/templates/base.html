@@ -1,0 +1,308 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head lang="en">
+        <meta charset="UTF-8">
+        {% load static %}
+        <link rel="shortcut icon" href="{% static 'images/favicon.png' %}"/>
+        <link rel="bookmark" href="{% static 'images/favicon.png' %}"/>
+        <script type="text/javascript" src="{% static 'js/jquery.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/vue.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/cms/common.js' %}" ></script>
+        <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/cms/form.js' %}"></script>
+{#        <script src="//cdn.bootcss.com/modernizr/2.8.3/modernizr.js"></script>#}
+        <!--[if IE]>
+        <script src="http://libs.useso.com/js/html5shiv/3.7/html5shiv.min.js"></script>
+        <![endif]-->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+        {% block title %}{% endblock %} | CMS
+        </title>
+        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+        <link rel="stylesheet" href="{% static 'css/ptcms.css' %}">
+        <link rel="stylesheet" href="{% static 'css/form.css' %}">
+        {% block head %}{% endblock %}
+    </head>
+    <body>
+        <header>
+            <a href="{% url 'main_index' %}"><div class="title-pic"><img src="{% static 'images/pt_logo.png' %}"></div></a>
+            <a href="{% url 'main_index' %}"><span class="title">葡萄生活CMS</span></a>
+            <nav>
+                <ul class="guide-ul">
+                    <li class="tags"><a href="{% url 'tags' %}" title="">标签库</a></li>
+                    <li class="one"><a href="{% url 'services' %}" title="">服务</a></li>
+                    <li class="two"><a href="{% url 'goods' %}" title="">商品</a></li>
+                    <li class="three"><a href="{% url 'images' %}" title="">图库</a></li>
+                    <li class="four"><a href="{% url 'actions' %}" title="">动作</a></li>
+                    <li class="six"><a href="{% url 'category' %}" title="">分类</a></li>
+          <!--          <li class="seven"><a href="{#% url 'coupons' %#}" title="">优惠券</a></li>
+                    <li class="eight"><a href="{#% url 'specialtopics' %#}" title="">专题</a></li>-->
+                    <li class="nine"><a href="{% url 'static_data' %}" title="">商家</a></li>
+                    {% if perms.man.config %}
+                    <li class="ten"><a href="{% url 'copy_associate' %}" title="">复制/关联</a></li>
+                    <li class="thirteen"><a href="{% url 'cp_list' %}" title="">品牌</a></li>
+                    <li class="pcard"><a href="{% url 'pcard_list' %}" title="">套餐卡</a></li>
+                    <li class="fourteen"><a href="{% url 'problems' %}" title="">常见问题</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            <div class="login-info">
+
+                <div class="dropdown" >
+                    <button type="button" class="btn dropdown-toggle pt_btn_down" id="dropdownMenu1"
+                    data-toggle="dropdown"  style="background-color: #373c4a;outline:none;color:#fff;">
+                    欢迎您： {_cms_begin_user_end_}
+                    <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu pt-dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" style="min-width:120px;background-color: #373c4a;outline:none;color:#fff;left:38px;z-index:6666" >
+                        {% if perms.man.man %}
+                        <li role="presentation">
+                            <a role="menuitem" tabindex="-1" href="{% url 'man' %}">帐号管理</a>
+                        </li>
+                        {% endif %}
+                        <script type="application/javascript">
+                        if({_cms_begin_install_type_end_}){
+{#                            {% if perms.man.check %}#}
+                            document.write('<li role="presentation"><a role="menuitem" tabindex="-1" href="{% url 'check' %}">审核中心</a></li>');
+{#                            {% endif %}#}
+{#                            {% if perms.man.config %}#}
+                            document.write('<li role="presentation"><a role="menuitem" tabindex="-1" href="{% url 'record' %}">记录中心</a></li>');
+{#                            {% endif %}#}
+                        }
+                        </script>
+
+
+                        <li role="presentation">
+                            <a role="menuitem" tabindex="-1" href="{% url 'logout_then_login' %}?next={% url 'main_index' %}">
+                            退出
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+             <!-- <div class="pt-cms-time" style="display:inline-block;position:absolute;right:5px;color:#fff;top:23px;right:3px;"></div> -->
+        </header>
+        <!--  <button onclick="checkCookie()">11111</button> -->
+        <aside class="aside">
+            <!--    <div class="hide_side"></div> -->
+            <ul>
+            <script type="application/javascript">
+            var types = {_cms_begin_types_end_};
+            for (var i in types)
+            {
+                var img = "";
+                var title = "";
+                var style = "";
+                if(types[i][1] == "APP")
+                {
+                    img = "{% static 'images/icon_cms_android.png' %}";
+                    title = "Android版";
+                    style = "app";
+                }
+                else if(types[i][1] == "IOS")
+                {
+                    img = "{% static 'images/icon_cms_ios.png' %}";
+                    title = "IOS版";
+                    style = "ios";
+                }
+                else if(types[i][1] == "activity")
+                {
+                    img = "{% static 'images/open.png' %}";
+                    title = "活动配置";
+                    style = "ios";
+                }
+                else if(types[i][1] == "H5")
+                {
+                    img = "{% static 'images/icon_cms_html5.png' %}";
+                    title = "H5版";
+                    style = "h-5";
+                }
+                else if(types[i][1] == "YellowPage")
+                {
+                    img = "{% static 'images/yellowpage.png' %}";
+                    title = "生活黄页";
+                    style = "yellowPage";
+                }
+{#               else if(types[i][1] == "open_service")#}
+{#               {#}
+{#                     img = "/static/images/open.png";#}
+{#                     title = "开放服务";#}
+{#                     style = "open_service";#}
+{#                 }#}
+                else
+                {
+                    continue;
+                }
+                document.write('<a href="{% url 'main_index' %}?t=' + types[i][0] + '" title=""><li class='+style+'><img src="' + img + '">' +'<span class="span_hide">'+title +'</span>'+'</li></a>');
+                }
+                function setNavBg(nav) {
+                switch (nav) {
+                    case "android":
+                    case 1:
+                    $(".app").addClass("current_li");
+                    $("li:not(.app)").removeClass('current_li');
+                    break;
+                    case "ios":
+                    case 5:
+                    $(".ios").addClass("current_li");
+                    $("li:not(.ios)").removeClass('current_li');
+                    break;
+                    case "activityconfig":
+                        $("li:not(.seven)").removeClass('current_li');
+                        $(".seven").addClass("current_li");
+                        break;
+                    case "h5":
+                    case 4:
+                    $(".h-5").addClass("current_li");
+                    $("li:not(.h-5)").removeClass('current_li');
+                    break;
+                    case "yellowPage":
+                    case 2:
+                    $(".yellowPage").addClass("current_li");
+                    $("li:not(.yellowPage)").removeClass('current_li');
+                    break;
+                    case "activity_config":
+                    $(".activity_config").addClass('current_li');
+                    $("li:not(.activity_config)").removeClass('current_li');
+                    break;
+                    case "services":
+                    $("li:not(.one)").removeClass('current_li');
+                    $(".one").addClass("current_li");
+                    break;
+                    case "goods":
+                    $("li:not(.two)").removeClass('current_li');
+                    $(".two").addClass("current_li");
+                    break;
+                    case "images":
+                    $("li:not(.three)").removeClass('current_li');
+                    $(".three").addClass("current_li");
+                    break;
+                    case "actions":
+                    $("li:not(.four)").removeClass('current_li');
+                    $(".four").addClass("current_li");
+                    break;
+                    case "city_groups":
+                    $("li:not(.five)").removeClass('current_li');
+                    $(".five").addClass("current_li");
+                    break;
+                    case "category":
+                    $("li:not(.six)").removeClass('current_li');
+                    $(".six").addClass("current_li");
+                    break;
+                  /*  case "specialtopic":
+                    $("li:not(.eight)").removeClass('current_li');
+                    $(".eight").addClass("current_li");
+                    break;*/
+                    case "static_data":
+                    $("li:not(.nine)").removeClass('current_li');
+                    $(".nine").addClass("current_li");
+                    break;
+                    case "copy_associate":
+                    $("li:not(.ten)").removeClass('current_li');
+                    $(".ten").addClass("current_li");
+                    break;
+                     case "check":
+                    $("li:not(.eleven)").removeClass('current_li');
+                    $(".nine").addClass("current_li");
+                    break;
+                    case "record":
+                    $("li:not(.twelve)").removeClass('current_li');
+                    $(".ten").addClass("current_li");
+                    break;
+                    case "pcard":
+                    $("li:not(.pcard)").removeClass('current_li');
+                    $(".pcard").addClass("current_li");
+                    break;
+                    case "tags":
+                    $("li:not(.tags)").removeClass('current_li');
+                    $(".tags").addClass("current_li");
+                    break;
+                }
+                }
+
+                    </script>
+                <script type="application/javascript">
+                if(4 != {_cms_begin_install_type_end_}){
+                    document.write('<a href="{% url 'open_services_channels' %}" title=""><li class="open_service"><img src="/static/images/open.png"><span class="span_hide">开放服务</span></li></a>');
+                }
+                if(4 != {_cms_begin_install_type_end_}){
+                    document.write('<a href="{% url 'open_activity_channels' %}" title=""><li class="activity_config"><img src="/static/images/open.png"><span class="span_hide">活动配置</span></li></a>');
+                }
+                </script>
+                </ul>
+                <!--  <span class="type-edit">编辑</span> -->
+            </aside>
+            <article>
+            <div class="content">
+
+            <!-- 删除提示 -->
+            <div class="modal fade" id="myModal-del" tabindex="-1" role="dialog"
+                aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog" style="width: 480px;">
+                    <div class="modal-content" style="width:5rem;margin:0 auto;">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                            &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                            <div class="hint_icon"><img src="{% static 'images/delete.png' %}"></div>删除提示
+                            </h4>
+                        </div>
+                        <div class="modal-body" style="text-align:center;">
+                            <span>确认删除名称为<span class="del_info"></span>的相关数据</span>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default"
+                            data-dismiss="modal">取消
+                            </button>
+                            <button type="button" class="btn btn-primary btn-default" data-dismiss="modal">
+                            确定
+                            </button>
+                        </div>
+                    </div><!-- /.modal-content
+                    </div><!-- /.modal -->
+                </div>
+            </div>
+            {% block content %}
+            {% endblock %}
+        </div>
+        </article>
+
+    <script>
+    $(document).ready(function() {
+     function getTime(){
+       var myDate = new Date();
+        myDate.setDate(myDate.getDate());
+        myDate = myDate.toLocaleTimeString();
+        $(".pt-cms-time").html(myDate);
+        // console.log(myDate);
+        }
+        var myDate = setInterval(function(){getTime()},1000);
+    });
+        //列表操作权限设置
+        function checkAuthority(){
+            if("{{ perms.man.config }}" != "True"){
+                $(".glyphicon-edit").each(function () {
+                    $(this).parents("td").html('<a class="glyphicon glyphicon-eye-open"></a>');
+                });
+                $(".glyphicon-trash").each(function () {
+                    //var data_status = this.dataset.status;
+                    //console.log(data_status);
+                    //console.log($(this).parent("tr").prev().find("td.edit-td").data("status"));
+                    $(this).parents("td").html('<a class="glyphicon glyphicon-eye-open"></a>');
+                });
+                $("td .top-btn").each(function(){
+                    $(this).parent("td").html('<a class="glyphicon glyphicon-eye-open"></a>');
+                });
+            }
+        }
+        // (function changeColor(){
+        //     $("aside,header,.version").css('background', 'rgba(173, 9, 9, 0.87)');
+        // })();
+
+
+    </script>
+    </body>
+</html>
