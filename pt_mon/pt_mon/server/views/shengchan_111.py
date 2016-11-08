@@ -34,7 +34,7 @@ def index(req, template_name):
                 return i and i.strip()
             ret = filter(not_empty, i)
             if len(ret) < 10: continue
-            c = [ret[0], ret[1], ret[10]]
+            c = [ret[0], ret[1], ret[10] ,ret[11]]
 
             cs_111.append(c)
     print cs_111

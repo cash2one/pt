@@ -25,6 +25,7 @@ if __name__ == "__main__":
                     return i and i.strip()
                 ret = filter(not_empty, i)
                 if len(ret) < 10: continue
-                b = [ret[0], ret[1], ret[10]]
+                b = [ret[0], ret[1], ret[10] ,ret[11]]
                 print b
             s.close()
+# python.exe .\manage.py migrate
